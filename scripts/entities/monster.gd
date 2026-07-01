@@ -1,14 +1,23 @@
 extends CharacterBody2D
-## 일반 몬스터 (PRD 3.1). 단순 1패턴 — 플레이어 추격 + 접촉 데미지.
-## 처치 시 재료 드롭(Scavenge 씬에 통지). 지역 보스/스토리 보스는 별도 확장.
+## 일반 몬스터 (PRD 3.1).
+## 감지 반경(detection_range) 안에 플레이어가 들어오면 추적(CHASE) 시작.
+## 추적 중 chase_duration 초 동안 한 번도 데미지를 주지 못하면 추적을 멈추고
+## 제자리에 머문다(IDLE). 데미지를 주면 추적 시간이 리셋되어 계속 쫓아온다.
+## 감지 반경·추적 시간은 몬스터마다 다르게 설정(스폰 시 프로필로 주입).
+
+enum State { IDLE, CHASE }
 
 @export var speed := 95.0
 @export var max_hp := 50.0
 @export var contact_damage := 15.0
+@export var detection_range := 180.0   # 감지 반경 (몬스터마다 다름)
+@export var chase_duration := 4.0      # 무피해 시 추적 유지 시간 (몬스터마다 다름)
 
 var hp := 50.0
 var drop_item_id: String = ""
 
+var _state: int = State.IDLE
+var _chase_timer := 0.0
 var _player: Node2D = null
 var _touching := false
 var _dmg_cd := 0.0
@@ -16,21 +25,73 @@ var _dmg_cd := 0.0
 
 func _ready() -> void:
 	hp = max_hp
+	# 인스턴스별 고유 감지 반경 적용(공유 리소스 오염 방지).
+	var det := CircleShape2D.new()
+	det.radius = detection_range
+	$DetectionArea/DetCol.shape = det
+	$DetectionArea.body_entered.connect(_on_detect)
 	$HitBox.body_entered.connect(_on_hit_entered)
 	$HitBox.body_exited.connect(_on_hit_exited)
+	# 감지 반경 디버그 표시 토글(테스트용).
+	Config.detection_range_visibility_changed.connect(func(_v): queue_redraw())
+	queue_redraw()
+
+
+func _draw() -> void:
+	# 몬스터 감지 반경 디버그 시각화. Config 스위치로 끌 수 있음.
+	if not Config.show_detection_range:
+		return
+	var col := Color(1.0, 0.4, 0.4, 0.5) if _state == State.CHASE else Color(0.6, 0.6, 0.6, 0.3)
+	draw_arc(Vector2.ZERO, detection_range, 0.0, TAU, 64, col, 2.0, true)
 
 
 func _physics_process(delta: float) -> void:
-	if _player == null or not is_instance_valid(_player):
-		_player = get_tree().get_first_node_in_group("player")
-	if _player:
-		velocity = (_player.global_position - global_position).normalized() * speed
-		move_and_slide()
+	if _state == State.CHASE:
+		_chase_timer -= delta
+		if _chase_timer <= 0.0 or _player == null or not is_instance_valid(_player):
+			_end_chase()
+		else:
+			velocity = (_player.global_position - global_position).normalized() * speed
+			move_and_slide()
+	else:
+		velocity = Vector2.ZERO # 제자리에 머뭄
 
 	_dmg_cd = maxf(0.0, _dmg_cd - delta)
 	if _touching and _dmg_cd <= 0.0 and _player and _player.has_method("take_hit"):
 		_player.take_hit(contact_damage)
 		_dmg_cd = 1.0
+		# 데미지 성공 → (재)추적 + 추적 시간 리셋.
+		var was_chasing := _state == State.CHASE
+		_state = State.CHASE
+		_chase_timer = chase_duration
+		if not was_chasing:
+			queue_redraw()
+
+
+func _on_detect(body: Node) -> void:
+	if body.is_in_group("player") and _state == State.IDLE:
+		_player = body
+		_state = State.CHASE
+		_chase_timer = chase_duration
+		queue_redraw()
+
+
+func _on_hit_entered(body: Node) -> void:
+	if body.is_in_group("player"):
+		_touching = true
+		_player = body
+
+
+func _on_hit_exited(body: Node) -> void:
+	if body.is_in_group("player"):
+		_touching = false
+
+
+func _end_chase() -> void:
+	_state = State.IDLE
+	_chase_timer = 0.0
+	velocity = Vector2.ZERO
+	queue_redraw()
 
 
 func take_damage(amount: float) -> void:
@@ -44,13 +105,3 @@ func _die() -> void:
 	if s and s.has_method("on_monster_drop"):
 		s.on_monster_drop(global_position, drop_item_id)
 	queue_free()
-
-
-func _on_hit_entered(body: Node) -> void:
-	if body.is_in_group("player"):
-		_touching = true
-
-
-func _on_hit_exited(body: Node) -> void:
-	if body.is_in_group("player"):
-		_touching = false

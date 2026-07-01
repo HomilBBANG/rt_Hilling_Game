@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/entities/monster.gd" id="1"]
 
@@ -7,6 +7,9 @@ size = Vector2(26, 26)
 
 [sub_resource type="RectangleShape2D" id="hit"]
 size = Vector2(36, 36)
+
+[sub_resource type="CircleShape2D" id="det"]
+radius = 180.0
 
 [node name="Monster" type="CharacterBody2D" groups=["monster"]]
 collision_layer = 2
@@ -26,3 +29,10 @@ collision_mask = 1
 
 [node name="HitCol" type="CollisionShape2D" parent="HitBox"]
 shape = SubResource("hit")
+
+[node name="DetectionArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 1
+
+[node name="DetCol" type="CollisionShape2D" parent="DetectionArea"]
+shape = SubResource("det")

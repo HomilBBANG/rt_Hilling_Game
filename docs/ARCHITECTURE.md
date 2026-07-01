@@ -19,7 +19,7 @@ hilling-game/
 │   ├── phases/                # 하루 사이클 페이즈 (씬 전환 단위)
 │   │   ├── morning_prep.tscn  #  아침 준비
 │   │   ├── scavenge.tscn      #  탐사(지역 템플릿 — RegionData 로 확장)
-│   │   └── night_session.tscn #  밤 세션: 쿠킹+서빙+급식(3분 타이머)
+│   │   └── night_session.tscn #  밤 세션: 쿠킹+서빙+급식(1분 타이머)
 │   ├── ui/hud.tscn            # 최소 HUD (trust 비노출)
 │   ├── entities/              # player / belami / npc (예정)
 │   └── minigames/cooking/     # 쿠킹 미니게임 (예정)
@@ -37,7 +37,7 @@ hilling-game/
 ```
 MORNING_PREP ─▶ SCAVENGE ─▶ NIGHT ─▶ (day+1) MORNING_PREP
    │                          │
- [저장:morning]           [저장:night]   (NIGHT = 3분 쿠킹/급식 세션)
+ [저장:morning]           [저장:night]   (NIGHT = 1분 쿠킹/급식 세션)
 ```
 
 - `GameManager.advance()` 가 현재 스텝에서 다음 스텝으로 전환하며, 해당 페이즈 씬을

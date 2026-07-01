@@ -9,6 +9,7 @@ extends Node
 ## (게이지를 '지우는' 게 아니라 '가리는' 방식이라, 언제든 다시 켤 수 있음.)
 
 signal gauges_visibility_changed(visible: bool)
+signal detection_range_visibility_changed(visible: bool)
 
 var show_gauges: bool = true:
 	set(value):
@@ -16,3 +17,12 @@ var show_gauges: bool = true:
 			return
 		show_gauges = value
 		gauges_visibility_changed.emit(value)
+
+## 몬스터 감지 반경을 화면에 표시할지 여부(테스트용). false 면 원을 숨긴다.
+## 런타임에 Config.show_detection_range = false 로 토글 가능.
+var show_detection_range: bool = true:
+	set(value):
+		if show_detection_range == value:
+			return
+		show_detection_range = value
+		detection_range_visibility_changed.emit(value)

@@ -29,7 +29,7 @@ theme_override_constants/margin_bottom = 24
 
 [node name="Main" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 12
 
 [node name="TopBar" type="HBoxContainer" parent="Margin/Main"]
 layout_mode = 2
@@ -37,7 +37,7 @@ theme_override_constants/separation = 20
 
 [node name="TimeLabel" type="Label" parent="Margin/Main/TopBar"]
 layout_mode = 2
-text = "남은 시간: 180초"
+text = "남은 시간: 60초"
 
 [node name="SatLabel" type="Label" parent="Margin/Main/TopBar"]
 layout_mode = 2
@@ -56,21 +56,58 @@ text = "토큰(예정): 0"
 layout_mode = 2
 text = "먹인 수: 0"
 
-[node name="BelamiFace" type="Label" parent="Margin/Main"]
+[node name="Field" type="Panel" parent="Margin/Main"]
+custom_minimum_size = Vector2(0, 240)
 layout_mode = 2
-theme_override_font_sizes/font_size = 44
+size_flags_vertical = 3
+
+[node name="Counter" type="ColorRect" parent="Margin/Main/Field"]
+offset_right = 60.0
+offset_bottom = 44.0
+color = Color(0.5, 0.4, 0.24, 1)
+
+[node name="CounterLabel" type="Label" parent="Margin/Main/Field"]
+offset_right = 60.0
+offset_bottom = 20.0
 horizontal_alignment = 1
+text = "조리대"
+
+[node name="Belami" type="Label" parent="Margin/Main/Field"]
+offset_right = 80.0
+offset_bottom = 56.0
+theme_override_font_sizes/font_size = 40
 text = "( ˘ ᴗ ˘ )"
+
+[node name="Player" type="ColorRect" parent="Margin/Main/Field"]
+offset_right = 26.0
+offset_bottom = 26.0
+color = Color(0.36, 0.66, 1, 1)
+
+[node name="ServeHint" type="Label" parent="Margin/Main/Field"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -28.0
+grow_horizontal = 2
+grow_vertical = 0
+horizontal_alignment = 1
+text = "요리를 완성하면 들고 → WASD로 벨라미에게 가져가 서빙"
 
 [node name="CookArea" type="VBoxContainer" parent="Margin/Main"]
 layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/separation = 12
+theme_override_constants/separation = 8
 
 [node name="RecipeLabel" type="Label" parent="Margin/Main/CookArea"]
 layout_mode = 2
 horizontal_alignment = 1
 text = "요리:"
+
+[node name="HeldLabel" type="Label" parent="Margin/Main/CookArea"]
+layout_mode = 2
+horizontal_alignment = 1
+text = ""
 
 [node name="SequenceRow" type="HBoxContainer" parent="Margin/Main/CookArea"]
 layout_mode = 2
@@ -96,15 +133,10 @@ text = "튀기는 중..."
 
 [node name="CollectButton" type="Button" parent="Margin/Main/CookArea"]
 visible = false
-custom_minimum_size = Vector2(160, 48)
+custom_minimum_size = Vector2(160, 44)
 layout_mode = 2
 size_flags_horizontal = 4
 text = "꺼내기!"
-
-[node name="Hint" type="Label" parent="Margin/Main/CookArea"]
-layout_mode = 2
-horizontal_alignment = 1
-text = "조합형: 재료를 순서대로 클릭 · 타이머형: 적정 순간에 꺼내기 → 자동 서빙"
 
 [node name="Ingredients" type="HBoxContainer" parent="Margin/Main"]
 layout_mode = 2

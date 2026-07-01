@@ -39,11 +39,23 @@ func _spawn_world() -> void:
 	if _player.has_signal("stamina_depleted"):
 		_player.stamina_depleted.connect(_on_stamina_depleted)
 
+	# 몬스터마다 감지 반경/추적 시간/속도가 다르도록 프로필을 순환 부여.
+	var profiles := [
+		{"detection_range": 160.0, "chase_duration": 3.0, "speed": 90.0},
+		{"detection_range": 240.0, "chase_duration": 5.0, "speed": 78.0},
+		{"detection_range": 120.0, "chase_duration": 2.5, "speed": 110.0},
+	]
+	var mi := 0
 	for m in $MonsterSpawns.get_children():
 		var mon := monster_scene.instantiate()
-		add_child(mon)
-		mon.global_position = m.global_position
+		var prof: Dictionary = profiles[mi % profiles.size()]
+		mon.detection_range = prof["detection_range"]
+		mon.chase_duration = prof["chase_duration"]
+		mon.speed = prof["speed"]
 		mon.drop_item_id = _pick_material_id()
+		add_child(mon) # detection_range 를 _ready 전에 주입해야 함 → add_child 전에 설정
+		mon.global_position = m.global_position
+		mi += 1
 
 	for r in $ResourceSpawns.get_children():
 		var node := resource_scene.instantiate()
