@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/data/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fries"
+display_name = "감자튀김"
+sub_mechanic = 1
+ingredient_ids = PackedStringArray("potato")
+base_quality = 24.0
+timer_seconds = 4.0
+unlocked_by_default = false
+unlock_item_id = "potato"

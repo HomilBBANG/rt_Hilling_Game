@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/data/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "canned_food"
+display_name = "통조림"
+category = 0
+description = "오래됐지만 아직 먹을 수 있는 통조림."
+freshness_decay = 0.0

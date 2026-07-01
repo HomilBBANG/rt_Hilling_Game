@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/data/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "scrap_metal"
+display_name = "고철"
+category = 1
+description = "무기 제작에 쓰이는 고철 조각."
+freshness_decay = 0.0

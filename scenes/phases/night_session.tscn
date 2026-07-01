@@ -1,0 +1,156 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/phases/night_session.gd" id="1"]
+
+[node name="NightSession" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="Bg" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.16, 0.12, 0.11, 1)
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 56
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="Main" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="TopBar" type="HBoxContainer" parent="Margin/Main"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="TimeLabel" type="Label" parent="Margin/Main/TopBar"]
+layout_mode = 2
+text = "남은 시간: 180초"
+
+[node name="SatLabel" type="Label" parent="Margin/Main/TopBar"]
+layout_mode = 2
+text = "만족 0 / 60"
+
+[node name="SatBar" type="ProgressBar" parent="Margin/Main/TopBar"]
+custom_minimum_size = Vector2(180, 20)
+layout_mode = 2
+show_percentage = false
+
+[node name="TokensLabel" type="Label" parent="Margin/Main/TopBar"]
+layout_mode = 2
+text = "토큰(예정): 0"
+
+[node name="FedLabel" type="Label" parent="Margin/Main/TopBar"]
+layout_mode = 2
+text = "먹인 수: 0"
+
+[node name="BelamiFace" type="Label" parent="Margin/Main"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 44
+horizontal_alignment = 1
+text = "( ˘ ᴗ ˘ )"
+
+[node name="CookArea" type="VBoxContainer" parent="Margin/Main"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="RecipeLabel" type="Label" parent="Margin/Main/CookArea"]
+layout_mode = 2
+horizontal_alignment = 1
+text = "요리:"
+
+[node name="SequenceRow" type="HBoxContainer" parent="Margin/Main/CookArea"]
+layout_mode = 2
+alignment = 1
+
+[node name="MistakeLabel" type="Label" parent="Margin/Main/CookArea"]
+layout_mode = 2
+horizontal_alignment = 1
+text = ""
+
+[node name="CookProgress" type="ProgressBar" parent="Margin/Main/CookArea"]
+visible = false
+custom_minimum_size = Vector2(260, 24)
+layout_mode = 2
+size_flags_horizontal = 4
+show_percentage = false
+
+[node name="TimerHint" type="Label" parent="Margin/Main/CookArea"]
+visible = false
+layout_mode = 2
+horizontal_alignment = 1
+text = "튀기는 중..."
+
+[node name="CollectButton" type="Button" parent="Margin/Main/CookArea"]
+visible = false
+custom_minimum_size = Vector2(160, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "꺼내기!"
+
+[node name="Hint" type="Label" parent="Margin/Main/CookArea"]
+layout_mode = 2
+horizontal_alignment = 1
+text = "조합형: 재료를 순서대로 클릭 · 타이머형: 적정 순간에 꺼내기 → 자동 서빙"
+
+[node name="Ingredients" type="HBoxContainer" parent="Margin/Main"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="Results" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Dim" type="ColorRect" parent="Results"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.6)
+
+[node name="Center" type="CenterContainer" parent="Results"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="VBox" type="VBoxContainer" parent="Results/Center"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="ResultTitle" type="Label" parent="Results/Center/VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 28
+text = "오늘 밤 — 결과"
+
+[node name="ResultReaction" type="Label" parent="Results/Center/VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+text = "벨라미"
+
+[node name="ResultStats" type="Label" parent="Results/Center/VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+text = ""
+
+[node name="NextButton" type="Button" parent="Results/Center/VBox"]
+layout_mode = 2
+text = "다음 날로 →"

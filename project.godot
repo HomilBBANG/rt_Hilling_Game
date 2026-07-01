@@ -11,11 +11,27 @@ config_version=5
 [application]
 
 config/name="Hilling_Game"
+config/description="벨라미 — 2D 도트 생존/힐링 시뮬레이션"
+run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
+[autoload]
+
+Config="*res://autoload/config.gd"
+SaveManager="*res://autoload/save_manager.gd"
+BelamiManager="*res://autoload/belami_manager.gd"
+NpcUnlockDB="*res://autoload/npc_unlock_db.gd"
+NPCManager="*res://autoload/npc_manager.gd"
+WeaponManager="*res://autoload/weapon_manager.gd"
+CodexManager="*res://autoload/codex_manager.gd"
+RecipeDB="*res://autoload/recipe_db.gd"
+GameManager="*res://autoload/game_manager.gd"
+
 [display]
 
+window/size/viewport_width=1280
+window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 

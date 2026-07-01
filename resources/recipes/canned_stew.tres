@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/data/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "canned_stew"
+display_name = "통조림 스튜"
+sub_mechanic = 0
+ingredient_ids = PackedStringArray("canned_food", "herb", "canned_food")
+base_quality = 22.0
+timer_seconds = 0.0
+unlocked_by_default = true

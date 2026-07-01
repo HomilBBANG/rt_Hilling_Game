@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RegionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/data/region_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "ruins"
+display_name = "폐허"
+food_item_ids = PackedStringArray("canned_food", "herb", "potato")
+material_item_ids = PackedStringArray("scrap_metal")
+boss_id = ""
+ammo_pickup_points = 3
+stamina_budget = 100
