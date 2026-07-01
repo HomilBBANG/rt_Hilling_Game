@@ -69,6 +69,9 @@ func continue_game() -> void:
 	BelamiManager.refresh_preferences(_unlocked_recipe_ids())
 	# 로드된 누적 만족도 기준으로 해금 재점검(엑셀에서 임계값을 낮춘 경우도 반영).
 	NPCManager.check_unlocks(BelamiManager.trust)
+	# 이미 부활한 NPC들의 효과도 재적용(멱등).
+	for revived_id in NPCManager.revived_ids:
+		_apply_npc_effect(revived_id)
 	var phase := String(data.get("phase", "morning"))
 	_goto_step(Step.MORNING_PREP if phase == "morning" else Step.NIGHT)
 
@@ -147,10 +150,20 @@ func _load_phase_scene(step: int) -> void:
 
 
 func _on_total_satisfaction_changed(total: float) -> void:
-	var newly := NPCManager.check_unlocks(total)
-	for npc_id in newly:
-		# TODO: 부활 컷씬 + 콘텐츠 unlock. 지금은 로그만.
-		print("[GameManager] NPC 해금(부활): ", npc_id, " (", NpcUnlockDB.display_name_of(npc_id), ")")
+	for npc_id in NPCManager.check_unlocks(total):
+		_apply_npc_effect(npc_id)
+		# TODO: 부활 컷씬. 지금은 로그.
+		print("[GameManager] NPC 부활: %s (%s) → %s" % [
+			npc_id, NpcUnlockDB.display_name_of(npc_id), NpcUnlockDB.unlocks_of(npc_id)])
+
+
+## NPC 부활 효과 적용(멱등). unlocks 필드(엑셀)로 매핑.
+func _apply_npc_effect(npc_id: String) -> void:
+	match NpcUnlockDB.unlocks_of(npc_id):
+		"weapon_upgrade":
+			WeaponManager.unlock_upgrades() # 하나 → 무기 강화 해금
+		_:
+			pass # TODO: serving/kitchen/new_region 등 나머지 NPC 효과
 
 
 ## 현재 해금된 레시피 id 목록(도감 획득 기반 해금 포함). 선호 음식 선정에 사용.

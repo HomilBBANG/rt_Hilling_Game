@@ -42,3 +42,11 @@ func display_name_of(npc_id: String) -> String:
 		if String(e.get("npc_id", "")) == npc_id:
 			return String(e.get("display_name", npc_id))
 	return npc_id
+
+
+## 이 NPC가 해금하는 콘텐츠 id(예: "weapon_upgrade"). 없으면 빈 문자열.
+func unlocks_of(npc_id: String) -> String:
+	for e in entries:
+		if String(e.get("npc_id", "")) == npc_id:
+			return String(e.get("unlocks", ""))
+	return ""

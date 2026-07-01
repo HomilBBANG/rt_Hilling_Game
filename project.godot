@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 Config="*res://autoload/config.gd"
+Balance="*res://autoload/balance.gd"
 SaveManager="*res://autoload/save_manager.gd"
 BelamiManager="*res://autoload/belami_manager.gd"
 NpcUnlockDB="*res://autoload/npc_unlock_db.gd"

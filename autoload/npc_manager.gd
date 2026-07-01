@@ -8,6 +8,8 @@ signal npc_revived(npc_id: String)
 const PLACEMENT_SLOTS := ["kitchen", "serving"]
 
 var revived_ids: Array[String] = []
+## 부활 컷씬을 이미 보여준 NPC(캠프에서 시체→NPC 연출 중복 방지).
+var shown_revival_ids: Array[String] = []
 var placement := {"kitchen": "", "serving": ""}
 
 
@@ -30,17 +32,34 @@ func is_revived(npc_id: String) -> bool:
 	return npc_id in revived_ids
 
 
+## 부활은 했지만 아직 컷씬을 안 보여준 NPC 목록(캠프에서 연출할 대상).
+func pending_revivals() -> Array[String]:
+	var out: Array[String] = []
+	for npc_id in revived_ids:
+		if npc_id not in shown_revival_ids:
+			out.append(npc_id)
+	return out
+
+
+func mark_shown(npc_id: String) -> void:
+	if npc_id not in shown_revival_ids:
+		shown_revival_ids.append(npc_id)
+
+
 func assign(slot: String, npc_id: String) -> void:
 	if slot in placement:
 		placement[slot] = npc_id
 
 
 func to_dict() -> Dictionary:
-	return {"revived": revived_ids, "placement": placement}
+	return {"revived": revived_ids, "shown": shown_revival_ids, "placement": placement}
 
 
 func from_dict(d: Dictionary) -> void:
 	revived_ids = []
 	for v in d.get("revived", []):
 		revived_ids.append(String(v))
+	shown_revival_ids = []
+	for v in d.get("shown", []):
+		shown_revival_ids.append(String(v))
 	placement = d.get("placement", {"kitchen": "", "serving": ""})

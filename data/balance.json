@@ -1,0 +1,6 @@
+{
+  "player_speed": 280,
+  "scavenge_seconds": 150,
+  "night_seconds": 60,
+  "target_satisfaction": 60
+}

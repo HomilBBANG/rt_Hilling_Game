@@ -55,6 +55,8 @@ var _pos_init := false
 
 
 func _ready() -> void:
+	run_seconds = Balance.get_float("night_seconds", run_seconds) # 엑셀 조정 가능
+	target_satisfaction = Balance.get_float("target_satisfaction", target_satisfaction)
 	_time_left = run_seconds
 	_sat_bar.max_value = target_satisfaction
 	_sat_bar.value = 0

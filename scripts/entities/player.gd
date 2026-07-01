@@ -11,8 +11,8 @@ signal stamina_depleted
 @export var bullet_scene: PackedScene
 
 ## 근접(칼) — 탄약 불필요, 조준 방향 부채꼴 범위 즉시 타격(PRD 3.3).
+## 데미지는 WeaponManager(강화 반영)에서 읽는다.
 @export var melee_range := 64.0
-@export var melee_damage := 45.0
 @export var melee_cooldown := 0.42
 @export var melee_arc_dot := 0.5 # 조준 방향 기준 부채꼴(≈±60°)
 
@@ -29,6 +29,7 @@ var _melee_cd := 0.0
 
 func _ready() -> void:
 	stamina = max_stamina
+	speed = Balance.get_float("player_speed", speed) # 엑셀 조정 가능
 
 
 func _physics_process(delta: float) -> void:
@@ -69,6 +70,7 @@ func _shoot() -> void:
 		return
 	var b := bullet_scene.instantiate()
 	get_parent().add_child(b)
+	b.damage = WeaponManager.ranged_damage() # 강화 반영
 	b.global_position = _muzzle.global_position
 	var dir := get_global_mouse_position() - global_position
 	if dir.length() < 0.01:
@@ -90,7 +92,7 @@ func _melee() -> void:
 		var to: Vector2 = m.global_position - global_position
 		if to.length() <= melee_range and to.normalized().dot(aim) >= melee_arc_dot:
 			if m.has_method("take_damage"):
-				m.take_damage(melee_damage)
+				m.take_damage(WeaponManager.melee_damage()) # 강화 반영
 
 
 func _flash_slash() -> void:

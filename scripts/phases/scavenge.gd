@@ -5,11 +5,18 @@ extends Node2D
 
 const REGION_PATH := "res://resources/regions/ruins.tres"
 
+## 맵 크기(벽/바닥은 씬에서 이 값에 맞춰 배치되어 있음). 스폰 분산 범위 기준.
+const MAP_SIZE := Vector2(6400, 4800)
+const SPAWN_MARGIN := 140.0    # 벽에서 떨어뜨릴 여백
+const PLAYER_CLEAR := 500.0    # 플레이어 시작 주변엔 몬스터 스폰 금지
+
 @export var player_scene: PackedScene
 @export var monster_scene: PackedScene
 @export var resource_scene: PackedScene
 @export var ammo_scene: PackedScene
 @export var run_seconds := 90.0
+@export var monster_count := 16
+@export var resource_count := 24
 
 var _region: RegionData = null
 var _time_left := 0.0
@@ -26,6 +33,7 @@ var _returning := false
 
 func _ready() -> void:
 	add_to_group("scavenge")
+	run_seconds = Balance.get_float("scavenge_seconds", run_seconds) # 엑셀 조정 가능
 	_time_left = run_seconds
 	_region = load(REGION_PATH) as RegionData
 	_spawn_world()
@@ -38,29 +46,30 @@ func _spawn_world() -> void:
 	_player.global_position = $PlayerStart.global_position
 	if _player.has_signal("stamina_depleted"):
 		_player.stamina_depleted.connect(_on_stamina_depleted)
+	_set_camera_limits()
 
 	# 몬스터마다 감지 반경/추적 시간/속도가 다르도록 프로필을 순환 부여.
+	# 넓은 맵 전체에 절차적으로 분산 배치(개수는 export 로 조정).
 	var profiles := [
-		{"detection_range": 160.0, "chase_duration": 3.0, "speed": 90.0},
-		{"detection_range": 240.0, "chase_duration": 5.0, "speed": 78.0},
-		{"detection_range": 120.0, "chase_duration": 2.5, "speed": 110.0},
+		{"detection_range": 160.0, "chase_duration": 3.0, "speed": 90.0, "wander_radius": 80.0},
+		{"detection_range": 240.0, "chase_duration": 5.0, "speed": 78.0, "wander_radius": 130.0},
+		{"detection_range": 120.0, "chase_duration": 2.5, "speed": 110.0, "wander_radius": 60.0},
 	]
-	var mi := 0
-	for m in $MonsterSpawns.get_children():
+	for i in monster_count:
 		var mon := monster_scene.instantiate()
-		var prof: Dictionary = profiles[mi % profiles.size()]
+		var prof: Dictionary = profiles[i % profiles.size()]
 		mon.detection_range = prof["detection_range"]
 		mon.chase_duration = prof["chase_duration"]
 		mon.speed = prof["speed"]
+		mon.wander_radius = prof["wander_radius"]
 		mon.drop_item_id = _pick_material_id()
-		add_child(mon) # detection_range 를 _ready 전에 주입해야 함 → add_child 전에 설정
-		mon.global_position = m.global_position
-		mi += 1
+		add_child(mon) # exports 를 _ready 전에 주입
+		mon.global_position = _random_spawn_pos(true)
 
-	for r in $ResourceSpawns.get_children():
+	for i in resource_count:
 		var node := resource_scene.instantiate()
 		add_child(node)
-		node.global_position = r.global_position
+		node.global_position = _random_spawn_pos(false)
 		node.item_id = _pick_food_id()
 
 	# 탄약: 맵 내 고정 지점(랜덤 아님, PRD 3.1)
@@ -178,3 +187,25 @@ func _pick_material_id() -> String:
 	if _region and _region.material_item_ids.size() > 0:
 		return _region.material_item_ids[randi() % _region.material_item_ids.size()]
 	return "scrap_metal"
+
+
+## 맵 내 랜덤 위치. avoid_player=true 면 플레이어 시작 지점 주변은 피함.
+func _random_spawn_pos(avoid_player: bool) -> Vector2:
+	var start: Vector2 = $PlayerStart.global_position
+	for attempt in 20:
+		var p := Vector2(
+			randf_range(SPAWN_MARGIN, MAP_SIZE.x - SPAWN_MARGIN),
+			randf_range(SPAWN_MARGIN, MAP_SIZE.y - SPAWN_MARGIN))
+		if not avoid_player or p.distance_to(start) >= PLAYER_CLEAR:
+			return p
+	return start + Vector2(PLAYER_CLEAR, 0.0)
+
+
+## 플레이어 카메라가 맵 밖(벽 너머)을 보지 않도록 경계 제한.
+func _set_camera_limits() -> void:
+	var cam := _player.get_node_or_null("Camera")
+	if cam:
+		cam.limit_left = 0
+		cam.limit_top = 0
+		cam.limit_right = int(MAP_SIZE.x)
+		cam.limit_bottom = int(MAP_SIZE.y)
