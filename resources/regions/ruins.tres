@@ -10,4 +10,5 @@ food_item_ids = PackedStringArray("canned_food", "herb", "potato")
 material_item_ids = PackedStringArray("scrap_metal")
 boss_id = ""
 ammo_pickup_points = 3
+obstacle_count = 48
 stamina_budget = 100

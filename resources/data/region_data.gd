@@ -15,5 +15,7 @@ extends Resource
 @export var boss_id: String = ""
 ## 고정 탄약 드롭 지점 수(랜덤 아님 — 동선 학습 가능, PRD 3.1).
 @export var ammo_pickup_points: int = 0
+## 장애물(나무·바위) 절차적 배치 개수(지역 밀도).
+@export var obstacle_count: int = 48
 ## 진입에 드는 스태미나 예산.
 @export var stamina_budget: int = 100

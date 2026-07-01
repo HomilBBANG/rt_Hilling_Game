@@ -14,9 +14,12 @@ const PLAYER_CLEAR := 500.0    # 플레이어 시작 주변엔 몬스터 스폰 
 @export var monster_scene: PackedScene
 @export var resource_scene: PackedScene
 @export var ammo_scene: PackedScene
+@export var obstacle_scene: PackedScene
 @export var run_seconds := 90.0
 @export var monster_count := 16
 @export var resource_count := 24
+
+var _obstacles: Array = [] # [{pos:Vector2, radius:float}]
 
 var _region: RegionData = null
 var _time_left := 0.0
@@ -47,6 +50,9 @@ func _spawn_world() -> void:
 	if _player.has_signal("stamina_depleted"):
 		_player.stamina_depleted.connect(_on_stamina_depleted)
 	_set_camera_limits()
+
+	# 장애물을 먼저 배치 → 몬스터/자원이 그 위에 안 생기도록 회피 기준으로 사용.
+	_scatter_obstacles()
 
 	# 몬스터마다 감지 반경/추적 시간/속도가 다르도록 프로필을 순환 부여.
 	# 넓은 맵 전체에 절차적으로 분산 배치(개수는 export 로 조정).
@@ -189,16 +195,74 @@ func _pick_material_id() -> String:
 	return "scrap_metal"
 
 
-## 맵 내 랜덤 위치. avoid_player=true 면 플레이어 시작 지점 주변은 피함.
+## 맵 내 랜덤 위치. avoid_player=true 면 시작 지점 주변, 그리고 장애물 위는 피함.
 func _random_spawn_pos(avoid_player: bool) -> Vector2:
 	var start: Vector2 = $PlayerStart.global_position
-	for attempt in 20:
+	for attempt in 25:
 		var p := Vector2(
 			randf_range(SPAWN_MARGIN, MAP_SIZE.x - SPAWN_MARGIN),
 			randf_range(SPAWN_MARGIN, MAP_SIZE.y - SPAWN_MARGIN))
-		if not avoid_player or p.distance_to(start) >= PLAYER_CLEAR:
-			return p
+		if avoid_player and p.distance_to(start) < PLAYER_CLEAR:
+			continue
+		if not _clear_of_obstacles(p, 26.0):
+			continue
+		return p
 	return start + Vector2(PLAYER_CLEAR, 0.0)
+
+
+func _clear_of_obstacles(p: Vector2, margin: float) -> bool:
+	for o in _obstacles:
+		if p.distance_to(o.pos) < float(o.radius) + margin:
+			return false
+	return true
+
+
+## 장애물(나무·바위)을 맵 전체에 절차적으로 배치. 플레이어 시작·탄약 지점·기존 장애물은 회피.
+func _scatter_obstacles() -> void:
+	if obstacle_scene == null:
+		return
+	var count := 48
+	if _region:
+		count = _region.obstacle_count
+	var start: Vector2 = $PlayerStart.global_position
+	var ammo_positions: Array = []
+	for a in $AmmoSpawns.get_children():
+		ammo_positions.append(a.global_position)
+
+	for i in count:
+		var is_tree := randf() < 0.6
+		var r := randf_range(24.0, 34.0) if is_tree else randf_range(16.0, 24.0)
+		var col := Color(0.26, 0.5, 0.28) if is_tree else Color(0.46, 0.46, 0.5)
+		var pos := _find_obstacle_pos(start, ammo_positions, r)
+		if pos == Vector2.INF:
+			continue
+		var ob := obstacle_scene.instantiate()
+		ob.setup(r, col) # add_child(_ready) 전에 크기/색 주입
+		add_child(ob)
+		ob.global_position = pos
+		_obstacles.append({"pos": pos, "radius": r})
+
+
+func _find_obstacle_pos(start: Vector2, ammo_positions: Array, r: float) -> Vector2:
+	for attempt in 30:
+		var p := Vector2(
+			randf_range(SPAWN_MARGIN, MAP_SIZE.x - SPAWN_MARGIN),
+			randf_range(SPAWN_MARGIN, MAP_SIZE.y - SPAWN_MARGIN))
+		if p.distance_to(start) < PLAYER_CLEAR:
+			continue
+		var ok := true
+		for ap in ammo_positions:
+			if p.distance_to(ap) < 170.0:
+				ok = false
+				break
+		if ok:
+			for o in _obstacles:
+				if p.distance_to(o.pos) < float(o.radius) + r + 30.0:
+					ok = false
+					break
+		if ok:
+			return p
+	return Vector2.INF
 
 
 ## 플레이어 카메라가 맵 밖(벽 너머)을 보지 않도록 경계 제한.

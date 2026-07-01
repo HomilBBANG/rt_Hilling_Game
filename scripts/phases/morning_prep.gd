@@ -12,6 +12,11 @@ const _CORPSE_COLOR := Color(0.32, 0.32, 0.35)
 
 var _figures := {} # npc_id -> {body:ColorRect, label:Label, color:Color}
 
+## 캠프 내 주인공 이동(WASD). 컷씬 중에는 정지.
+@export var move_speed := 260.0
+var _player_pos := Vector2.ZERO
+var _pos_init := false
+
 @onready var _title: Label = $Body/VBox/Header
 @onready var _ground: Control = $Body/VBox/Ground
 @onready var _campfire: ColorRect = $Body/VBox/Ground/Campfire
@@ -40,6 +45,36 @@ func _ready() -> void:
 	await _play_cutscenes()
 
 
+func _process(delta: float) -> void:
+	if not _pos_init or _overlay.visible: # 컷씬 중엔 이동 정지
+		return
+	_apply_move(_input_dir(), delta)
+
+
+func _input_dir() -> Vector2:
+	var d := Vector2.ZERO
+	if Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT):
+		d.x -= 1.0
+	if Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT):
+		d.x += 1.0
+	if Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP):
+		d.y -= 1.0
+	if Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN):
+		d.y += 1.0
+	return d
+
+
+func _apply_move(dir: Vector2, delta: float) -> void:
+	if dir == Vector2.ZERO:
+		return
+	_player_pos += dir.normalized() * move_speed * delta
+	var g := _ground.size
+	var half := _player_fig.size * 0.5
+	_player_pos.x = clampf(_player_pos.x, half.x, g.x - half.x)
+	_player_pos.y = clampf(_player_pos.y, half.y, g.y - half.y)
+	_player_fig.position = _player_pos - half
+
+
 # ── 캠프 배치 ──────────────────────────────────────────
 
 func _build_figures() -> void:
@@ -48,7 +83,9 @@ func _build_figures() -> void:
 	var radius := minf(g.x, g.y) * 0.34
 
 	_campfire.position = center - _campfire.size * 0.5
-	_player_fig.position = center + Vector2(-radius - 40.0, 8.0) - _player_fig.size * 0.5
+	_player_pos = center + Vector2(-radius - 40.0, 8.0)
+	_player_fig.position = _player_pos - _player_fig.size * 0.5
+	_pos_init = true
 	_belami.position = center + Vector2(-radius - 40.0, -46.0) - _belami.size * 0.5
 
 	var entries := NpcUnlockDB.entries
