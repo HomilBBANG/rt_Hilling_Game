@@ -1,44 +1,47 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene format=3 uid="uid://b5aoyjikw8poc"]
 
-[ext_resource type="Script" path="res://scripts/entities/player.gd" id="1"]
+[ext_resource type="Script" uid="uid://cwmbl5f4y474a" path="res://scripts/entities/player.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/entities/bullet/bullet.tscn" id="2"]
-[ext_resource type="Texture2D" path="res://assets/characters/gun.png" id="3"]
-[ext_resource type="Texture2D" path="res://assets/characters/arm.png" id="4"]
+[ext_resource type="Texture2D" uid="uid://bktxy6dgltgpf" path="res://assets/characters/gun.png" id="3"]
+[ext_resource type="Texture2D" uid="uid://cbqpehqxa0q6f" path="res://assets/characters/arm.png" id="4"]
 
 [sub_resource type="RectangleShape2D" id="body"]
 size = Vector2(24, 24)
 
-[node name="Player" type="CharacterBody2D" groups=["player"]]
-collision_layer = 1
+[node name="Player" type="CharacterBody2D" unique_id=1252082497 groups=["player"]]
 collision_mask = 8
 script = ExtResource("1")
 bullet_scene = ExtResource("2")
 
-[node name="Col" type="CollisionShape2D" parent="."]
+[node name="Col" type="CollisionShape2D" parent="." unique_id=2107733349]
 shape = SubResource("body")
 
-[node name="Body" type="AnimatedSprite2D" parent="."]
+[node name="Body" type="AnimatedSprite2D" parent="." unique_id=469232705]
 texture_filter = 1
 
-[node name="Aim" type="Node2D" parent="."]
+[node name="Aim" type="Node2D" parent="." unique_id=996220231]
 
-[node name="Arm" type="Sprite2D" parent="Aim"]
+[node name="Gun" type="Sprite2D" parent="Aim" unique_id=1819159826]
 texture_filter = 1
-offset = Vector2(6, 5)
-texture = ExtResource("4")
-
-[node name="Gun" type="Sprite2D" parent="Aim"]
-texture_filter = 1
-offset = Vector2(9, 2)
+position = Vector2(-1, -5)
 texture = ExtResource("3")
+offset = Vector2(9, 2)
+flip_h = true
 
-[node name="Slash" type="Polygon2D" parent="Aim"]
+[node name="Arm" type="Sprite2D" parent="Aim" unique_id=364663455]
+texture_filter = 1
+position = Vector2(-5, -4)
+texture = ExtResource("4")
+offset = Vector2(6, 5)
+flip_h = true
+
+[node name="Slash" type="Polygon2D" parent="Aim" unique_id=498437922]
 visible = false
 color = Color(0.95, 0.96, 1, 0.55)
 polygon = PackedVector2Array(6, -9, 58, -28, 72, 0, 58, 28, 6, 9)
 
-[node name="Muzzle" type="Marker2D" parent="Aim"]
+[node name="Muzzle" type="Marker2D" parent="Aim" unique_id=447474979]
 position = Vector2(19, 0)
 
-[node name="Camera" type="Camera2D" parent="."]
+[node name="Camera" type="Camera2D" parent="." unique_id=882233752]
 zoom = Vector2(2, 2)

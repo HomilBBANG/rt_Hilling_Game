@@ -1,10 +1,11 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/phases/scavenge.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/entities/player/player.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://scenes/entities/monster/monster.tscn" id="3"]
 [ext_resource type="PackedScene" path="res://scenes/entities/pickups/resource_node.tscn" id="4"]
 [ext_resource type="PackedScene" path="res://scenes/entities/pickups/ammo_pickup.tscn" id="5"]
+[ext_resource type="Texture2D" path="res://assets/tiles/grass.png" id="6"]
 
 [sub_resource type="RectangleShape2D" id="wallH"]
 size = Vector2(3200, 20)
@@ -22,6 +23,15 @@ player_scene = ExtResource("2")
 monster_scene = ExtResource("3")
 resource_scene = ExtResource("4")
 ammo_scene = ExtResource("5")
+
+[node name="Floor" type="Sprite2D" parent="."]
+texture_filter = 1
+texture_repeat = 2
+z_index = -100
+centered = false
+texture = ExtResource("6")
+region_enabled = true
+region_rect = Rect2(0, 0, 3200, 2400)
 
 [node name="Walls" type="StaticBody2D" parent="."]
 collision_layer = 8
