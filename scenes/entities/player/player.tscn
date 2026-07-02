@@ -24,14 +24,12 @@ texture_filter = 1
 
 [node name="Arm" type="Sprite2D" parent="Aim"]
 texture_filter = 1
-flip_h = true
-offset = Vector2(16, 0)
+offset = Vector2(6, 5)
 texture = ExtResource("4")
 
 [node name="Gun" type="Sprite2D" parent="Aim"]
 texture_filter = 1
-flip_h = true
-offset = Vector2(16, 0)
+offset = Vector2(9, 2)
 texture = ExtResource("3")
 
 [node name="Slash" type="Polygon2D" parent="Aim"]
@@ -40,7 +38,7 @@ color = Color(0.95, 0.96, 1, 0.55)
 polygon = PackedVector2Array(6, -9, 58, -28, 72, 0, 58, 28, 6, 9)
 
 [node name="Muzzle" type="Marker2D" parent="Aim"]
-position = Vector2(30, 0)
+position = Vector2(19, 0)
 
 [node name="Camera" type="Camera2D" parent="."]
 zoom = Vector2(2, 2)

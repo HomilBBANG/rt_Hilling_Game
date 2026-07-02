@@ -35,13 +35,16 @@
 - gif → 프레임 추출: `assets/characters/run/run_N.png`, `assets/characters/idle/idle_N.png` (Python PIL). PlayerFrames가 경로로 로드
 - 단색 배경 시트는 numpy 크로마키 후 슬라이스(과거 obj_1 방식)
 
-## ⚠️ 지금 진행 중이던 작업 (미완)
-**팔/총을 어깨 위치에 붙이기 (offset 조정 필요)**
-- 위치: `scenes/entities/player/player.tscn` 의 `Aim > Arm`(arm.png) + `Aim > Gun`(gun.png)
-- 현재 둘 다 `offset = Vector2(16, 0)`, `flip_h = true`. `Aim`은 플레이어 원점(0,0)에서 마우스로 look_at 회전
-- **문제**: 팔+총이 캐릭터 오른쪽에 붕 떠서 붙음(offset 과다)
-- **다음 단계**: arm.png/gun.png 실제 그림 bbox 측정(PIL getbbox) → 어깨(그림 왼쪽 끝)가 Aim 원점에 오도록 offset 재계산. 필요 시 Aim 노드를 어깨 높이로 살짝 이동(예: position (0,-4))
-- 좌우 반전 보정: `player.gd` _physics_process 에서 `_aim.scale.y = -1`(마우스 왼쪽일 때). 몸통은 `_body.flip_h = mouse.x > player.x`
+## ✅ 팔/총 어깨 정렬 — 완료
+- arm.png/gun.png 둘 다 원본이 **오른쪽을 향하는 그림**이었음(어깨/손잡이=왼쪽, 손/총구=오른쪽).
+  → 기존 `flip_h = true` + `offset = Vector2(16,0)` 조합이 그림을 캐릭터 오른쪽으로 크게 밀어냄(이중 이동)이 원인.
+- PIL getbbox 측정: arm 콘텐츠 x10..18/y9..13, gun 콘텐츠 x7..24/y13..18(손잡이≈x15, 총구=x24).
+- 합성 프리뷰(python)로 검증 후 확정값:
+  - `Arm`: `flip_h` 제거(false), `offset = Vector2(6, 5)` → 어깨가 Aim 원점, 팔이 +x로 뻗음(y 중앙 정렬)
+  - `Gun`: `flip_h` 제거(false), `offset = Vector2(9, 2)` → 손잡이가 손 위치(local x≈8), 총구가 local x≈17
+  - `Muzzle`: `Vector2(19,0)` (30에서 축소 — 총구 끝에 맞춤)
+- `Aim`은 플레이어 원점(0,0)에서 look_at 회전, 좌우 반전 보정은 `player.gd`의 `_aim.scale.y = -1`(마우스 왼쪽일 때) 그대로 유지 — offset 변경과 무관하게 동작 확인.
+- 헤드리스 임포트 검사 통과. **인게임 육안 확인 권장**(특히 왼쪽 조준 시 총이 바로 서는지).
 
 ## 미커밋 변경
 많이 쌓여 있음. **새 세션 시작 전 커밋 권장.**
