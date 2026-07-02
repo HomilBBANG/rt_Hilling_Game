@@ -38,7 +38,7 @@ var _pos_init := false
 @onready var _tokens_label: Label = $Margin/Main/TopBar/TokensLabel
 @onready var _fed_label: Label = $Margin/Main/TopBar/FedLabel
 @onready var _field: Control = $Margin/Main/Field
-@onready var _player_node: Control = $Margin/Main/Field/Player
+@onready var _player_node: AnimatedSprite2D = $Margin/Main/Field/Player
 @onready var _counter: ColorRect = $Margin/Main/Field/Counter
 @onready var _counter_label: Label = $Margin/Main/Field/CounterLabel
 @onready var _belami: Label = $Margin/Main/Field/Belami
@@ -91,6 +91,8 @@ func _update_field(_delta: float) -> void:
 		return
 	if not _pos_init:
 		_player_pos = Vector2(40.0, _field.size.y * 0.5)
+		_player_node.sprite_frames = PlayerFrames.build()
+		_player_node.play("idle")
 		_pos_init = true
 
 	var d := Vector2.ZERO
@@ -103,9 +105,15 @@ func _update_field(_delta: float) -> void:
 	if Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN):
 		d.y += 1.0
 	_player_pos += d.normalized() * move_speed * _delta
-	_player_pos.x = clampf(_player_pos.x, 16.0, _field.size.x - 16.0)
-	_player_pos.y = clampf(_player_pos.y, 16.0, _field.size.y - 16.0)
-	_player_node.position = _player_pos - _player_node.size * 0.5
+	_player_pos.x = clampf(_player_pos.x, 48.0, _field.size.x - 48.0)
+	_player_pos.y = clampf(_player_pos.y, 48.0, _field.size.y - 48.0)
+	_player_node.position = _player_pos
+	if d != Vector2.ZERO:
+		if _player_node.animation != "run":
+			_player_node.play("run")
+		_player_node.flip_h = d.x > 0
+	elif _player_node.animation != "idle":
+		_player_node.play("idle")
 
 	var counter_pos := Vector2(64.0, _field.size.y * 0.5)
 	_counter.position = counter_pos - _counter.size * 0.5

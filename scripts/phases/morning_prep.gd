@@ -21,7 +21,7 @@ var _pos_init := false
 @onready var _ground: Control = $Body/VBox/Ground
 @onready var _campfire: ColorRect = $Body/VBox/Ground/Campfire
 @onready var _belami: Label = $Body/VBox/Ground/Belami
-@onready var _player_fig: Control = $Body/VBox/Ground/Player
+@onready var _player_fig: AnimatedSprite2D = $Body/VBox/Ground/Player
 @onready var _forge: VBoxContainer = $Body/VBox/Footer/UpgradePanel
 @onready var _tokens_label: Label = $Body/VBox/Footer/UpgradePanel/TokensLabel
 @onready var _ranged_btn: Button = $Body/VBox/Footer/UpgradePanel/RangedButton
@@ -48,7 +48,14 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if not _pos_init or _overlay.visible: # 컷씬 중엔 이동 정지
 		return
-	_apply_move(_input_dir(), delta)
+	var dir := _input_dir()
+	_apply_move(dir, delta)
+	if dir != Vector2.ZERO:
+		if _player_fig.animation != "run":
+			_player_fig.play("run")
+		_player_fig.flip_h = dir.x > 0
+	elif _player_fig.animation != "idle":
+		_player_fig.play("idle")
 
 
 func _input_dir() -> Vector2:
@@ -69,10 +76,10 @@ func _apply_move(dir: Vector2, delta: float) -> void:
 		return
 	_player_pos += dir.normalized() * move_speed * delta
 	var g := _ground.size
-	var half := _player_fig.size * 0.5
-	_player_pos.x = clampf(_player_pos.x, half.x, g.x - half.x)
-	_player_pos.y = clampf(_player_pos.y, half.y, g.y - half.y)
-	_player_fig.position = _player_pos - half
+	var h := 48.0
+	_player_pos.x = clampf(_player_pos.x, h, g.x - h)
+	_player_pos.y = clampf(_player_pos.y, h, g.y - h)
+	_player_fig.position = _player_pos
 
 
 # ── 캠프 배치 ──────────────────────────────────────────
@@ -84,7 +91,9 @@ func _build_figures() -> void:
 
 	_campfire.position = center - _campfire.size * 0.5
 	_player_pos = center + Vector2(-radius - 40.0, 8.0)
-	_player_fig.position = _player_pos - _player_fig.size * 0.5
+	_player_fig.sprite_frames = PlayerFrames.build()
+	_player_fig.play("idle")
+	_player_fig.position = _player_pos
 	_pos_init = true
 	_belami.position = center + Vector2(-radius - 40.0, -46.0) - _belami.size * 0.5
 

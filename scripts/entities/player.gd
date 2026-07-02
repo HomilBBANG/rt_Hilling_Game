@@ -25,7 +25,6 @@ var _melee_cd := 0.0
 @onready var _aim: Node2D = $Aim
 @onready var _muzzle: Marker2D = $Aim/Muzzle
 @onready var _slash: Polygon2D = $Aim/Slash
-@onready var _arm: Node2D = $Aim/Arm
 @onready var _body: AnimatedSprite2D = $Body
 
 
@@ -37,23 +36,7 @@ func _ready() -> void:
 
 ## idle(정지 스프라이트) + run(player_run.gif 프레임) 애니메이션을 코드로 구성.
 func _setup_animation() -> void:
-	var frames := SpriteFrames.new()
-	frames.add_animation("idle")
-	frames.set_animation_loop("idle", true)
-	var idle_tex: Texture2D = load("res://assets/characters/player.png")
-	if idle_tex:
-		frames.add_frame("idle", idle_tex)
-	frames.add_animation("run")
-	frames.set_animation_loop("run", true)
-	frames.set_animation_speed("run", 10.0) # gif 10fps
-	var i := 0
-	while true:
-		var p := "res://assets/characters/run/run_%d.png" % i
-		if not ResourceLoader.exists(p):
-			break
-		frames.add_frame("run", load(p))
-		i += 1
-	_body.sprite_frames = frames
+	_body.sprite_frames = PlayerFrames.build()
 	_body.play("idle")
 
 
@@ -62,7 +45,7 @@ func _update_anim() -> void:
 	var want := "run" if velocity.length() > 5.0 else "idle"
 	if _body.animation != want:
 		_body.play(want)
-	_body.flip_h = get_global_mouse_position().x < global_position.x
+	_body.flip_h = get_global_mouse_position().x > global_position.x
 
 
 func _physics_process(delta: float) -> void:
@@ -76,7 +59,7 @@ func _physics_process(delta: float) -> void:
 
 	_aim.look_at(get_global_mouse_position())
 	# 왼쪽을 조준하면 팔이 뒤집혀 보이므로 세로 반전으로 보정(총이 항상 바로 서게).
-	_arm.scale.y = -1.0 if get_global_mouse_position().x < global_position.x else 1.0
+	_aim.scale.y = -1.0 if get_global_mouse_position().x < global_position.x else 1.0
 
 	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and _fire_cd <= 0.0:
 		_shoot()

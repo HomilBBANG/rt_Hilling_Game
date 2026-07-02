@@ -1,7 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/entities/player.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/entities/bullet/bullet.tscn" id="2"]
+[ext_resource type="Texture2D" path="res://assets/characters/gun.png" id="3"]
+[ext_resource type="Texture2D" path="res://assets/characters/arm.png" id="4"]
 
 [sub_resource type="RectangleShape2D" id="body"]
 size = Vector2(24, 24)
@@ -20,9 +22,17 @@ texture_filter = 1
 
 [node name="Aim" type="Node2D" parent="."]
 
-[node name="Arm" type="Polygon2D" parent="Aim"]
-color = Color(0.85, 0.7, 0.55, 1)
-polygon = PackedVector2Array(0, -4, 16, -4, 16, -2, 28, -2, 28, 2, 16, 2, 16, 4, 0, 4)
+[node name="Arm" type="Sprite2D" parent="Aim"]
+texture_filter = 1
+flip_h = true
+offset = Vector2(16, 0)
+texture = ExtResource("4")
+
+[node name="Gun" type="Sprite2D" parent="Aim"]
+texture_filter = 1
+flip_h = true
+offset = Vector2(16, 0)
+texture = ExtResource("3")
 
 [node name="Slash" type="Polygon2D" parent="Aim"]
 visible = false

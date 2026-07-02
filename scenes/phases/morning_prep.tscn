@@ -1,7 +1,6 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://scripts/phases/morning_prep.gd" id="1"]
-[ext_resource type="Texture2D" path="res://assets/characters/player.png" id="2"]
 
 [node name="MorningPrep" type="Control"]
 layout_mode = 3
@@ -54,13 +53,9 @@ offset_bottom = 40.0
 theme_override_font_sizes/font_size = 34
 text = "( ˘ ᴗ ˘ )"
 
-[node name="Player" type="TextureRect" parent="Body/VBox/Ground"]
+[node name="Player" type="AnimatedSprite2D" parent="Body/VBox/Ground"]
 texture_filter = 1
-offset_right = 96.0
-offset_bottom = 96.0
-texture = ExtResource("2")
-expand_mode = 1
-stretch_mode = 0
+scale = Vector2(3, 3)
 
 [node name="Footer" type="VBoxContainer" parent="Body/VBox"]
 layout_mode = 2
