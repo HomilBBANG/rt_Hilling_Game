@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scripts/phases/scavenge.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/entities/player/player.tscn" id="2"]
@@ -6,6 +6,8 @@
 [ext_resource type="PackedScene" path="res://scenes/entities/pickups/resource_node.tscn" id="4"]
 [ext_resource type="PackedScene" path="res://scenes/entities/pickups/ammo_pickup.tscn" id="5"]
 [ext_resource type="Texture2D" path="res://assets/tiles/grass.png" id="6"]
+[ext_resource type="Texture2D" path="res://assets/ui/hp_fill.png" id="7"]
+[ext_resource type="Texture2D" path="res://assets/ui/hp_frame.png" id="8"]
 
 [sub_resource type="RectangleShape2D" id="wallH"]
 size = Vector2(3200, 20)
@@ -137,3 +139,43 @@ offset_top = -40.0
 offset_bottom = -12.0
 horizontal_alignment = 1
 text = "이동 WASD · 사격 좌클릭 · 근접 우클릭 · 아래 초록 출구에서 E로 귀환"
+
+[node name="HpBar" type="TextureProgressBar" parent="HUD/Root"]
+texture_filter = 1
+layout_mode = 1
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -76.0
+offset_right = 96.0
+offset_bottom = -56.0
+scale = Vector2(3, 3)
+max_value = 100.0
+value = 100.0
+fill_mode = 0
+tint_under = Color(0.22, 0.22, 0.22, 1)
+texture_under = ExtResource("7")
+texture_progress = ExtResource("7")
+
+[node name="HpFrame" type="TextureRect" parent="HUD/Root"]
+texture_filter = 1
+layout_mode = 1
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -76.0
+offset_right = 96.0
+offset_bottom = -56.0
+scale = Vector2(3, 3)
+mouse_filter = 2
+texture = ExtResource("8")
+
+[node name="HpText" type="Label" parent="HUD/Root"]
+layout_mode = 1
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -96.0
+offset_right = 120.0
+offset_bottom = -78.0
+text = "HP"

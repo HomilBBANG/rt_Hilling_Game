@@ -29,6 +29,7 @@ var _returning := false
 @onready var _stamina_label: Label = $HUD/Root/Stats/StaminaLabel
 @onready var _ammo_label: Label = $HUD/Root/Stats/AmmoLabel
 @onready var _loot_label: Label = $HUD/Root/Stats/LootLabel
+@onready var _hp_bar: TextureProgressBar = $HUD/Root/HpBar
 
 
 func _ready() -> void:
@@ -162,6 +163,9 @@ func _update_hud() -> void:
 	var st := 0.0
 	if _player and is_instance_valid(_player):
 		st = _player.stamina
+		# HP 바(빨간 면)를 스태미나 비율로 채운다 → 깎이면 좌→우로 줄어듦.
+		var mx: float = maxf(1.0, _player.max_stamina)
+		_hp_bar.value = st / mx * 100.0
 	_stamina_label.text = "스태미나: %0.0f" % st
 	_ammo_label.text = "탄약: %d" % WeaponManager.ammo
 	_loot_label.text = "채집: %s" % _loot_summary()
