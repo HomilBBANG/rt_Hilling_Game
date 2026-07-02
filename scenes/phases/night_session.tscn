@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/phases/night_session.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/characters/player.png" id="2"]
 
 [node name="NightSession" type="Control"]
 layout_mode = 3
@@ -78,10 +79,13 @@ offset_bottom = 56.0
 theme_override_font_sizes/font_size = 40
 text = "( ˘ ᴗ ˘ )"
 
-[node name="Player" type="ColorRect" parent="Margin/Main/Field"]
-offset_right = 26.0
-offset_bottom = 26.0
-color = Color(0.36, 0.66, 1, 1)
+[node name="Player" type="TextureRect" parent="Margin/Main/Field"]
+texture_filter = 1
+offset_right = 96.0
+offset_bottom = 96.0
+texture = ExtResource("2")
+expand_mode = 1
+stretch_mode = 0
 
 [node name="ServeHint" type="Label" parent="Margin/Main/Field"]
 layout_mode = 1

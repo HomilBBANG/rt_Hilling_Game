@@ -1,21 +1,19 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/phases/scavenge.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/entities/player/player.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://scenes/entities/monster/monster.tscn" id="3"]
 [ext_resource type="PackedScene" path="res://scenes/entities/pickups/resource_node.tscn" id="4"]
 [ext_resource type="PackedScene" path="res://scenes/entities/pickups/ammo_pickup.tscn" id="5"]
-[ext_resource type="Texture2D" path="res://assets/backgrounds/explor_bg_1.png" id="6"]
-[ext_resource type="PackedScene" path="res://scenes/entities/obstacle/obstacle.tscn" id="7"]
 
 [sub_resource type="RectangleShape2D" id="wallH"]
-size = Vector2(6400, 20)
+size = Vector2(3200, 20)
 
 [sub_resource type="RectangleShape2D" id="wallV"]
-size = Vector2(20, 4800)
+size = Vector2(20, 2400)
 
 [sub_resource type="RectangleShape2D" id="exit"]
-size = Vector2(240, 100)
+size = Vector2(200, 90)
 
 [node name="Scavenge" type="Node2D" groups=["scavenge"]]
 y_sort_enabled = true
@@ -24,67 +22,58 @@ player_scene = ExtResource("2")
 monster_scene = ExtResource("3")
 resource_scene = ExtResource("4")
 ammo_scene = ExtResource("5")
-obstacle_scene = ExtResource("7")
-
-[node name="Background" type="Sprite2D" parent="."]
-z_index = -10
-texture_repeat = 2
-position = Vector2(3200, 2400)
-texture = ExtResource("6")
-region_enabled = true
-region_rect = Rect2(0, 0, 6400, 4800)
 
 [node name="Walls" type="StaticBody2D" parent="."]
 collision_layer = 8
 collision_mask = 0
 
 [node name="Top" type="CollisionShape2D" parent="Walls"]
-position = Vector2(3200, 10)
+position = Vector2(1600, 10)
 shape = SubResource("wallH")
 
 [node name="Bottom" type="CollisionShape2D" parent="Walls"]
-position = Vector2(3200, 4790)
+position = Vector2(1600, 2390)
 shape = SubResource("wallH")
 
 [node name="Left" type="CollisionShape2D" parent="Walls"]
-position = Vector2(10, 2400)
+position = Vector2(10, 1200)
 shape = SubResource("wallV")
 
 [node name="Right" type="CollisionShape2D" parent="Walls"]
-position = Vector2(6390, 2400)
+position = Vector2(3190, 1200)
 shape = SubResource("wallV")
 
 [node name="PlayerStart" type="Marker2D" parent="."]
-position = Vector2(3200, 2400)
+position = Vector2(1600, 1200)
 
 [node name="AmmoSpawns" type="Node2D" parent="."]
 
 [node name="A1" type="Marker2D" parent="AmmoSpawns"]
-position = Vector2(500, 500)
+position = Vector2(250, 250)
 
 [node name="A2" type="Marker2D" parent="AmmoSpawns"]
-position = Vector2(5900, 500)
+position = Vector2(2950, 250)
 
 [node name="A3" type="Marker2D" parent="AmmoSpawns"]
-position = Vector2(500, 4300)
+position = Vector2(250, 2150)
 
 [node name="A4" type="Marker2D" parent="AmmoSpawns"]
-position = Vector2(5900, 4300)
+position = Vector2(2950, 2150)
 
 [node name="A5" type="Marker2D" parent="AmmoSpawns"]
-position = Vector2(3200, 700)
+position = Vector2(1600, 350)
 
 [node name="A6" type="Marker2D" parent="AmmoSpawns"]
-position = Vector2(3200, 4100)
+position = Vector2(1600, 2050)
 
 [node name="A7" type="Marker2D" parent="AmmoSpawns"]
-position = Vector2(1400, 2400)
+position = Vector2(700, 1200)
 
 [node name="A8" type="Marker2D" parent="AmmoSpawns"]
-position = Vector2(5000, 2400)
+position = Vector2(2500, 1200)
 
 [node name="ExitZone" type="Area2D" parent="."]
-position = Vector2(3200, 4680)
+position = Vector2(1600, 2340)
 collision_layer = 0
 collision_mask = 1
 
@@ -93,7 +82,7 @@ shape = SubResource("exit")
 
 [node name="ExitVis" type="Polygon2D" parent="ExitZone"]
 color = Color(0.3, 0.7, 0.55, 0.7)
-polygon = PackedVector2Array(-120, -50, 120, -50, 120, 50, -120, 50)
+polygon = PackedVector2Array(-100, -45, 100, -45, 100, 45, -100, 45)
 
 [node name="HUD" type="CanvasLayer" parent="."]
 

@@ -15,15 +15,14 @@ bullet_scene = ExtResource("2")
 [node name="Col" type="CollisionShape2D" parent="."]
 shape = SubResource("body")
 
-[node name="Body" type="Polygon2D" parent="."]
-color = Color(0.36, 0.66, 1, 1)
-polygon = PackedVector2Array(-12, -12, 12, -12, 12, 12, -12, 12)
+[node name="Body" type="AnimatedSprite2D" parent="."]
+texture_filter = 1
 
 [node name="Aim" type="Node2D" parent="."]
 
-[node name="Indicator" type="Polygon2D" parent="Aim"]
-color = Color(0.95, 0.95, 1, 1)
-polygon = PackedVector2Array(0, -3, 22, 0, 0, 3)
+[node name="Arm" type="Polygon2D" parent="Aim"]
+color = Color(0.85, 0.7, 0.55, 1)
+polygon = PackedVector2Array(0, -4, 16, -4, 16, -2, 28, -2, 28, 2, 16, 2, 16, 4, 0, 4)
 
 [node name="Slash" type="Polygon2D" parent="Aim"]
 visible = false
@@ -31,6 +30,7 @@ color = Color(0.95, 0.96, 1, 0.55)
 polygon = PackedVector2Array(6, -9, 58, -28, 72, 0, 58, 28, 6, 9)
 
 [node name="Muzzle" type="Marker2D" parent="Aim"]
-position = Vector2(22, 0)
+position = Vector2(30, 0)
 
 [node name="Camera" type="Camera2D" parent="."]
+zoom = Vector2(2, 2)
