@@ -3,10 +3,10 @@ extends RefCounted
 ## 플레이어 애니메이션 프레임(idle / run) 공용 빌더.
 ## 탐사 플레이어 · 캠프 · 밤 세션이 모두 같은 프레임을 쓰도록 한 곳에서 구성.
 
-## idle_name: idle 프레임 폴더/접두사. 기본 "idle"(탐사용).
-## 요리·캠프는 "idle_hand" 를 넘겨 손 든 대기 모션을 쓴다.
-## 프레임 경로: res://assets/characters/<idle_name>/<idle_name>_N.png
-static func build(idle_name := "idle") -> SpriteFrames:
+## idle_name / run_name: 애니 프레임 폴더/접두사. 기본 "idle"/"run"(탐사용).
+## 요리·캠프는 "idle_hand"/"run_hand" 를 넘겨 손 든 모션을 쓴다.
+## 프레임 경로: res://assets/characters/<name>/<name>_N.png
+static func build(idle_name := "idle", run_name := "run") -> SpriteFrames:
 	var frames := SpriteFrames.new()
 
 	frames.add_animation("idle")
@@ -23,7 +23,9 @@ static func build(idle_name := "idle") -> SpriteFrames:
 	frames.add_animation("run")
 	frames.set_animation_loop("run", true)
 	frames.set_animation_speed("run", 10.0)
-	_load(frames, "run", "res://assets/characters/run/run_%d.png")
+	_load(frames, "run", "res://assets/characters/%s/%s_%%d.png" % [run_name, run_name])
+	if frames.get_frame_count("run") == 0 and run_name != "run": # 폴백: 기본 run
+		_load(frames, "run", "res://assets/characters/run/run_%d.png")
 
 	return frames
 

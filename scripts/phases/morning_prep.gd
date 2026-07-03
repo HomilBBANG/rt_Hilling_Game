@@ -91,7 +91,7 @@ func _build_figures() -> void:
 
 	_campfire.position = center - _campfire.size * 0.5
 	_player_pos = center + Vector2(-radius - 40.0, 8.0)
-	_player_fig.sprite_frames = PlayerFrames.build("idle_hand")
+	_player_fig.sprite_frames = PlayerFrames.build("idle_hand", "run_hand")
 	_player_fig.play("idle")
 	_player_fig.position = _player_pos
 	_pos_init = true

@@ -92,7 +92,7 @@ func _update_field(_delta: float) -> void:
 		return
 	if not _pos_init:
 		_player_pos = Vector2(40.0, _field.size.y * 0.5)
-		_player_node.sprite_frames = PlayerFrames.build("idle_hand")
+		_player_node.sprite_frames = PlayerFrames.build("idle_hand", "run_hand")
 		_player_node.play("idle")
 		_pos_init = true
 

@@ -34,7 +34,7 @@
 - 개별 확대 금지 → **카메라 줌**으로 통일(Camera2D zoom=2). 단 캠프/밤은 UI라 AnimatedSprite2D scale=3
 - 권장 크기: 배경 32×32(이음매 없는 타일), 몬스터 32×32(보스 64×64), 장애물 바위 32×32/나무 48×64~64×96, 플레이어 32×32
 - gif → 프레임 추출: `assets/characters/run/run_N.png`, `assets/characters/idle/idle_N.png` (Python PIL). PlayerFrames가 경로로 로드
-- idle 변형: `PlayerFrames.build(idle_name)` — 기본 "idle"(탐사), **캠프·요리는 "idle_hand"**(`assets/characters/idle_hand/idle_hand_N.png`, player_idle_hand.gif에서 추출)
+- 모션 변형: `PlayerFrames.build(idle_name, run_name)` — 기본 "idle"/"run"(탐사), **캠프·요리는 "idle_hand"/"run_hand"**(`assets/characters/{idle_hand,run_hand}/…_N.png`, player_idle_hand.gif·player_run_hand.gif에서 추출)
 - 단색 배경 시트는 numpy 크로마키 후 슬라이스(과거 obj_1 방식)
 
 ## ✅ 팔/총 어깨 정렬 — 완료
