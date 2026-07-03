@@ -10,7 +10,8 @@ const _PALETTE := [
 ]
 const _DEAD_TEX := preload("res://assets/npc/npc_a_dead.png") # 임시 시체 스프라이트
 
-var _figures := {} # npc_id -> {body:ColorRect, label:Label, color:Color}
+var _figures := {} # npc_id -> {body:AnimatedSprite2D, label:Label, color:Color}
+var _npc_frames: SpriteFrames = null # NPC 공용 프레임(dead=npc_a_dead, idle=npc_a_idle)
 
 ## 캠프 내 주인공 이동(WASD). 컷씬 중에는 정지.
 @export var move_speed := 260.0
@@ -37,6 +38,7 @@ var _tab_was_down := false
 @onready var _tokens_label: Label = $Body/VBox/Footer/UpgradePanel/TokensLabel
 @onready var _ranged_btn: Button = $Body/VBox/Footer/UpgradePanel/RangedButton
 @onready var _melee_btn: Button = $Body/VBox/Footer/UpgradePanel/MeleeButton
+@onready var _craft_box: VBoxContainer = $Body/VBox/Footer/UpgradePanel/CraftBox
 @onready var _go_button: Button = $Body/VBox/Footer/GoButton
 @onready var _overlay: Control = $Cutscene
 @onready var _overlay_text: Label = $Cutscene/Center/Text
@@ -226,15 +228,14 @@ func _make_figure(npc_id: String, disp: String, color: Color, pos: Vector2) -> D
 	# 컷씬 대기 중이면(부활은 했지만 아직 안 보여줌) 시체 상태로 시작해 연출로 전환.
 	var shown := revived and npc_id not in NPCManager.pending_revivals()
 
-	# 시체/부활 모두 npc_a_dead 스프라이트 사용(임시). 상태는 회전+틴트로 구분.
-	var body := Sprite2D.new()
-	body.texture = _DEAD_TEX
+	# 시체=npc_a_dead / 부활=npc_a_idle(애니). 상태는 재생 애니 + 틴트로 구분.
+	var body := AnimatedSprite2D.new()
+	body.sprite_frames = _npc_sprite_frames()
 	body.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	body.scale = Vector2(3, 3) # 플레이어(32px @ scale 3)와 동일 크기
-	# 시체는 원본 밝기 그대로(npc_a_dead가 이미 '죽은' 그림). 부활 시 팔레트 색으로 틴트.
-	body.modulate = color if shown else Color(1, 1, 1)
-	body.rotation = 0.0 # 시체·부활 모두 똑바로 선 자세(회전 없음)
-	body.position = pos # Sprite2D 는 중심 기준
+	body.modulate = Color(1, 1, 1) # 원본 색 그대로(틴트 없음)
+	body.position = pos # AnimatedSprite2D 는 중심 기준
+	body.play("idle" if shown else "dead")
 	_ground.add_child(body)
 
 	var label := Label.new()
@@ -244,6 +245,28 @@ func _make_figure(npc_id: String, disp: String, color: Color, pos: Vector2) -> D
 	_ground.add_child(label)
 
 	return {"body": body, "label": label, "color": color, "name": disp}
+
+
+## NPC 공용 프레임: "dead"(npc_a_dead 1장) + "idle"(npc_a_idle N장). 한 번만 만들어 재사용.
+func _npc_sprite_frames() -> SpriteFrames:
+	if _npc_frames != null:
+		return _npc_frames
+	var sf := SpriteFrames.new()
+	sf.remove_animation("default")
+	sf.add_animation("dead")
+	sf.set_animation_loop("dead", false)
+	sf.add_frame("dead", _DEAD_TEX)
+	sf.add_animation("idle")
+	sf.set_animation_loop("idle", true)
+	sf.set_animation_speed("idle", 2.5)
+	var i := 0
+	while ResourceLoader.exists("res://assets/npc/npc_a_idle_%d.png" % i):
+		sf.add_frame("idle", load("res://assets/npc/npc_a_idle_%d.png" % i))
+		i += 1
+	if sf.get_frame_count("idle") == 0: # 폴백: idle 프레임 없으면 dead 이미지로
+		sf.add_frame("idle", _DEAD_TEX)
+	_npc_frames = sf
+	return _npc_frames
 
 
 # ── 부활 컷씬 ──────────────────────────────────────────
@@ -268,13 +291,11 @@ func _play_one(npc_id: String) -> void:
 	await get_tree().create_timer(0.6).timeout
 	if fig.is_empty():
 		return
-	var body: Sprite2D = fig["body"]
+	var body: AnimatedSprite2D = fig["body"]
 	var label: Label = fig["label"]
+	body.play("idle") # 시체(dead) → 살아있는 idle 애니메이션으로 전환
 	var t := create_tween()
-	t.set_parallel(true)
-	t.tween_property(body, "rotation", 0.0, 1.0)
-	t.tween_property(body, "modulate", fig["color"], 1.0)
-	t.tween_property(body, "position", body.position - Vector2(0, 6), 1.0)
+	t.tween_property(body, "position", body.position - Vector2(0, 6), 1.0) # 살짝 일어서는 연출
 	await t.finished
 	label.text = String(fig["name"])
 	label.modulate = Color(1, 1, 1)
@@ -294,6 +315,34 @@ func _refresh_forge() -> void:
 	_ranged_btn.disabled = not WeaponManager.can_upgrade("ranged")
 	_melee_btn.text = _btn_text("melee", "칼")
 	_melee_btn.disabled = not WeaponManager.can_upgrade("melee")
+	_rebuild_craft_buttons()
+
+
+## 제작 가능한 무기 버튼을 다시 구성(장착 무기 종류 데미지 표시 + 비용).
+func _rebuild_craft_buttons() -> void:
+	for c in _craft_box.get_children():
+		c.queue_free()
+	for raw_id in WeaponManager.craftable_ids():
+		var id := String(raw_id)
+		var w: Dictionary = WeaponDB.get_weapon(id)
+		var btn := Button.new()
+		btn.custom_minimum_size = Vector2(320, 34)
+		btn.focus_mode = Control.FOCUS_NONE
+		btn.text = "제작: %s (%s, 공격력 %d) — %d토큰" % [
+			WeaponDB.display_name(id), _kind_label(String(w.get("kind", ""))),
+			int(WeaponDB.base_damage(id)), WeaponManager.weapon_craft_cost(id)]
+		btn.disabled = not WeaponManager.can_craft(id)
+		btn.pressed.connect(_on_craft.bind(id))
+		_craft_box.add_child(btn)
+
+
+func _kind_label(kind: String) -> String:
+	return "원거리" if kind == "ranged" else "근접"
+
+
+func _on_craft(id: String) -> void:
+	if WeaponManager.craft_weapon(id):
+		_refresh_forge() # 토큰·보유 목록 갱신
 
 
 func _btn_text(kind: String, label: String) -> String:

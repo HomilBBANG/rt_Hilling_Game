@@ -84,6 +84,16 @@ custom_minimum_size = Vector2(320, 36)
 layout_mode = 2
 text = "칼 강화"
 
+[node name="CraftTitle" type="Label" parent="Body/VBox/Footer/UpgradePanel"]
+layout_mode = 2
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.75, 0.75, 0.8, 1)
+text = "── 새 무기 제작 ──"
+
+[node name="CraftBox" type="VBoxContainer" parent="Body/VBox/Footer/UpgradePanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
 [node name="GoButton" type="Button" parent="Body/VBox/Footer"]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
