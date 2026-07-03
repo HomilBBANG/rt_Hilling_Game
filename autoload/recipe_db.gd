@@ -6,6 +6,9 @@ const RECIPE_PATHS := [
 	"res://resources/recipes/canned_stew.tres",
 	"res://resources/recipes/herb_bite.tres",
 	"res://resources/recipes/fries.tres",
+	"res://resources/recipes/potato_soup.tres",
+	"res://resources/recipes/hearty_stew.tres",
+	"res://resources/recipes/herb_fry.tres",
 ]
 
 var recipes: Array = []

@@ -81,6 +81,16 @@ text = "( ˘ ᴗ ˘ )"
 texture_filter = 1
 scale = Vector2(3, 3)
 
+[node name="Server" type="AnimatedSprite2D" parent="Field"]
+visible = false
+texture_filter = 1
+scale = Vector2(3, 3)
+
+[node name="ServerDish" type="Label" parent="Field"]
+visible = false
+theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
+text = ""
+
 [node name="SequenceRow" type="HBoxContainer" parent="Field"]
 layout_mode = 1
 anchor_right = 1.0
@@ -211,3 +221,67 @@ text = ""
 [node name="NextButton" type="Button" parent="Results/Center/VBox"]
 layout_mode = 2
 text = "다음 날로 →"
+
+[node name="Prep" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Dim" type="ColorRect" parent="Prep"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.1, 0.08, 0.09, 0.96)
+
+[node name="Center" type="CenterContainer" parent="Prep"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Panel" type="PanelContainer" parent="Prep/Center"]
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="Prep/Center/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 20
+
+[node name="VBox" type="VBoxContainer" parent="Prep/Center/Panel/Margin"]
+custom_minimum_size = Vector2(520, 0)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Prep/Center/Panel/Margin/VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 28
+text = "주방 준비"
+
+[node name="NpcTitle" type="Label" parent="Prep/Center/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.75, 0.8, 1)
+text = "── 주방 NPC 배치 ──"
+
+[node name="NpcList" type="VBoxContainer" parent="Prep/Center/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="RecipeTitle" type="Label" parent="Prep/Center/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.75, 0.8, 1)
+text = "── 오늘 밤 레시피 선택 ──"
+
+[node name="RecipeList" type="VBoxContainer" parent="Prep/Center/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="StartButton" type="Button" parent="Prep/Center/Panel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+focus_mode = 0
+text = "요리 시작 →"

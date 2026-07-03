@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/data/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "herb_fry"
+display_name = "들풀 튀김"
+sub_mechanic = 1
+ingredient_ids = PackedStringArray("herb")
+base_quality = 20.0
+timer_seconds = 3.0
+unlocked_by_default = true

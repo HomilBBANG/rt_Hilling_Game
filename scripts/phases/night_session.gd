@@ -32,6 +32,18 @@ var _held: Dictionary = {}
 var _player_pos := Vector2.ZERO
 var _pos_init := false
 
+## 주방 준비 화면(배치+레시피 선택). _started 전에는 조리/타이머가 진행되지 않는다.
+var _started := false
+var _selected: Dictionary = {} # 오늘 밤 조리할 레시피 id 집합
+
+## 서빙 도우미 NPC: 요리를 받아 god 에게 걸어가 전달하고 돌아온다.
+enum ServerState { IDLE, CARRYING, RETURNING }
+const _SERVER_SPEED := 300.0
+var _server_state: int = ServerState.IDLE
+var _server_pos := Vector2.ZERO
+var _server_home := Vector2.ZERO
+var _server_dish: Dictionary = {}
+
 @onready var _time_label: Label = $TopBar/TimeLabel
 @onready var _sat_label: Label = $TopBar/SatLabel
 @onready var _sat_bar: ProgressBar = $TopBar/SatBar
@@ -52,7 +64,13 @@ var _pos_init := false
 @onready var _collect_button: Button = $Field/CollectButton
 @onready var _held_label: Label = $BottomBar/HeldLabel
 @onready var _ingredients_box: HBoxContainer = $Field/Ingredients
+@onready var _server: AnimatedSprite2D = $Field/Server
+@onready var _server_dish_label: Label = $Field/ServerDish
 @onready var _results: Control = $Results
+@onready var _prep: Control = $Prep
+@onready var _npc_list: VBoxContainer = $Prep/Center/Panel/Margin/VBox/NpcList
+@onready var _recipe_list: VBoxContainer = $Prep/Center/Panel/Margin/VBox/RecipeList
+@onready var _start_button: Button = $Prep/Center/Panel/Margin/VBox/StartButton
 
 
 func _ready() -> void:
@@ -71,12 +89,15 @@ func _ready() -> void:
 	_held_label.text = ""
 	_apply_gauge_visibility()
 	Config.gauges_visibility_changed.connect(_on_gauges_visibility_changed)
-	_next_recipe()
+	# 요리 전 '주방 준비' 화면 먼저(배치 + 레시피 선택). 시작 버튼 전엔 조리 진행 안 함.
+	_start_button.pressed.connect(_start_cooking)
+	_build_prep()
+	_prep.visible = true
 	_update_hud()
 
 
 func _process(delta: float) -> void:
-	if _ended:
+	if _ended or not _started: # 준비 화면 동안엔 타이머·조리 정지
 		return
 	_time_left = maxf(0.0, _time_left - delta)
 	_time_label.text = "남은 시간: %0.0f초" % _time_left
@@ -97,6 +118,12 @@ func _update_field(_delta: float) -> void:
 		_player_pos = Vector2(40.0, _field.size.y * 0.5)
 		_player_node.sprite_frames = PlayerFrames.build("idle_hand", "run_hand")
 		_player_node.play("idle")
+		# 서빙 도우미 초기화(조리대 아래에서 대기).
+		_server_home = Vector2(120.0, _field.size.y * 0.5 + 70.0)
+		_server_pos = _server_home
+		_server.sprite_frames = _npc_idle_frames()
+		_server.play("idle")
+		_server.position = _server_pos
 		_pos_init = true
 
 	var d := Vector2.ZERO
@@ -134,8 +161,10 @@ func _update_field(_delta: float) -> void:
 	if not _held.is_empty() and _player_pos.distance_to(belami_pos) < 56.0:
 		_do_serve()
 
+	_update_server(_delta, belami_pos) # 서빙 도우미가 요리를 받아 god 에게 걸어가 전달
+
 	if not _held.is_empty():
-		_serve_hint.text = "WASD로 god에게 이동해 전달하세요"
+		_serve_hint.text = "서빙 도우미에게 맡기는 중…" if _has_helper("serving") else "WASD로 god에게 이동해 전달하세요"
 	elif not near:
 		_serve_hint.text = "왼쪽 조리대로 이동해 요리하세요"
 	else:
@@ -165,8 +194,66 @@ func _do_serve() -> void:
 	_next_recipe() # 다음 요리 시작
 
 
+## 서빙 도우미: 대기 중 완성 요리를 받아 god 에게 걸어가 전달하고 제자리로 돌아온다.
+func _update_server(delta: float, god_pos: Vector2) -> void:
+	if not _has_helper("serving"):
+		_server.visible = false
+		_server_dish_label.visible = false
+		return
+	_server.visible = true
+	# 대기 중이고 완성 요리가 있으면 받아서 출발(플레이어는 다음 요리 진행).
+	if _server_state == ServerState.IDLE and not _held.is_empty():
+		_server_dish = _held.duplicate()
+		_held = {}
+		_held_label.text = ""
+		_server_state = ServerState.CARRYING
+		_next_recipe()
+	match _server_state:
+		ServerState.CARRYING:
+			_move_server_to(god_pos, delta)
+			if _server_pos.distance_to(god_pos) < 56.0:
+				if not _server_dish.is_empty():
+					_apply_serve(_server_dish["recipe"], _server_dish["grade"])
+				_server_dish = {}
+				_server_state = ServerState.RETURNING
+		ServerState.RETURNING:
+			_move_server_to(_server_home, delta)
+			if _server_pos.distance_to(_server_home) < 8.0:
+				_server_state = ServerState.IDLE
+	_server.position = _server_pos
+	var carrying := _server_state == ServerState.CARRYING and not _server_dish.is_empty()
+	_server_dish_label.visible = carrying
+	if carrying:
+		_server_dish_label.text = String(_server_dish["recipe"].display_name)
+		_server_dish_label.position = _server_pos + Vector2(-30.0, -72.0)
+
+
+func _move_server_to(target: Vector2, delta: float) -> void:
+	var to := target - _server_pos
+	if to.length() > 1.0:
+		_server_pos += to.normalized() * _SERVER_SPEED * delta
+		_server.flip_h = to.x > 0.0
+
+
+func _npc_idle_frames() -> SpriteFrames:
+	var sf := SpriteFrames.new()
+	sf.remove_animation("default")
+	sf.add_animation("idle")
+	sf.set_animation_loop("idle", true)
+	sf.set_animation_speed("idle", 2.5)
+	var i := 0
+	while ResourceLoader.exists("res://assets/npc/npc_a_idle_%d.png" % i):
+		sf.add_frame("idle", load("res://assets/npc/npc_a_idle_%d.png" % i))
+		i += 1
+	if sf.get_frame_count("idle") == 0:
+		sf.add_frame("idle", load("res://assets/npc/npc_a_dead.png"))
+	return sf
+
+
 func _apply_serve(recipe: RecipeData, grade: String) -> void:
 	var bonus := 1.5 if BelamiManager.is_preferred(recipe.id) else 1.0
+	if _has_helper("kitchen"): # 주방 도우미: 만족/토큰 보너스
+		bonus *= 1.25
 	_satisfaction += _sat_gain(grade) * bonus
 	_tokens_pending += int(_token_gain(grade) * bonus)
 	_fed += 1
@@ -183,6 +270,116 @@ func _apply_gauge_visibility() -> void:
 
 func _on_gauges_visibility_changed(_visible: bool) -> void:
 	_apply_gauge_visibility()
+
+
+# ── 주방 준비 (NPC 배치 + 레시피 선택) ──────────────────
+
+func _build_prep() -> void:
+	_build_npc_rows()
+	_build_recipe_rows()
+
+
+## 슬롯별(주방/서빙) 배치 가능한 NPC 행 구성. 부활한 NPC만 배치 가능.
+func _build_npc_rows() -> void:
+	for c in _npc_list.get_children():
+		c.queue_free()
+	for slot in NPCManager.PLACEMENT_SLOTS: # ["kitchen", "serving"]
+		var npc_id := _npc_for_role(String(slot))
+		var row := HBoxContainer.new()
+		var label := Label.new()
+		label.custom_minimum_size = Vector2(260, 0)
+		label.text = "%s: %s" % [_role_label(String(slot)), (_npc_name(npc_id) if npc_id != "" else "-")]
+		row.add_child(label)
+		if npc_id != "" and NPCManager.is_revived(npc_id):
+			var btn := Button.new()
+			btn.focus_mode = Control.FOCUS_NONE
+			btn.custom_minimum_size = Vector2(160, 34)
+			var placed := String(NPCManager.placement.get(slot, "")) == npc_id
+			btn.text = "배치 해제" if placed else "배치하기"
+			btn.pressed.connect(_on_toggle_place.bind(String(slot), npc_id))
+			row.add_child(btn)
+		else:
+			var note := Label.new()
+			note.modulate = Color(0.6, 0.6, 0.6)
+			note.text = "(아직 부활 안 함)"
+			row.add_child(note)
+		_npc_list.add_child(row)
+
+
+func _on_toggle_place(slot: String, npc_id: String) -> void:
+	var placed := String(NPCManager.placement.get(slot, "")) == npc_id
+	NPCManager.assign(slot, "" if placed else npc_id)
+	_build_npc_rows()
+
+
+## 해금된 레시피를 다중 선택 토글로 구성(처음 열 때 전부 선택).
+func _build_recipe_rows() -> void:
+	for c in _recipe_list.get_children():
+		c.queue_free()
+	var unlocked := RecipeDB.unlocked()
+	if _selected.is_empty():
+		for r in unlocked:
+			_selected[r.id] = true
+	for r in unlocked:
+		var btn := Button.new()
+		btn.focus_mode = Control.FOCUS_NONE
+		btn.custom_minimum_size = Vector2(0, 34)
+		btn.toggle_mode = true
+		btn.button_pressed = bool(_selected.get(r.id, false))
+		btn.text = _recipe_row_text(r, btn.button_pressed)
+		btn.toggled.connect(_on_toggle_recipe.bind(r, btn))
+		_recipe_list.add_child(btn)
+
+
+func _on_toggle_recipe(pressed: bool, recipe: RecipeData, btn: Button) -> void:
+	_selected[recipe.id] = pressed
+	btn.text = _recipe_row_text(recipe, pressed)
+
+
+func _recipe_row_text(r: RecipeData, selected: bool) -> String:
+	var mark := "✓" if selected else " "
+	var ings: Array[String] = []
+	for ing in r.ingredient_ids:
+		ings.append(_item_name(String(ing)))
+	var mech := "튀김" if r.sub_mechanic == RecipeData.SubMechanic.TIMER else "순서"
+	return "[%s] %s  (%s · %s)" % [mark, r.display_name, mech, ", ".join(ings)]
+
+
+## '요리 시작' → 준비 화면 닫고 조리 진행. 선택이 없으면 전체 선택으로 대체.
+func _start_cooking() -> void:
+	var any := false
+	for k in _selected.keys():
+		if _selected[k]:
+			any = true
+			break
+	if not any:
+		for r in RecipeDB.unlocked():
+			_selected[r.id] = true
+	_prep.visible = false
+	_started = true
+	_next_recipe()
+	_update_hud()
+
+
+func _npc_for_role(role: String) -> String:
+	for e in NpcUnlockDB.entries:
+		if String(e.get("unlocks", "")) == role:
+			return String(e.get("npc_id", ""))
+	return ""
+
+
+func _role_label(slot: String) -> String:
+	return "주방 도우미" if slot == "kitchen" else "서빙 도우미"
+
+
+func _npc_name(npc_id: String) -> String:
+	return NpcUnlockDB.display_name_of(npc_id) if npc_id != "" else "-"
+
+
+## 해당 슬롯에 부활한 NPC가 배치되어 있으면 true(배치 효과 판정).
+func _has_helper(slot: String) -> bool:
+	var id := String(NPCManager.placement.get(slot, ""))
+	return id != "" and NPCManager.is_revived(id)
 
 
 # ── 레시피 진행 ────────────────────────────────────────
@@ -208,11 +405,13 @@ func _next_recipe() -> void:
 		return
 	var options: Array = []
 	for r in RecipeDB.unlocked():
+		if not bool(_selected.get(r.id, false)): # 준비 화면에서 고른 것만
+			continue
 		if _can_afford(r):
 			options.append(r)
 	if options.is_empty():
 		_current = null
-		_recipe_label.text = "재료가 부족합니다"
+		_recipe_label.text = "선택한 레시피 재료가 부족합니다"
 		_show_mechanic_ui(-1)
 		return
 	_current = options[randi() % options.size()]

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/data/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "potato_soup"
+display_name = "감자 수프"
+sub_mechanic = 0
+ingredient_ids = PackedStringArray("potato", "canned_food")
+base_quality = 22.0
+timer_seconds = 0.0
+unlocked_by_default = false
+unlock_item_id = "potato"
