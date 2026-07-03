@@ -49,19 +49,10 @@ func _spawn_world() -> void:
 		_player.stamina_depleted.connect(_on_stamina_depleted)
 	_set_camera_limits()
 
-	# 몬스터마다 감지 반경/추적 시간/속도가 다르도록 프로필 순환.
-	var profiles := [
-		{"detection_range": 160.0, "chase_duration": 3.0, "speed": 90.0, "wander_radius": 80.0},
-		{"detection_range": 240.0, "chase_duration": 5.0, "speed": 78.0, "wander_radius": 130.0},
-		{"detection_range": 120.0, "chase_duration": 2.5, "speed": 110.0, "wander_radius": 60.0},
-	]
+	# 몬스터 종류/능력치는 엑셀(data/monsters.xlsx → MonsterDB)에서 읽어 순환 배치.
 	for i in monster_count:
 		var mon := monster_scene.instantiate()
-		var prof: Dictionary = profiles[i % profiles.size()]
-		mon.detection_range = prof["detection_range"]
-		mon.chase_duration = prof["chase_duration"]
-		mon.speed = prof["speed"]
-		mon.wander_radius = prof["wander_radius"]
+		_apply_monster_type(mon, MonsterDB.get_type(i))
 		mon.drop_item_id = _pick_material_id()
 		add_child(mon) # exports 를 _ready 전에 주입
 		mon.global_position = _random_spawn_pos(true)
@@ -80,6 +71,25 @@ func _spawn_world() -> void:
 
 	$ExitZone.body_entered.connect(_on_exit_entered)
 	$ExitZone.body_exited.connect(_on_exit_exited)
+
+
+## 엑셀 몬스터 종류(Dictionary)의 능력치를 몬스터 인스턴스에 주입. 빈 사전이면 기본값 유지.
+func _apply_monster_type(mon: Node, t: Dictionary) -> void:
+	if t.is_empty():
+		return
+	mon.max_hp = float(t.get("max_hp", mon.max_hp))
+	mon.contact_damage = float(t.get("contact_damage", mon.contact_damage))
+	mon.speed = float(t.get("speed", mon.speed))
+	mon.detection_range = float(t.get("detection_range", mon.detection_range))
+	mon.chase_duration = float(t.get("chase_duration", mon.chase_duration))
+	mon.wander_radius = float(t.get("wander_radius", mon.wander_radius))
+	mon.wander_speed = float(t.get("wander_speed", mon.wander_speed))
+	# 공격 스킬 파라미터(엑셀에 열이 있으면 덮어씀, 없으면 몬스터 기본값 유지).
+	mon.stop_distance = float(t.get("stop_distance", mon.stop_distance))
+	mon.attack_range = float(t.get("attack_range", mon.attack_range))
+	mon.attack_cooldown = float(t.get("attack_cooldown", mon.attack_cooldown))
+	mon.attack_windup = float(t.get("attack_windup", mon.attack_windup))
+	mon.sprite_id = String(t.get("sprite", ""))
 
 
 func _process(delta: float) -> void:

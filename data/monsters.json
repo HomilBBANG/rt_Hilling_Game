@@ -1,0 +1,42 @@
+[
+  {
+    "id": "monster_a",
+    "display_name": "떠돌이",
+    "max_hp": 50,
+    "contact_damage": 15,
+    "speed": 90,
+    "detection_range": 160,
+    "chase_duration": 3,
+    "wander_radius": 80,
+    "wander_speed": 40,
+    "sprite": "monster_a",
+    "attack_range": 48,
+    "attack_cooldown": 1.2
+  },
+  {
+    "id": "monster_b",
+    "display_name": "추적자",
+    "max_hp": 80,
+    "contact_damage": 18,
+    "speed": 78,
+    "detection_range": 240,
+    "chase_duration": 5,
+    "wander_radius": 130,
+    "wander_speed": 40,
+    "attack_range": 60,
+    "attack_cooldown": 1.6
+  },
+  {
+    "id": "monster_c",
+    "display_name": "날쌘이",
+    "max_hp": 35,
+    "contact_damage": 12,
+    "speed": 110,
+    "detection_range": 120,
+    "chase_duration": 2.5,
+    "wander_radius": 60,
+    "wander_speed": 45,
+    "attack_range": 40,
+    "attack_cooldown": 0.9
+  }
+]

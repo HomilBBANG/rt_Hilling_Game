@@ -1,28 +1,41 @@
 extends CharacterBody2D
 ## 일반 몬스터 (PRD 3.1).
 ## 감지 반경(detection_range) 안에 플레이어가 들어오면 추적(CHASE) 시작.
-## 추적 중 chase_duration 초 동안 한 번도 데미지를 주지 못하면 추적을 멈추고
-## 제자리에 머문다(IDLE). 데미지를 주면 추적 시간이 리셋되어 계속 쫓아온다.
-## 감지 반경·추적 시간은 몬스터마다 다르게 설정(스폰 시 프로필로 주입).
+## 추적 중 chase_duration 초 동안 공격도 못하면 추적을 멈추고 제자리로(IDLE).
+## 플레이어에게 파고들지 않고 stop_distance(코앞)에서 멈춰, 공격 범위(attack_range)를
+## 표시한 뒤 짧은 준비동작(windup) 후 공격 스킬로 데미지(쿨다운 attack_cooldown).
+## 능력치는 몬스터마다 다르게 설정(스폰 시 엑셀 데이터 주입).
 
 enum State { IDLE, CHASE }
 
 @export var speed := 95.0
 @export var max_hp := 50.0
-@export var contact_damage := 15.0
+@export var contact_damage := 15.0     # 공격 스킬 1회 데미지
 @export var detection_range := 180.0   # 감지 반경 (몬스터마다 다름)
-@export var chase_duration := 4.0      # 무피해 시 추적 유지 시간 (몬스터마다 다름)
+@export var chase_duration := 4.0      # 무공격 시 추적 유지 시간 (몬스터마다 다름)
 @export var wander_radius := 90.0      # 대기 시 배회 반경(스폰 지점 기준)
 @export var wander_speed := 40.0       # 배회 이동 속도(추적보다 느림)
+
+## 공격 스킬 파라미터.
+@export var stop_distance := 26.0      # 플레이어 코앞에서 멈추는 거리(겹침 방지, ≈몸 반지름 합+1px)
+@export var attack_range := 48.0       # 공격 범위(표시됨). 이 안의 플레이어에게 데미지
+@export var attack_cooldown := 1.2     # 공격 간 간격(초)
+@export var attack_windup := 0.35      # 공격 준비동작(텔레그래프) 시간(초)
+
+## idle 애니 폴더 id(assets/monsters/<sprite_id>/<sprite_id>_idle_N.png). 비우면 사각형 유지.
+@export var sprite_id: String = ""
 
 var hp := 50.0
 var drop_item_id: String = ""
 
+var _sprite: AnimatedSprite2D = null # sprite_id 지정 시 사용
+var _has_walk := false               # walk 애니 존재 여부
+
 var _state: int = State.IDLE
 var _chase_timer := 0.0
 var _player: Node2D = null
-var _touching := false
-var _dmg_cd := 0.0
+var _attack_cd := 0.0     # 남은 공격 쿨다운
+var _windup := -1.0       # >=0 이면 공격 준비동작 진행 중(남은 시간)
 
 var _home := Vector2.ZERO
 var _home_set := false
@@ -32,24 +45,76 @@ var _wander_pause := 0.0
 
 func _ready() -> void:
 	hp = max_hp
+	_setup_visual()
 	# 인스턴스별 고유 감지 반경 적용(공유 리소스 오염 방지).
 	var det := CircleShape2D.new()
 	det.radius = detection_range
 	$DetectionArea/DetCol.shape = det
 	$DetectionArea.body_entered.connect(_on_detect)
 	$HitBox.body_entered.connect(_on_hit_entered)
-	$HitBox.body_exited.connect(_on_hit_exited)
 	# 감지 반경 디버그 표시 토글(테스트용).
 	Config.detection_range_visibility_changed.connect(func(_v): queue_redraw())
 	queue_redraw()
 
 
-func _draw() -> void:
-	# 몬스터 감지 반경 디버그 시각화. Config 스위치로 끌 수 있음.
-	if not Config.show_detection_range:
+## sprite_id 가 지정되고 프레임이 있으면 AnimatedSprite2D 로 표시(idle + walk), 없으면 사각형 유지.
+func _setup_visual() -> void:
+	if sprite_id == "":
 		return
-	var col := Color(1.0, 0.4, 0.4, 0.5) if _state == State.CHASE else Color(0.6, 0.6, 0.6, 0.3)
-	draw_arc(Vector2.ZERO, detection_range, 0.0, TAU, 64, col, 2.0, true)
+	var sf := SpriteFrames.new()
+	sf.remove_animation("default") # 기본 빈 애니 제거
+	var idle_n := _add_anim(sf, "idle", "res://assets/monsters/%s/%s_idle_%%d.png" % [sprite_id, sprite_id], 2.5)
+	var walk_n := _add_anim(sf, "walk", "res://assets/monsters/%s/%s_walk_%%d.png" % [sprite_id, sprite_id], 8.0)
+	if idle_n == 0 and walk_n == 0:
+		return # 프레임 하나도 없으면 플레이스홀더 유지
+	_has_walk = walk_n > 0
+	_sprite = $Sprite as AnimatedSprite2D
+	_sprite.sprite_frames = sf
+	_sprite.play("idle" if idle_n > 0 else "walk")
+	_sprite.visible = true
+	$Body.visible = false
+
+
+## 패턴(…_%d.png)으로 프레임을 로드해 애니 추가. 로드한 프레임 수 반환(0이면 애니 제거).
+func _add_anim(sf: SpriteFrames, anim: String, pattern: String, fps: float) -> int:
+	sf.add_animation(anim)
+	sf.set_animation_loop(anim, true)
+	sf.set_animation_speed(anim, fps)
+	var i := 0
+	while ResourceLoader.exists(pattern % i):
+		sf.add_frame(anim, load(pattern % i))
+		i += 1
+	if i == 0:
+		sf.remove_animation(anim)
+	return i
+
+
+## 이동 여부에 따라 walk/idle 전환 + 좌우 반전.
+func _update_anim() -> void:
+	if _sprite == null:
+		return
+	var moving := velocity.length() > 5.0
+	var want := "walk" if (moving and _has_walk) else "idle"
+	if not _sprite.sprite_frames.has_animation(want):
+		want = "idle" if _sprite.sprite_frames.has_animation("idle") else "walk"
+	if _sprite.animation != want:
+		_sprite.play(want)
+	if absf(velocity.x) > 1.0:
+		_sprite.flip_h = velocity.x < 0.0 # 왼쪽 이동 시 반전(원본이 오른쪽을 향한다고 가정)
+
+
+func _draw() -> void:
+	# 공격 범위 표시(추적 중일 때만). 준비동작 중이면 채워서 임박함을 알림.
+	if _state == State.CHASE:
+		var attacking := _windup >= 0.0
+		var edge := Color(1.0, 0.3, 0.2, 0.7 if attacking else 0.25)
+		if attacking:
+			draw_circle(Vector2.ZERO, attack_range, Color(1.0, 0.3, 0.2, 0.18))
+		draw_arc(Vector2.ZERO, attack_range, 0.0, TAU, 48, edge, 2.0, true)
+	# 감지 반경 디버그 시각화(Config 스위치로 토글).
+	if Config.show_detection_range:
+		var col := Color(1.0, 0.4, 0.4, 0.5) if _state == State.CHASE else Color(0.6, 0.6, 0.6, 0.3)
+		draw_arc(Vector2.ZERO, detection_range, 0.0, TAU, 64, col, 2.0, true)
 
 
 func _physics_process(delta: float) -> void:
@@ -59,26 +124,62 @@ func _physics_process(delta: float) -> void:
 		_home_set = true
 		_pick_wander_target()
 
+	_attack_cd = maxf(0.0, _attack_cd - delta)
+
 	if _state == State.CHASE:
 		_chase_timer -= delta
 		if _chase_timer <= 0.0 or _player == null or not is_instance_valid(_player):
 			_end_chase()
 		else:
-			velocity = (_player.global_position - global_position).normalized() * speed
-			move_and_slide()
+			_chase_and_attack(delta)
 	else:
 		_wander(delta) # 대기 시 home 주변을 배회
 
-	_dmg_cd = maxf(0.0, _dmg_cd - delta)
-	if _touching and _dmg_cd <= 0.0 and _player and _player.has_method("take_hit"):
-		_player.take_hit(contact_damage)
-		_dmg_cd = 1.0
-		# 데미지 성공 → (재)추적 + 추적 시간 리셋.
-		var was_chasing := _state == State.CHASE
-		_state = State.CHASE
-		_chase_timer = chase_duration
-		if not was_chasing:
+	_update_anim() # 이동 여부에 따라 walk/idle 전환
+
+
+## 플레이어를 stop_distance 코앞까지 쫓아가 멈춘 뒤 공격 스킬을 사용.
+func _chase_and_attack(delta: float) -> void:
+	var to: Vector2 = _player.global_position - global_position
+	var dist := to.length()
+	if dist > stop_distance:
+		# 코앞에서 딱 멈추도록 남은 거리만큼만 이동(오버슈트로 인한 버벅임 방지).
+		var reach := minf(speed, (dist - stop_distance) / maxf(delta, 0.0001))
+		velocity = to.normalized() * reach
+		move_and_slide()
+		if _windup >= 0.0: # 이동하면 준비동작 취소
+			_windup = -1.0
 			queue_redraw()
+	else:
+		# 코앞 도착 → 정지 후 공격.
+		velocity = Vector2.ZERO
+		if _sprite and absf(to.x) > 1.0:
+			_sprite.flip_h = to.x < 0.0 # 플레이어 쪽을 바라봄
+		_attack_tick(delta)
+
+
+## 정지 상태에서 공격 사이클: 쿨다운 → 준비동작(windup) → 데미지.
+func _attack_tick(delta: float) -> void:
+	if _windup >= 0.0:
+		_windup -= delta
+		if _windup <= 0.0:
+			_windup = -1.0
+			_do_attack()
+		queue_redraw()
+		return
+	if _attack_cd <= 0.0:
+		_windup = attack_windup      # 텔레그래프 시작
+		_chase_timer = chase_duration # 공격 시도 중이면 추적 유지
+		queue_redraw()
+
+
+## 공격 발동: attack_range 안의 플레이어에게 데미지.
+func _do_attack() -> void:
+	_attack_cd = attack_cooldown
+	if _player and is_instance_valid(_player) and _player.has_method("take_hit"):
+		if _player.global_position.distance_to(global_position) <= attack_range:
+			_player.take_hit(contact_damage)
+	queue_redraw()
 
 
 func _on_detect(body: Node) -> void:
@@ -89,15 +190,10 @@ func _on_detect(body: Node) -> void:
 		queue_redraw()
 
 
+## 근접 접촉은 데미지 없이 플레이어 참조만 갱신(공격은 stop_distance에서 스킬로 처리).
 func _on_hit_entered(body: Node) -> void:
 	if body.is_in_group("player"):
-		_touching = true
 		_player = body
-
-
-func _on_hit_exited(body: Node) -> void:
-	if body.is_in_group("player"):
-		_touching = false
 
 
 func _end_chase() -> void:
