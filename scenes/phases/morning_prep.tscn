@@ -114,3 +114,81 @@ layout_mode = 2
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 26
 text = ""
+
+[node name="StatsScreen" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Dim" type="ColorRect" parent="StatsScreen"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.6)
+
+[node name="Center" type="CenterContainer" parent="StatsScreen"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Panel" type="PanelContainer" parent="StatsScreen/Center"]
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="StatsScreen/Center/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 20
+
+[node name="VBox" type="VBoxContainer" parent="StatsScreen/Center/Panel/Margin"]
+custom_minimum_size = Vector2(380, 0)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="StatsScreen/Center/Panel/Margin/VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 28
+text = "능력치"
+
+[node name="Tokens" type="Label" parent="StatsScreen/Center/Panel/Margin/VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+text = "보유 토큰: 0"
+
+[node name="Sep1" type="HSeparator" parent="StatsScreen/Center/Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="HpLabel" type="Label" parent="StatsScreen/Center/Panel/Margin/VBox"]
+layout_mode = 2
+text = "체력  100  (Lv0)"
+
+[node name="HpButton" type="Button" parent="StatsScreen/Center/Panel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+focus_mode = 0
+text = "체력 강화"
+
+[node name="SpeedLabel" type="Label" parent="StatsScreen/Center/Panel/Margin/VBox"]
+layout_mode = 2
+text = "이동속도  280  (Lv0)"
+
+[node name="SpeedButton" type="Button" parent="StatsScreen/Center/Panel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+focus_mode = 0
+text = "이동속도 강화"
+
+[node name="Sep2" type="HSeparator" parent="StatsScreen/Center/Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="Hint" type="Label" parent="StatsScreen/Center/Panel/Margin/VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.7, 0.7, 0.75, 1)
+text = "Tab: 닫기"

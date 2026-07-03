@@ -24,6 +24,10 @@ var _carter_hint: Label = null
 var _forge_open := false
 var _e_was_down := false
 
+## 능력치 화면(Tab 토글).
+var _stats_open := false
+var _tab_was_down := false
+
 @onready var _title: Label = $Body/VBox/Header
 @onready var _ground: Control = $Body/VBox/Ground
 @onready var _campfire: ColorRect = $Body/VBox/Ground/Campfire
@@ -36,6 +40,12 @@ var _e_was_down := false
 @onready var _go_button: Button = $Body/VBox/Footer/GoButton
 @onready var _overlay: Control = $Cutscene
 @onready var _overlay_text: Label = $Cutscene/Center/Text
+@onready var _stats_screen: Control = $StatsScreen
+@onready var _stats_tokens: Label = $StatsScreen/Center/Panel/Margin/VBox/Tokens
+@onready var _hp_label: Label = $StatsScreen/Center/Panel/Margin/VBox/HpLabel
+@onready var _hp_btn: Button = $StatsScreen/Center/Panel/Margin/VBox/HpButton
+@onready var _speed_label: Label = $StatsScreen/Center/Panel/Margin/VBox/SpeedLabel
+@onready var _speed_btn: Button = $StatsScreen/Center/Panel/Margin/VBox/SpeedButton
 
 
 func _ready() -> void:
@@ -43,6 +53,9 @@ func _ready() -> void:
 	_go_button.pressed.connect(GameManager.advance)
 	_ranged_btn.pressed.connect(_on_upgrade.bind("ranged"))
 	_melee_btn.pressed.connect(_on_upgrade.bind("melee"))
+	_hp_btn.pressed.connect(_on_stat_upgrade.bind("hp"))
+	_speed_btn.pressed.connect(_on_stat_upgrade.bind("speed"))
+	_stats_screen.visible = false
 	_overlay.visible = false
 	# 레이아웃 확정 후 배치.
 	await get_tree().process_frame
@@ -53,7 +66,10 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if not _pos_init or _overlay.visible: # 컷씬 중엔 이동 정지
+	if _overlay.visible: # 컷씬 중엔 아무 입력도 안 받음
+		return
+	_handle_stats_toggle()
+	if not _pos_init or _stats_open: # 능력치 화면 중엔 이동 정지
 		return
 	var dir := _input_dir()
 	_apply_move(dir, delta)
@@ -85,6 +101,41 @@ func _update_carter_interaction() -> void:
 	if _forge_open and not near: # 멀어지면 닫기
 		_forge_open = false
 		_refresh_forge()
+
+
+# ── 능력치 화면 (Tab) ──────────────────────────────────
+
+## Tab(엣지)로 능력치 화면을 연다/닫는다.
+func _handle_stats_toggle() -> void:
+	var down := Input.is_physical_key_pressed(KEY_TAB)
+	if down and not _tab_was_down:
+		_stats_open = not _stats_open
+		_stats_screen.visible = _stats_open
+		if _stats_open:
+			_refresh_stats()
+	_tab_was_down = down
+
+
+func _refresh_stats() -> void:
+	_stats_tokens.text = "보유 토큰: %d" % GameManager.tokens
+	_hp_label.text = "체력  %d  (Lv%d)" % [int(PlayerStats.max_hp()), PlayerStats.level_of("hp")]
+	_speed_label.text = "이동속도  %d  (Lv%d)" % [int(PlayerStats.move_speed()), PlayerStats.level_of("speed")]
+	_hp_btn.text = _stat_btn_text("hp")
+	_hp_btn.disabled = not PlayerStats.can_upgrade("hp")
+	_speed_btn.text = _stat_btn_text("speed")
+	_speed_btn.disabled = not PlayerStats.can_upgrade("speed")
+
+
+func _stat_btn_text(stat: String) -> String:
+	if PlayerStats.is_max(stat):
+		return "최대 레벨 (Lv%d)" % PlayerStats.level_of(stat)
+	return "강화 → %d  (%d토큰)" % [int(PlayerStats.next_value(stat)), PlayerStats.upgrade_cost(stat)]
+
+
+func _on_stat_upgrade(stat: String) -> void:
+	if PlayerStats.try_upgrade(stat):
+		_refresh_stats()
+		_refresh_forge() # 토큰이 줄었으니 제작 패널도 갱신(열려 있으면)
 
 
 func _input_dir() -> Vector2:

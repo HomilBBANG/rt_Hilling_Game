@@ -9,5 +9,13 @@
   "camp_god_x": 0.8,
   "camp_god_y": 0.44,
   "camp_player_x": 0.45,
-  "camp_player_y": 0.5
+  "camp_player_y": 0.5,
+  "stat_hp_base": 100,
+  "stat_hp_per_level": 20,
+  "stat_hp_max_level": 5,
+  "stat_hp_cost": 15,
+  "stat_speed_base": 280,
+  "stat_speed_per_level": 20,
+  "stat_speed_max_level": 5,
+  "stat_speed_cost": 15
 }

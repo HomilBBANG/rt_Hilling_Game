@@ -29,8 +29,10 @@ var _melee_cd := 0.0
 
 
 func _ready() -> void:
+	# 체력·이동속도는 PlayerStats(토큰 업그레이드 + 엑셀 stat_* 기본값)에서 읽는다.
+	max_stamina = PlayerStats.max_hp()
 	stamina = max_stamina
-	speed = Balance.get_float("player_speed", speed) # 엑셀 조정 가능
+	speed = PlayerStats.move_speed()
 	melee_range = WeaponManager.melee_range()        # 무기별 사거리(엑셀 조정 가능)
 	_setup_animation()
 

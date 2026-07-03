@@ -46,6 +46,7 @@ func start_new_game() -> void:
 	# 매니저 상태를 기본값으로 초기화(이전 세션 잔존 방지).
 	BelamiManager.from_dict({})
 	WeaponManager.from_dict({})
+	PlayerStats.from_dict({})
 	NPCManager.from_dict({})
 	CodexManager.from_dict({})
 	BelamiManager.refresh_preferences(_unlocked_recipe_ids())
@@ -61,6 +62,7 @@ func continue_game() -> void:
 	tokens = int(data.get("tokens", 0))
 	BelamiManager.from_dict(data.get("belami", {}))
 	WeaponManager.from_dict(data.get("weapons", {}))
+	PlayerStats.from_dict(data.get("player_stats", {}))
 	NPCManager.from_dict(data.get("npcs", {}))
 	CodexManager.from_dict(data.get("codex", {}))
 	var ws: Dictionary = data.get("world_state", {})
@@ -128,6 +130,7 @@ func _autosave(phase: String) -> void:
 		"tokens": tokens,
 		"belami": BelamiManager.to_dict(),
 		"player": {}, # TODO: 외형 커스터마이징 상태
+		"player_stats": PlayerStats.to_dict(),
 		"weapons": WeaponManager.to_dict(),
 		"world_state": {
 			"run_inventory": run_inventory.duplicate(),
