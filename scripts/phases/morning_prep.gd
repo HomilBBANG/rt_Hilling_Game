@@ -13,8 +13,7 @@ const _DEAD_TEX := preload("res://assets/npc/npc_a_dead.png") # 임시 시체 �
 var _figures := {} # npc_id -> {body:AnimatedSprite2D, label:Label, color:Color}
 var _npc_frames: SpriteFrames = null # NPC 공용 프레임(dead=npc_a_dead, idle=npc_a_idle)
 
-## 캠프 내 주인공 이동(WASD). 컷씬 중에는 정지.
-@export var move_speed := 260.0
+## 캠프 내 주인공 이동(WASD). 컷씬 중에는 정지. 속도는 PlayerStats.move_speed().
 var _player_pos := Vector2.ZERO
 var _pos_init := false
 
@@ -156,7 +155,8 @@ func _input_dir() -> Vector2:
 func _apply_move(dir: Vector2, delta: float) -> void:
 	if dir == Vector2.ZERO:
 		return
-	_player_pos += dir.normalized() * move_speed * delta
+	# 탐사·요리와 동일 속도(PlayerStats). 동적으로 읽어 Tab 업그레이드가 즉시 반영됨.
+	_player_pos += dir.normalized() * PlayerStats.move_speed() * delta
 	var g := _ground.size
 	var h := 48.0
 	_player_pos.x = clampf(_player_pos.x, h, g.x - h)

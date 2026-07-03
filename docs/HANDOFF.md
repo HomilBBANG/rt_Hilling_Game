@@ -19,7 +19,7 @@
 ## 엑셀 연동 (데이터 드리븐)
 - NPC 해금표: `data/npc_unlocks.xlsx` → `python tools/convert_npc_unlocks.py` → `data/npc_unlocks.json`
 - **몬스터**: `data/monsters.xlsx` → `python tools/convert_monsters.py` → `data/monsters.json` (행=종류, 열: id/max_hp/contact_damage/speed/detection_range/chase_duration/wander_radius/wander_speed/sprite/attack_range/attack_cooldown). `MonsterDB` 로드, 스폰 시 순환. sprite=idle 애니 폴더 id(assets/monsters/&lt;id&gt;/&lt;id&gt;_{idle,walk}_N.png), 비우면 사각형. 몬스터는 stop_distance 코앞에서 멈춰 attack_range(표시됨) 안에 공격 스킬
-- 밸런스: `data/balance.xlsx` → `python tools/convert_balance.py` → `data/balance.json` (player_speed/scavenge_seconds/night_seconds/target_satisfaction/cook_player_speed)
+- 밸런스: `data/balance.xlsx` → `python tools/convert_balance.py` → `data/balance.json` (scavenge_seconds/night_seconds/target_satisfaction/stat_*/camp_*). 플레이어 이동속도는 balance가 아니라 PlayerStats.move_speed()(stat_speed_*) — 탐사·요리·캠프 공통
   - **무기 사거리(px)**: `<무기id>_range` 키로 무기별 조정 — 현재 `pistol_range`(총알 이동거리), `knife_range`(칼 부채꼴 반경). WeaponManager.range_of()가 장착 무기 id로 조회, 없으면 기본값(900/64)
 - Python + Pillow + numpy 설치됨(에셋 처리). pip는 `python -m pip`.
 
