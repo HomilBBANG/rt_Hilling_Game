@@ -12,6 +12,10 @@ const RANGED_STEP := 10.0
 const MELEE_STEP := 15.0
 const MAX_LEVEL := 5
 
+## 무기별 사거리 기본값(px). 엑셀 balance 에 "<무기id>_range" 행이 있으면 그 값이 우선.
+const RANGED_RANGE_BASE := 900.0
+const MELEE_RANGE_BASE := 64.0
+
 var ammo: int = 12
 var upgrade_unlocked: bool = false        # '하나' 부활 시 true
 var ranged_level: int = 0
@@ -50,6 +54,21 @@ func melee_damage() -> float:
 
 func current_damage(kind: String) -> float:
 	return ranged_damage() if kind == "ranged" else melee_damage()
+
+
+## 장착한 원거리 무기의 사거리(px). 엑셀 "<무기id>_range" 로 조정 가능.
+func ranged_range() -> float:
+	return Balance.get_float(str(equipped["ranged"]) + "_range", RANGED_RANGE_BASE)
+
+
+## 장착한 근접 무기의 사거리(px). 엑셀 "<무기id>_range" 로 조정 가능.
+func melee_range() -> float:
+	return Balance.get_float(str(equipped["melee"]) + "_range", MELEE_RANGE_BASE)
+
+
+## 종류별 사거리 조회(kind: "ranged" | "melee").
+func range_of(kind: String) -> float:
+	return ranged_range() if kind == "ranged" else melee_range()
 
 
 func next_damage(kind: String) -> float:

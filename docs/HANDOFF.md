@@ -19,6 +19,7 @@
 ## 엑셀 연동 (데이터 드리븐)
 - NPC 해금표: `data/npc_unlocks.xlsx` → `python tools/convert_npc_unlocks.py` → `data/npc_unlocks.json`
 - 밸런스: `data/balance.xlsx` → `python tools/convert_balance.py` → `data/balance.json` (player_speed/scavenge_seconds/night_seconds/target_satisfaction)
+  - **무기 사거리(px)**: `<무기id>_range` 키로 무기별 조정 — 현재 `pistol_range`(총알 이동거리), `knife_range`(칼 부채꼴 반경). WeaponManager.range_of()가 장착 무기 id로 조회, 없으면 기본값(900/64)
 - Python + Pillow + numpy 설치됨(에셋 처리). pip는 `python -m pip`.
 
 ## 구현 완료

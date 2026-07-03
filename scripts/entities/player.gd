@@ -31,6 +31,7 @@ var _melee_cd := 0.0
 func _ready() -> void:
 	stamina = max_stamina
 	speed = Balance.get_float("player_speed", speed) # 엑셀 조정 가능
+	melee_range = WeaponManager.melee_range()        # 무기별 사거리(엑셀 조정 가능)
 	_setup_animation()
 
 
@@ -90,6 +91,7 @@ func _shoot() -> void:
 	var b := bullet_scene.instantiate()
 	get_parent().add_child(b)
 	b.damage = WeaponManager.ranged_damage() # 강화 반영
+	b.max_range = WeaponManager.ranged_range() # 무기별 사거리(엑셀 조정 가능)
 	b.global_position = _muzzle.global_position
 	var dir := get_global_mouse_position() - global_position
 	if dir.length() < 0.01:
