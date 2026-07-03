@@ -31,6 +31,7 @@ PlayerStats="*res://autoload/player_stats.gd"
 CodexManager="*res://autoload/codex_manager.gd"
 RecipeDB="*res://autoload/recipe_db.gd"
 MonsterDB="*res://autoload/monster_db.gd"
+ItemDB="*res://autoload/item_db.gd"
 GameManager="*res://autoload/game_manager.gd"
 
 [display]

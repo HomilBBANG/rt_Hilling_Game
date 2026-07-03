@@ -5,7 +5,7 @@ extends Control
 ## 인벤토리: 화면 좌=캐릭터(총 든 idle)+착용 장비, 우=가방(run_inventory).
 ## 1칸 = 물건 1개(수량만큼 칸을 채움). 열려 있는 동안 게임은 일시정지.
 
-const BAG_CAPACITY := 24
+const BAG_MIN_SLOTS := 18 # 최소 표시 칸(빈 가방도 격자로 보이게). 수집분이 많으면 그만큼 늘어남
 
 @onready var _day_label: Label = $TopBar/DayLabel
 @onready var _phase_label: Label = $TopBar/PhaseLabel
@@ -15,7 +15,7 @@ const BAG_CAPACITY := 24
 @onready var _melee_label: Label = $Inventory/Equip/MeleeLabel
 @onready var _switch_note: Label = $Inventory/Equip/SwitchNote
 @onready var _weapon_list: VBoxContainer = $Inventory/Equip/WeaponList
-@onready var _bag_grid: GridContainer = $Inventory/BagGrid
+@onready var _bag_grid: GridContainer = $Inventory/BagScroll/BagGrid
 
 var _inv_open := false
 
@@ -84,38 +84,56 @@ func _on_equip(id: String) -> void:
 func _rebuild_bag() -> void:
 	for c in _bag_grid.get_children():
 		c.queue_free()
-	var units: Array[String] = []
+	# 같은 재료는 한 칸에 최대 max_stack(기본 99)개까지 겹침. 넘치면 다음 칸으로.
+	var stacks: Array = [] # 각 원소: {id, count}
 	for id in GameManager.run_inventory:
 		var cnt := int(GameManager.run_inventory[id])
-		for i in cnt:
-			units.append(String(id))
-	for i in BAG_CAPACITY:
-		_bag_grid.add_child(_make_slot(units[i] if i < units.size() else ""))
+		var per := maxi(1, ItemDB.max_stack(String(id)))
+		while cnt > 0:
+			var here := mini(cnt, per)
+			stacks.append({"id": String(id), "count": here})
+			cnt -= here
+	# 최소 칸 유지 + 열 배수로 올림(빈 가방도 격자로 보이게).
+	var cols := maxi(1, _bag_grid.columns)
+	var slot_count := maxi(stacks.size(), BAG_MIN_SLOTS)
+	if slot_count % cols != 0:
+		slot_count += cols - (slot_count % cols)
+	for i in slot_count:
+		if i < stacks.size():
+			_bag_grid.add_child(_make_slot(String(stacks[i]["id"]), int(stacks[i]["count"])))
+		else:
+			_bag_grid.add_child(_make_slot("", 0))
 
 
-func _make_slot(item_id: String) -> Control:
+func _make_slot(item_id: String, count: int) -> Control:
 	var slot := Panel.new()
 	slot.custom_minimum_size = Vector2(80, 80)
-	var lbl := Label.new()
-	lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var name_lbl := Label.new()
+	name_lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	if item_id == "":
 		slot.modulate = Color(1, 1, 1, 0.3) # 빈 칸
 	else:
-		lbl.text = _item_name(item_id)
-	slot.add_child(lbl)
+		name_lbl.text = _item_name(item_id)
+	slot.add_child(name_lbl)
+	if item_id != "" and count > 1: # 겹친 개수를 우측 하단에 표시
+		var cnt_lbl := Label.new()
+		cnt_lbl.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+		cnt_lbl.offset_left = -34.0
+		cnt_lbl.offset_top = -24.0
+		cnt_lbl.offset_right = -4.0
+		cnt_lbl.offset_bottom = -2.0
+		cnt_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		cnt_lbl.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+		cnt_lbl.text = "×%d" % count
+		slot.add_child(cnt_lbl)
 	return slot
 
 
 func _item_name(id: String) -> String:
-	var path := "res://resources/items/%s.tres" % id
-	if ResourceLoader.exists(path):
-		var it := load(path) as ItemData
-		if it:
-			return it.display_name
-	return id
+	return ItemDB.display_name(id)
 
 
 func _weapon_name(id: String) -> String:

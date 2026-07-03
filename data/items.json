@@ -1,0 +1,26 @@
+[
+  {
+    "id": "potato",
+    "display_name": "감자",
+    "category": "food",
+    "max_stack": 99
+  },
+  {
+    "id": "herb",
+    "display_name": "들풀",
+    "category": "food",
+    "max_stack": 99
+  },
+  {
+    "id": "canned_food",
+    "display_name": "통조림",
+    "category": "food",
+    "max_stack": 99
+  },
+  {
+    "id": "scrap_metal",
+    "display_name": "고철",
+    "category": "material",
+    "max_stack": 99
+  }
+]

@@ -122,12 +122,16 @@ offset_bottom = 60.0
 theme_override_font_sizes/font_size = 26
 text = "가방"
 
-[node name="BagGrid" type="GridContainer" parent="Inventory"]
+[node name="BagScroll" type="ScrollContainer" parent="Inventory"]
 layout_mode = 0
 offset_left = 680.0
 offset_top = 72.0
 offset_right = 1240.0
 offset_bottom = 680.0
+horizontal_scroll_mode = 0
+
+[node name="BagGrid" type="GridContainer" parent="Inventory/BagScroll"]
+layout_mode = 2
 theme_override_constants/h_separation = 10
 theme_override_constants/v_separation = 10
 columns = 6
