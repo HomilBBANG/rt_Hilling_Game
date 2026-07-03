@@ -1,7 +1,7 @@
 extends Control
 ## 밤 세션 — 쿠킹 + 서빙 + 급식 (PRD 3.2/3.4/3.5 + 급식 스펙).
-## 1분 타이머 동안 요리해 벨라미에게 서빙. 단, 서빙은 자동이 아니라
-## 완성한 요리를 '들고' 플레이어가 직접 벨라미에게 걸어가야 전달된다(WASD 이동).
+## 1분 타이머 동안 요리해 god에게 서빙. 단, 서빙은 자동이 아니라
+## 완성한 요리를 '들고' 플레이어가 직접 god에게 걸어가야 전달된다(WASD 이동).
 ## (추후 '서빙 보조' NPC가 부활하면 자동 서빙으로 대체될 예정 — PRD 3.5)
 ##
 ## 서빙 성공마다 만족↑ + 토큰↑ + 먹인 수↑. 재료(run_inventory)는 요리 완성 시 소모.
@@ -41,7 +41,8 @@ var _pos_init := false
 @onready var _player_node: AnimatedSprite2D = $Margin/Main/Field/Player
 @onready var _counter: ColorRect = $Margin/Main/Field/Counter
 @onready var _counter_label: Label = $Margin/Main/Field/CounterLabel
-@onready var _belami: Label = $Margin/Main/Field/Belami
+@onready var _god: AnimatedSprite2D = $Margin/Main/Field/God
+@onready var _belami: Label = $Margin/Main/Field/Belami # god 머리 위 반응(표정) 버블
 @onready var _serve_hint: Label = $Margin/Main/Field/ServeHint
 @onready var _recipe_label: Label = $Margin/Main/CookArea/RecipeLabel
 @onready var _seq_row: HBoxContainer = $Margin/Main/CookArea/SequenceRow
@@ -64,6 +65,8 @@ func _ready() -> void:
 	_build_ingredient_buttons()
 	_collect_button.pressed.connect(_on_collect)
 	_results.visible = false
+	_god.sprite_frames = GodFrames.build()
+	_god.play("idle")
 	_belami.text = "( ˘ ᴗ ˘ )"
 	_held_label.text = ""
 	_apply_gauge_visibility()
@@ -121,7 +124,8 @@ func _update_field(_delta: float) -> void:
 	_counter_label.position = counter_pos - _counter_label.size * 0.5 - Vector2(0.0, 40.0)
 
 	var belami_pos := Vector2(_field.size.x - 60.0, _field.size.y * 0.5)
-	_belami.position = belami_pos - _belami.size * 0.5
+	_god.position = belami_pos # AnimatedSprite2D 는 중심 기준
+	_belami.position = belami_pos + Vector2(0.0, -72.0) - _belami.size * 0.5 # 머리 위 반응 버블
 
 	# 조리대 근처에서만 요리 입력 활성화.
 	var near := _player_pos.distance_to(counter_pos) < 72.0
@@ -131,7 +135,7 @@ func _update_field(_delta: float) -> void:
 		_do_serve()
 
 	if not _held.is_empty():
-		_serve_hint.text = "WASD로 벨라미에게 이동해 전달하세요"
+		_serve_hint.text = "WASD로 god에게 이동해 전달하세요"
 	elif not near:
 		_serve_hint.text = "왼쪽 조리대로 이동해 요리하세요"
 	else:
@@ -307,7 +311,7 @@ func _hold_dish(grade: String) -> void:
 	_current = null
 	_frying = false
 	_show_mechanic_ui(-1)
-	_recipe_label.text = "완성! 벨라미에게 직접 가져가세요"
+	_recipe_label.text = "완성! god에게 직접 가져가세요"
 
 
 # ── 세션 종료 ──────────────────────────────────────────
@@ -327,7 +331,7 @@ func _end_session() -> void:
 func _show_results(success: bool, awarded: int) -> void:
 	_results.visible = true
 	$Results/Center/VBox/ResultTitle.text = "오늘 밤 — %s" % ("성공" if success else "실패")
-	$Results/Center/VBox/ResultReaction.text = "벨라미  %s  %s" % [
+	$Results/Center/VBox/ResultReaction.text = "god  %s  %s" % [
 		_belami_face_final(success), ("만족했다" if success else "시큰둥하다")
 	]
 	var stats := "획득 토큰: %d   ·   먹인 음식: %d개" % [awarded, _fed]

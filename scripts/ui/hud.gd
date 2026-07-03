@@ -32,5 +32,5 @@ func _phase_text(step: int) -> String:
 		GameManager.Step.SCAVENGE:
 			return "낮 · 탐사"
 		GameManager.Step.NIGHT:
-			return "밤 · 벨라미"
+			return "밤 · god"
 	return ""

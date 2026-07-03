@@ -30,7 +30,7 @@ theme_override_constants/separation = 14
 [node name="Title" type="Label" parent="Center/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 56
-text = "벨라미"
+text = "god"
 horizontal_alignment = 1
 
 [node name="Subtitle" type="Label" parent="Center/VBox"]
