@@ -64,6 +64,13 @@ def main() -> int:
         for col in OPTIONAL_COLS:
             if col in idx and r[idx[col]] is not None:
                 entry[col] = str(r[idx[col]]).strip()
+        # 캠프 개별 배치 좌표(바닥 비율 0~1). 비어 있으면 원형 자동 배치로 폴백.
+        for col in ("x", "y"):
+            if col in idx and r[idx[col]] is not None and str(r[idx[col]]).strip() != "":
+                try:
+                    entry[col] = float(r[idx[col]])
+                except (TypeError, ValueError):
+                    pass
         entries.append(entry)
 
     entries.sort(key=lambda e: e["threshold"])

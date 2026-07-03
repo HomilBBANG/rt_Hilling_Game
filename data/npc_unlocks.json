@@ -5,7 +5,9 @@
     "display_name": "하나",
     "role": "unique",
     "unlocks": "weapon_upgrade",
-    "note": "무기 제작/강화 해금"
+    "note": "무기 제작/강화 해금",
+    "x": 0.31,
+    "y": 0.28
   },
   {
     "threshold": 250,
@@ -13,7 +15,9 @@
     "display_name": "서린",
     "role": "placeable",
     "unlocks": "serving",
-    "note": "서빙 보조 배치 가능"
+    "note": "서빙 보조 배치 가능",
+    "x": 0.64,
+    "y": 0.45
   },
   {
     "threshold": 450,
@@ -21,7 +25,9 @@
     "display_name": "무림",
     "role": "placeable",
     "unlocks": "kitchen",
-    "note": "주방 보조 배치 가능"
+    "note": "주방 보조 배치 가능",
+    "x": 0.74,
+    "y": 0.72
   },
   {
     "threshold": 700,
@@ -29,6 +35,8 @@
     "display_name": "다인",
     "role": "unique",
     "unlocks": "new_region",
-    "note": "새 탐사 지역 해금"
+    "note": "새 탐사 지역 해금",
+    "x": 0.2,
+    "y": 0.82
   }
 ]

@@ -8,7 +8,7 @@ const _PALETTE := [
 	Color(0.9, 0.6, 0.3), Color(0.5, 0.82, 0.5),
 	Color(0.6, 0.66, 0.95), Color(0.86, 0.5, 0.72), Color(0.75, 0.8, 0.4),
 ]
-const _CORPSE_COLOR := Color(0.32, 0.32, 0.35)
+const _DEAD_TEX := preload("res://assets/npc/npc_a_dead.png") # 임시 시체 스프라이트
 
 var _figures := {} # npc_id -> {body:ColorRect, label:Label, color:Color}
 
@@ -20,7 +20,7 @@ var _pos_init := false
 @onready var _title: Label = $Body/VBox/Header
 @onready var _ground: Control = $Body/VBox/Ground
 @onready var _campfire: ColorRect = $Body/VBox/Ground/Campfire
-@onready var _belami: Label = $Body/VBox/Ground/Belami
+@onready var _belami: AnimatedSprite2D = $Body/VBox/Ground/Belami # god 캐릭터
 @onready var _player_fig: AnimatedSprite2D = $Body/VBox/Ground/Player
 @onready var _forge: VBoxContainer = $Body/VBox/Footer/UpgradePanel
 @onready var _tokens_label: Label = $Body/VBox/Footer/UpgradePanel/TokensLabel
@@ -90,12 +90,16 @@ func _build_figures() -> void:
 	var radius := minf(g.x, g.y) * 0.34
 
 	_campfire.position = center - _campfire.size * 0.5
-	_player_pos = center + Vector2(-radius - 40.0, 8.0)
+	# 플레이어·god 위치는 balance 엑셀(camp_player_x/y, camp_god_x/y, 비율 0~1)로 조정 가능.
+	_player_pos = _camp_pos("camp_player", g, center + Vector2(-radius - 40.0, 8.0))
 	_player_fig.sprite_frames = PlayerFrames.build("idle_hand", "run_hand")
 	_player_fig.play("idle")
+	_player_fig.flip_h = true # 스폰 시 오른쪽을 바라봄(이동 로직과 동일 규약: flip_h=true=우향)
 	_player_fig.position = _player_pos
 	_pos_init = true
-	_belami.position = center + Vector2(-radius - 40.0, -46.0) - _belami.size * 0.5
+	_belami.sprite_frames = GodFrames.build()
+	_belami.play("idle")
+	_belami.position = _camp_pos("camp_god", g, center + Vector2(-radius - 40.0, -46.0))
 
 	var entries := NpcUnlockDB.entries
 	var n := entries.size()
@@ -105,9 +109,21 @@ func _build_figures() -> void:
 			continue
 		var disp := String(entries[i].get("display_name", npc_id))
 		var color: Color = _PALETTE[i % _PALETTE.size()]
-		var ang := TAU * float(i) / maxf(1.0, float(n)) - PI * 0.5
-		var pos := center + Vector2(cos(ang), sin(ang)) * radius
+		# 엑셀 x,y(바닥 비율 0~1)가 있으면 개별 배치, 없으면 원형 자동 배치.
+		var pos: Vector2
+		if entries[i].has("x") and entries[i].has("y"):
+			pos = Vector2(float(entries[i]["x"]) * g.x, float(entries[i]["y"]) * g.y)
+		else:
+			var ang := TAU * float(i) / maxf(1.0, float(n)) - PI * 0.5
+			pos = center + Vector2(cos(ang), sin(ang)) * radius
 		_figures[npc_id] = _make_figure(npc_id, disp, color, pos)
+
+
+## balance 엑셀에 <prefix>_x/_y(바닥 비율 0~1)가 있으면 그 위치, 없으면 fallback.
+func _camp_pos(prefix: String, g: Vector2, fallback: Vector2) -> Vector2:
+	if Balance.has(prefix + "_x") and Balance.has(prefix + "_y"):
+		return Vector2(Balance.get_float(prefix + "_x", 0.5) * g.x, Balance.get_float(prefix + "_y", 0.5) * g.y)
+	return fallback
 
 
 func _make_figure(npc_id: String, disp: String, color: Color, pos: Vector2) -> Dictionary:
@@ -115,18 +131,21 @@ func _make_figure(npc_id: String, disp: String, color: Color, pos: Vector2) -> D
 	# 컷씬 대기 중이면(부활은 했지만 아직 안 보여줌) 시체 상태로 시작해 연출로 전환.
 	var shown := revived and npc_id not in NPCManager.pending_revivals()
 
-	var body := ColorRect.new()
-	body.size = Vector2(26, 30)
-	body.pivot_offset = body.size * 0.5
-	body.color = color if shown else _CORPSE_COLOR
-	body.rotation = 0.0 if shown else PI * 0.5 # 시체 = 누워 있음
-	body.position = pos - body.size * 0.5
+	# 시체/부활 모두 npc_a_dead 스프라이트 사용(임시). 상태는 회전+틴트로 구분.
+	var body := Sprite2D.new()
+	body.texture = _DEAD_TEX
+	body.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	body.scale = Vector2(3, 3) # 플레이어(32px @ scale 3)와 동일 크기
+	# 시체는 원본 밝기 그대로(npc_a_dead가 이미 '죽은' 그림). 부활 시 팔레트 색으로 틴트.
+	body.modulate = color if shown else Color(1, 1, 1)
+	body.rotation = 0.0 # 시체·부활 모두 똑바로 선 자세(회전 없음)
+	body.position = pos # Sprite2D 는 중심 기준
 	_ground.add_child(body)
 
 	var label := Label.new()
 	label.text = disp if shown else "???"
 	label.modulate = Color(1, 1, 1) if shown else Color(0.6, 0.6, 0.6)
-	label.position = pos + Vector2(-16.0, 22.0)
+	label.position = pos + Vector2(-16.0, 54.0) # 스프라이트(96px) 아래에 이름
 	_ground.add_child(label)
 
 	return {"body": body, "label": label, "color": color, "name": disp}
@@ -154,12 +173,12 @@ func _play_one(npc_id: String) -> void:
 	await get_tree().create_timer(0.6).timeout
 	if fig.is_empty():
 		return
-	var body: ColorRect = fig["body"]
+	var body: Sprite2D = fig["body"]
 	var label: Label = fig["label"]
 	var t := create_tween()
 	t.set_parallel(true)
 	t.tween_property(body, "rotation", 0.0, 1.0)
-	t.tween_property(body, "color", fig["color"], 1.0)
+	t.tween_property(body, "modulate", fig["color"], 1.0)
 	t.tween_property(body, "position", body.position - Vector2(0, 6), 1.0)
 	await t.finished
 	label.text = String(fig["name"])
