@@ -11,6 +11,9 @@ signal day_changed(day: int)
 var day: int = 1
 var current_step: int = Step.MORNING_PREP
 
+## 로비에서 지정하는 부팅 모드("new"/"load"). "" 면 main.gd 가 자동 판단(세이브 유무).
+var boot_mode: String = ""
+
 ## 하루 동안 탐사로 모은 채집물 {item_id: count}. 매일 아침 초기화.
 ## world_state 에 저장되어 밤 재진입 시에도 유지됨(PRD 3.7).
 var run_inventory: Dictionary = {}

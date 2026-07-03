@@ -12,7 +12,7 @@ config_version=5
 
 config/name="Hilling_Game"
 config/description="벨라미 — 2D 도트 생존/힐링 시뮬레이션"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/ui/lobby.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
