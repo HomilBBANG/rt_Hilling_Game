@@ -67,7 +67,7 @@ theme_override_constants/separation = 6
 [node name="HanaTitle" type="Label" parent="Body/VBox/Footer/UpgradePanel"]
 layout_mode = 2
 horizontal_alignment = 1
-text = "── 하나의 대장간 (무기 강화) ──"
+text = "── carter의 제작소 (무기 강화) ──"
 
 [node name="TokensLabel" type="Label" parent="Body/VBox/Footer/UpgradePanel"]
 layout_mode = 2

@@ -17,6 +17,13 @@ var _figures := {} # npc_id -> {body:ColorRect, label:Label, color:Color}
 var _player_pos := Vector2.ZERO
 var _pos_init := false
 
+## 제작(무기 강화)은 carter 에게 다가가 E 를 눌러야 열린다.
+const _INTERACT_RANGE := 90.0
+var _carter_pos := Vector2.ZERO
+var _carter_hint: Label = null
+var _forge_open := false
+var _e_was_down := false
+
 @onready var _title: Label = $Body/VBox/Header
 @onready var _ground: Control = $Body/VBox/Ground
 @onready var _campfire: ColorRect = $Body/VBox/Ground/Campfire
@@ -56,6 +63,28 @@ func _process(delta: float) -> void:
 		_player_fig.flip_h = dir.x > 0
 	elif _player_fig.animation != "idle":
 		_player_fig.play("idle")
+
+	_update_carter_interaction()
+
+
+## carter 근처면 안내 표시 + E(엣지)로 제작 패널 토글. 멀어지면 자동으로 닫힘.
+func _update_carter_interaction() -> void:
+	if _carter_hint == null:
+		return
+	var near := _player_pos.distance_to(_carter_pos) < _INTERACT_RANGE
+	_carter_hint.visible = near
+	if near:
+		_carter_hint.text = "E: 제작" if WeaponManager.upgrade_unlocked else "제작 (아직 잠김)"
+
+	var e_down := Input.is_physical_key_pressed(KEY_E)
+	if e_down and not _e_was_down and near and WeaponManager.upgrade_unlocked:
+		_forge_open = not _forge_open
+		_refresh_forge()
+	_e_was_down = e_down
+
+	if _forge_open and not near: # 멀어지면 닫기
+		_forge_open = false
+		_refresh_forge()
 
 
 func _input_dir() -> Vector2:
@@ -117,6 +146,21 @@ func _build_figures() -> void:
 			var ang := TAU * float(i) / maxf(1.0, float(n)) - PI * 0.5
 			pos = center + Vector2(cos(ang), sin(ang)) * radius
 		_figures[npc_id] = _make_figure(npc_id, disp, color, pos)
+		# 무기 제작을 해금하는 NPC(=carter)를 제작 상호작용 대상으로 지정.
+		if String(entries[i].get("unlocks", "")) == "weapon_upgrade":
+			_carter_pos = pos
+
+	_build_carter_hint()
+
+
+## 제작(무기강화) NPC 위에 표시할 상호작용 안내 라벨.
+func _build_carter_hint() -> void:
+	_carter_hint = Label.new()
+	_carter_hint.text = "E: 제작"
+	_carter_hint.modulate = Color(1.0, 0.95, 0.5)
+	_carter_hint.position = _carter_pos + Vector2(-24.0, -60.0)
+	_carter_hint.visible = false
+	_ground.add_child(_carter_hint)
 
 
 ## balance 엑셀에 <prefix>_x/_y(바닥 비율 0~1)가 있으면 그 위치, 없으면 fallback.
@@ -190,7 +234,8 @@ func _play_one(npc_id: String) -> void:
 # ── 하나의 대장간 (무기 강화) ──────────────────────────
 
 func _refresh_forge() -> void:
-	_forge.visible = WeaponManager.upgrade_unlocked
+	# carter 에게 다가가 E 로 열었을 때만 표시(해금 전이면 항상 숨김).
+	_forge.visible = _forge_open and WeaponManager.upgrade_unlocked
 	if not _forge.visible:
 		return
 	_tokens_label.text = "보유 토큰: %d" % GameManager.tokens

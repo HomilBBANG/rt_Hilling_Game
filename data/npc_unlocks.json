@@ -1,8 +1,8 @@
 [
   {
     "threshold": 100,
-    "npc_id": "hana",
-    "display_name": "하나",
+    "npc_id": "carter",
+    "display_name": "카터",
     "role": "unique",
     "unlocks": "weapon_upgrade",
     "note": "무기 제작/강화 해금",
@@ -11,8 +11,8 @@
   },
   {
     "threshold": 250,
-    "npc_id": "seorin",
-    "display_name": "서린",
+    "npc_id": "camila",
+    "display_name": "카밀라",
     "role": "placeable",
     "unlocks": "serving",
     "note": "서빙 보조 배치 가능",
@@ -21,8 +21,8 @@
   },
   {
     "threshold": 450,
-    "npc_id": "murim",
-    "display_name": "무림",
+    "npc_id": "emma",
+    "display_name": "엠마",
     "role": "placeable",
     "unlocks": "kitchen",
     "note": "주방 보조 배치 가능",
@@ -31,8 +31,8 @@
   },
   {
     "threshold": 700,
-    "npc_id": "dain",
-    "display_name": "다인",
+    "npc_id": "liam",
+    "display_name": "리암",
     "role": "unique",
     "unlocks": "new_region",
     "note": "새 탐사 지역 해금",
