@@ -1,8 +1,11 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/characters/gun.png" id="2"]
+[ext_resource type="Texture2D" path="res://assets/characters/arm.png" id="3"]
 
 [node name="HUD" type="Control"]
+process_mode = 3
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -27,3 +30,113 @@ text = "Day 1"
 [node name="PhaseLabel" type="Label" parent="TopBar"]
 layout_mode = 2
 text = "아침 · 준비"
+
+[node name="Inventory" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Dim" type="ColorRect" parent="Inventory"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.06, 0.05, 0.08, 0.93)
+
+[node name="Divider" type="ColorRect" parent="Inventory"]
+layout_mode = 0
+offset_left = 639.0
+offset_right = 641.0
+offset_bottom = 720.0
+color = Color(0.3, 0.3, 0.36, 1)
+
+[node name="LeftTitle" type="Label" parent="Inventory"]
+layout_mode = 0
+offset_left = 48.0
+offset_top = 24.0
+offset_right = 300.0
+offset_bottom = 60.0
+theme_override_font_sizes/font_size = 26
+text = "장비"
+
+[node name="CharView" type="Node2D" parent="Inventory"]
+position = Vector2(300, 320)
+scale = Vector2(6, 6)
+
+[node name="Body" type="AnimatedSprite2D" parent="Inventory/CharView"]
+texture_filter = 1
+flip_h = true
+
+[node name="Gun" type="Sprite2D" parent="Inventory/CharView"]
+texture_filter = 1
+position = Vector2(-1, -5)
+texture = ExtResource("2")
+offset = Vector2(9, 2)
+flip_h = true
+
+[node name="Arm" type="Sprite2D" parent="Inventory/CharView"]
+texture_filter = 1
+position = Vector2(-5, -4)
+texture = ExtResource("3")
+offset = Vector2(6, 5)
+flip_h = true
+
+[node name="Equip" type="VBoxContainer" parent="Inventory"]
+layout_mode = 0
+offset_left = 60.0
+offset_top = 470.0
+offset_right = 580.0
+offset_bottom = 600.0
+theme_override_constants/separation = 8
+
+[node name="EquipTitle" type="Label" parent="Inventory/Equip"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.75, 0.8, 1)
+text = "── 착용 장비 ──"
+
+[node name="RangedLabel" type="Label" parent="Inventory/Equip"]
+layout_mode = 2
+text = "원거리: -"
+
+[node name="MeleeLabel" type="Label" parent="Inventory/Equip"]
+layout_mode = 2
+text = "근접: -"
+
+[node name="SwitchNote" type="Label" parent="Inventory/Equip"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.75, 1)
+text = "── 무기 변경 ──"
+
+[node name="WeaponList" type="VBoxContainer" parent="Inventory/Equip"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="RightTitle" type="Label" parent="Inventory"]
+layout_mode = 0
+offset_left = 680.0
+offset_top = 24.0
+offset_right = 1000.0
+offset_bottom = 60.0
+theme_override_font_sizes/font_size = 26
+text = "가방"
+
+[node name="BagGrid" type="GridContainer" parent="Inventory"]
+layout_mode = 0
+offset_left = 680.0
+offset_top = 72.0
+offset_right = 1240.0
+offset_bottom = 680.0
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+columns = 6
+
+[node name="Hint" type="Label" parent="Inventory"]
+layout_mode = 0
+offset_left = 48.0
+offset_top = 660.0
+offset_right = 600.0
+offset_bottom = 690.0
+theme_override_colors/font_color = Color(0.7, 0.7, 0.75, 1)
+text = "I: 닫기"
