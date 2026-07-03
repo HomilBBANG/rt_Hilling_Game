@@ -18,7 +18,7 @@
 
 ## 엑셀 연동 (데이터 드리븐)
 - NPC 해금표: `data/npc_unlocks.xlsx` → `python tools/convert_npc_unlocks.py` → `data/npc_unlocks.json`
-- 밸런스: `data/balance.xlsx` → `python tools/convert_balance.py` → `data/balance.json` (player_speed/scavenge_seconds/night_seconds/target_satisfaction)
+- 밸런스: `data/balance.xlsx` → `python tools/convert_balance.py` → `data/balance.json` (player_speed/scavenge_seconds/night_seconds/target_satisfaction/cook_player_speed)
   - **무기 사거리(px)**: `<무기id>_range` 키로 무기별 조정 — 현재 `pistol_range`(총알 이동거리), `knife_range`(칼 부채꼴 반경). WeaponManager.range_of()가 장착 무기 id로 조회, 없으면 기본값(900/64)
 - Python + Pillow + numpy 설치됨(에셋 처리). pip는 `python -m pip`.
 
@@ -34,6 +34,7 @@
 - 개별 확대 금지 → **카메라 줌**으로 통일(Camera2D zoom=2). 단 캠프/밤은 UI라 AnimatedSprite2D scale=3
 - 권장 크기: 배경 32×32(이음매 없는 타일), 몬스터 32×32(보스 64×64), 장애물 바위 32×32/나무 48×64~64×96, 플레이어 32×32
 - gif → 프레임 추출: `assets/characters/run/run_N.png`, `assets/characters/idle/idle_N.png` (Python PIL). PlayerFrames가 경로로 로드
+- idle 변형: `PlayerFrames.build(idle_name)` — 기본 "idle"(탐사), **캠프·요리는 "idle_hand"**(`assets/characters/idle_hand/idle_hand_N.png`, player_idle_hand.gif에서 추출)
 - 단색 배경 시트는 numpy 크로마키 후 슬라이스(과거 obj_1 방식)
 
 ## ✅ 팔/총 어깨 정렬 — 완료

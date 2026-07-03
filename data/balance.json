@@ -3,6 +3,7 @@
   "scavenge_seconds": 150,
   "night_seconds": 60,
   "target_satisfaction": 60,
-  "pistol_range": 900,
-  "knife_range": 64
+  "pistol_range": 160,
+  "knife_range": 60,
+  "cook_player_speed": 260
 }

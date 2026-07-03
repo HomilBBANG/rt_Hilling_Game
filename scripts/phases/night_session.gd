@@ -57,6 +57,7 @@ var _pos_init := false
 func _ready() -> void:
 	run_seconds = Balance.get_float("night_seconds", run_seconds) # 엑셀 조정 가능
 	target_satisfaction = Balance.get_float("target_satisfaction", target_satisfaction)
+	move_speed = Balance.get_float("cook_player_speed", move_speed) # 요리 스테이지 이동 속도(엑셀 조정)
 	_time_left = run_seconds
 	_sat_bar.max_value = target_satisfaction
 	_sat_bar.value = 0
@@ -91,7 +92,7 @@ func _update_field(_delta: float) -> void:
 		return
 	if not _pos_init:
 		_player_pos = Vector2(40.0, _field.size.y * 0.5)
-		_player_node.sprite_frames = PlayerFrames.build()
+		_player_node.sprite_frames = PlayerFrames.build("idle_hand")
 		_player_node.play("idle")
 		_pos_init = true
 
