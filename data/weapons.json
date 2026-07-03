@@ -1,0 +1,42 @@
+[
+  {
+    "id": "pistol",
+    "display_name": "권총",
+    "kind": "ranged",
+    "base_damage": 25,
+    "craft_cost": 0,
+    "uses_ammo": true
+  },
+  {
+    "id": "knife",
+    "display_name": "나이프",
+    "kind": "melee",
+    "base_damage": 45,
+    "craft_cost": 0,
+    "uses_ammo": false
+  },
+  {
+    "id": "rifle",
+    "display_name": "라이플",
+    "kind": "ranged",
+    "base_damage": 40,
+    "craft_cost": 60,
+    "uses_ammo": true
+  },
+  {
+    "id": "shotgun",
+    "display_name": "샷건",
+    "kind": "ranged",
+    "base_damage": 60,
+    "craft_cost": 120,
+    "uses_ammo": true
+  },
+  {
+    "id": "sword",
+    "display_name": "검",
+    "kind": "melee",
+    "base_damage": 75,
+    "craft_cost": 90,
+    "uses_ammo": false
+  }
+]

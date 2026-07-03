@@ -17,10 +17,12 @@ const RANGED_RANGE_BASE := 900.0
 const MELEE_RANGE_BASE := 64.0
 
 var ammo: int = 12
-var upgrade_unlocked: bool = false        # '하나' 부활 시 true
+var upgrade_unlocked: bool = false        # 'carter' 부활 시 true (무기 강화/제작 해금)
 var ranged_level: int = 0
 var melee_level: int = 0
 var equipped := {"ranged": "pistol", "melee": "knife"}
+## 보유 무기 id 목록(제작으로 늘어남). 기본은 WeaponDB 의 craft_cost=0 무기.
+var owned: Array = ["pistol", "knife"]
 
 
 func add_ammo(amount: int) -> void:
@@ -44,12 +46,64 @@ func unlock_upgrades() -> void:
 	weapons_changed.emit()
 
 
+## 데미지 = 장착 무기의 기본 공격력(WeaponDB) + 슬롯 강화 레벨 보너스.
 func ranged_damage() -> float:
-	return RANGED_BASE + ranged_level * RANGED_STEP
+	return _base_damage(str(equipped["ranged"]), RANGED_BASE) + ranged_level * RANGED_STEP
 
 
 func melee_damage() -> float:
-	return MELEE_BASE + melee_level * MELEE_STEP
+	return _base_damage(str(equipped["melee"]), MELEE_BASE) + melee_level * MELEE_STEP
+
+
+func _base_damage(id: String, fallback: float) -> float:
+	var d := WeaponDB.base_damage(id)
+	return d if d > 0.0 else fallback
+
+
+# ── 보유 / 제작 / 장착 ─────────────────────────────────
+
+func is_owned(id: String) -> bool:
+	return id in owned
+
+
+func weapon_craft_cost(id: String) -> int:
+	return WeaponDB.craft_cost(id)
+
+
+## 제작 가능한(아직 미보유, craft_cost>0) 무기 id 목록.
+func craftable_ids() -> Array:
+	var out: Array = []
+	for w in WeaponDB.weapons:
+		var id := String(w.get("id", ""))
+		if id != "" and int(w.get("craft_cost", 0)) > 0 and not is_owned(id):
+			out.append(id)
+	return out
+
+
+func can_craft(id: String) -> bool:
+	return upgrade_unlocked and not is_owned(id) and GameManager.tokens >= weapon_craft_cost(id)
+
+
+## 토큰을 소모해 새 무기를 제작(보유 목록에 추가). 성공 시 true.
+func craft_weapon(id: String) -> bool:
+	if not can_craft(id):
+		return false
+	GameManager.tokens -= weapon_craft_cost(id)
+	owned.append(id)
+	weapons_changed.emit()
+	return true
+
+
+## 보유 무기를 해당 종류 슬롯에 장착. 성공 시 true.
+func equip_weapon(id: String) -> bool:
+	if not is_owned(id):
+		return false
+	var kind := WeaponDB.kind_of(id)
+	if kind != "ranged" and kind != "melee":
+		return false
+	equipped[kind] = id
+	weapons_changed.emit()
+	return true
 
 
 func current_damage(kind: String) -> float:
@@ -111,6 +165,7 @@ func to_dict() -> Dictionary:
 		"ranged_level": ranged_level,
 		"melee_level": melee_level,
 		"equipped": equipped,
+		"owned": owned,
 	}
 
 
@@ -120,3 +175,12 @@ func from_dict(d: Dictionary) -> void:
 	ranged_level = int(d.get("ranged_level", 0))
 	melee_level = int(d.get("melee_level", 0))
 	equipped = d.get("equipped", {"ranged": "pistol", "melee": "knife"})
+	# 보유 무기: 세이브값 우선, 없으면 WeaponDB 기본 보유(craft_cost=0).
+	var saved_owned: Array = d.get("owned", [])
+	if saved_owned.is_empty():
+		var defaults := WeaponDB.default_owned()
+		owned = defaults if not defaults.is_empty() else ["pistol", "knife"]
+	else:
+		owned = []
+		for id in saved_owned:
+			owned.append(String(id))
