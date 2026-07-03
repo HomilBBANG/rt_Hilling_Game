@@ -92,10 +92,26 @@ func advance() -> void:
 			_end_day()
 
 
-## 탐사 종료 시 Scavenge 씬이 호출. 채집물을 합산하고 밤으로 진행.
-func finish_scavenge(loot: Dictionary) -> void:
-	for k in loot.keys():
-		run_inventory[k] = int(run_inventory.get(k, 0)) + int(loot[k])
+## 인벤토리(가방)에 아이템 추가. 탐사 중 채집 즉시 호출되어 인벤토리에 바로 반영된다.
+func add_item(item_id: String, amount: int) -> void:
+	if item_id == "" or amount == 0:
+		return
+	run_inventory[item_id] = int(run_inventory.get(item_id, 0)) + amount
+
+
+## 인벤토리에서 아이템 제거(강제 귀환 패널티 등). 0 미만으로 내려가지 않는다.
+func remove_item(item_id: String, amount: int) -> void:
+	if not run_inventory.has(item_id):
+		return
+	var left := int(run_inventory[item_id]) - amount
+	if left > 0:
+		run_inventory[item_id] = left
+	else:
+		run_inventory.erase(item_id)
+
+
+## 탐사 종료 시 Scavenge 씬이 호출(채집물은 이미 add_item 으로 반영됨). 밤으로 진행.
+func finish_scavenge() -> void:
 	advance()
 
 
@@ -115,7 +131,7 @@ func _goto_step(step: int) -> void:
 	current_step = step
 	# 페이즈 시작 시점 자동 저장 (PRD 3.7: 아침 시작 / 밤 시작 두 지점)
 	if step == Step.MORNING_PREP:
-		run_inventory.clear() # 새 아침 → 지난날 채집물 정리
+		# 채집물은 비우지 않고 누적(인벤토리에 계속 쌓임). 요리로 소비.
 		_autosave("morning")
 	elif step == Step.NIGHT:
 		_autosave("night")

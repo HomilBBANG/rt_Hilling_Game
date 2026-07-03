@@ -105,9 +105,10 @@ func _process(delta: float) -> void:
 	_update_hud()
 
 
-## ResourceNode / 몬스터 드롭이 호출.
+## ResourceNode / 몬스터 드롭이 호출. 채집 즉시 인벤토리(run_inventory)에 반영.
 func add_loot(item_id: String, amount: int) -> void:
-	_loot[item_id] = int(_loot.get(item_id, 0)) + amount
+	_loot[item_id] = int(_loot.get(item_id, 0)) + amount # 이번 탐사분(HUD 요약 + 패널티 계산용)
+	GameManager.add_item(item_id, amount)                 # 인벤토리에 즉시 누적
 	_discover_item(item_id) # 도감 등록 → 레시피 해금 트리거(예: 감자 → 감자튀김)
 	_update_hud()
 
@@ -160,12 +161,11 @@ func _finish(forced: bool) -> void:
 	if _returning:
 		return
 	_returning = true
-	var loot := _loot.duplicate()
 	if forced:
-		# 가벼운 패널티(PRD 3.1): 채집물 절반 손실
-		for k in loot.keys():
-			loot[k] = int(loot[k]) / 2
-	GameManager.finish_scavenge(loot)
+		# 가벼운 패널티(PRD 3.1): 이번 탐사 채집물의 절반을 인벤토리에서 회수.
+		for k in _loot.keys():
+			GameManager.remove_item(String(k), int(_loot[k]) / 2)
+	GameManager.finish_scavenge()
 
 
 func _update_hud() -> void:
