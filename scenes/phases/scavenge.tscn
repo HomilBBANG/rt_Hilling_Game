@@ -1,13 +1,14 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene format=3 uid="uid://6jk7m155jm2m"]
 
-[ext_resource type="Script" path="res://scripts/phases/scavenge.gd" id="1"]
-[ext_resource type="PackedScene" path="res://scenes/entities/player/player.tscn" id="2"]
+[ext_resource type="Script" uid="uid://bxb8fid4u3po5" path="res://scripts/phases/scavenge.gd" id="1"]
+[ext_resource type="PackedScene" uid="uid://b5aoyjikw8poc" path="res://scenes/entities/player/player.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://scenes/entities/monster/monster.tscn" id="3"]
 [ext_resource type="PackedScene" path="res://scenes/entities/pickups/resource_node.tscn" id="4"]
 [ext_resource type="PackedScene" path="res://scenes/entities/pickups/ammo_pickup.tscn" id="5"]
-[ext_resource type="Texture2D" path="res://assets/tiles/grass.png" id="6"]
-[ext_resource type="Texture2D" path="res://assets/ui/hp_fill.png" id="7"]
-[ext_resource type="Texture2D" path="res://assets/ui/hp_frame.png" id="8"]
+[ext_resource type="Texture2D" uid="uid://chlmgvq3vs5bv" path="res://assets/backgrounds/explor_bg_1.png" id="6"]
+[ext_resource type="Texture2D" uid="uid://bdc5n5nfraldp" path="res://assets/ui/hp_fill.png" id="7"]
+[ext_resource type="Texture2D" uid="uid://dwbuvuslj6ddj" path="res://assets/ui/hp_frame.png" id="8"]
+[ext_resource type="PackedScene" uid="uid://c77o3mrl2phx7" path="res://scenes/entities/props/tree.tscn" id="9"]
 
 [sub_resource type="RectangleShape2D" id="wallH"]
 size = Vector2(3200, 20)
@@ -18,7 +19,7 @@ size = Vector2(20, 2400)
 [sub_resource type="RectangleShape2D" id="exit"]
 size = Vector2(200, 90)
 
-[node name="Scavenge" type="Node2D" groups=["scavenge"]]
+[node name="Scavenge" type="Node2D" unique_id=111250284 groups=["scavenge"]]
 y_sort_enabled = true
 script = ExtResource("1")
 player_scene = ExtResource("2")
@@ -26,110 +27,127 @@ monster_scene = ExtResource("3")
 resource_scene = ExtResource("4")
 ammo_scene = ExtResource("5")
 
-[node name="Floor" type="Sprite2D" parent="."]
-texture_filter = 1
-texture_repeat = 2
+[node name="Floor" type="Sprite2D" parent="." unique_id=1590863966]
 z_index = -100
-centered = false
 texture = ExtResource("6")
-region_enabled = true
-region_rect = Rect2(0, 0, 3200, 2400)
+centered = false
 
-[node name="Walls" type="StaticBody2D" parent="."]
+[node name="Tree1" parent="." unique_id=1253934212 instance=ExtResource("9")]
+position = Vector2(600, 700)
+
+[node name="Tree2" parent="." unique_id=604468019 instance=ExtResource("9")]
+position = Vector2(2400, 820)
+
+[node name="Tree3" parent="." unique_id=1427089920 instance=ExtResource("9")]
+position = Vector2(1000, 1700)
+
+[node name="Tree4" parent="." unique_id=1189895235 instance=ExtResource("9")]
+position = Vector2(2600, 1950)
+
+[node name="Tree5" parent="." unique_id=702310479 instance=ExtResource("9")]
+position = Vector2(430, 1500)
+
+[node name="Tree6" parent="." unique_id=1930605607 instance=ExtResource("9")]
+position = Vector2(943, 1678)
+
+[node name="Tree7" parent="." unique_id=1113656984 instance=ExtResource("9")]
+position = Vector2(975, 1626)
+
+[node name="Walls" type="StaticBody2D" parent="." unique_id=542807099]
 collision_layer = 8
 collision_mask = 0
 
-[node name="Top" type="CollisionShape2D" parent="Walls"]
+[node name="Top" type="CollisionShape2D" parent="Walls" unique_id=1367425938]
 position = Vector2(1600, 10)
 shape = SubResource("wallH")
 
-[node name="Bottom" type="CollisionShape2D" parent="Walls"]
+[node name="Bottom" type="CollisionShape2D" parent="Walls" unique_id=1987957560]
 position = Vector2(1600, 2390)
 shape = SubResource("wallH")
 
-[node name="Left" type="CollisionShape2D" parent="Walls"]
+[node name="Left" type="CollisionShape2D" parent="Walls" unique_id=1539230792]
 position = Vector2(10, 1200)
 shape = SubResource("wallV")
 
-[node name="Right" type="CollisionShape2D" parent="Walls"]
+[node name="Right" type="CollisionShape2D" parent="Walls" unique_id=1823872467]
 position = Vector2(3190, 1200)
 shape = SubResource("wallV")
 
-[node name="PlayerStart" type="Marker2D" parent="."]
+[node name="PlayerStart" type="Marker2D" parent="." unique_id=1057325105]
 position = Vector2(1600, 1200)
 
-[node name="AmmoSpawns" type="Node2D" parent="."]
+[node name="AmmoSpawns" type="Node2D" parent="." unique_id=1580352967]
 
-[node name="A1" type="Marker2D" parent="AmmoSpawns"]
+[node name="A1" type="Marker2D" parent="AmmoSpawns" unique_id=1705573807]
 position = Vector2(250, 250)
 
-[node name="A2" type="Marker2D" parent="AmmoSpawns"]
+[node name="A2" type="Marker2D" parent="AmmoSpawns" unique_id=1212466554]
 position = Vector2(2950, 250)
 
-[node name="A3" type="Marker2D" parent="AmmoSpawns"]
+[node name="A3" type="Marker2D" parent="AmmoSpawns" unique_id=996519650]
 position = Vector2(250, 2150)
 
-[node name="A4" type="Marker2D" parent="AmmoSpawns"]
+[node name="A4" type="Marker2D" parent="AmmoSpawns" unique_id=1298617271]
 position = Vector2(2950, 2150)
 
-[node name="A5" type="Marker2D" parent="AmmoSpawns"]
+[node name="A5" type="Marker2D" parent="AmmoSpawns" unique_id=682535020]
 position = Vector2(1600, 350)
 
-[node name="A6" type="Marker2D" parent="AmmoSpawns"]
+[node name="A6" type="Marker2D" parent="AmmoSpawns" unique_id=1225081141]
 position = Vector2(1600, 2050)
 
-[node name="A7" type="Marker2D" parent="AmmoSpawns"]
+[node name="A7" type="Marker2D" parent="AmmoSpawns" unique_id=1374567756]
 position = Vector2(700, 1200)
 
-[node name="A8" type="Marker2D" parent="AmmoSpawns"]
+[node name="A8" type="Marker2D" parent="AmmoSpawns" unique_id=25684883]
 position = Vector2(2500, 1200)
 
-[node name="ExitZone" type="Area2D" parent="."]
+[node name="ExitZone" type="Area2D" parent="." unique_id=1276427600]
 position = Vector2(1600, 2340)
 collision_layer = 0
-collision_mask = 1
 
-[node name="ExitCol" type="CollisionShape2D" parent="ExitZone"]
+[node name="ExitCol" type="CollisionShape2D" parent="ExitZone" unique_id=1558720675]
 shape = SubResource("exit")
 
-[node name="ExitVis" type="Polygon2D" parent="ExitZone"]
+[node name="ExitVis" type="Polygon2D" parent="ExitZone" unique_id=1019639682]
 color = Color(0.3, 0.7, 0.55, 0.7)
 polygon = PackedVector2Array(-100, -45, 100, -45, 100, 45, -100, 45)
 
-[node name="HUD" type="CanvasLayer" parent="."]
+[node name="HUD" type="CanvasLayer" parent="." unique_id=258991113]
 
-[node name="Root" type="Control" parent="HUD"]
+[node name="Root" type="Control" parent="HUD" unique_id=1253404769]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
 
-[node name="Stats" type="VBoxContainer" parent="HUD/Root"]
+[node name="Stats" type="VBoxContainer" parent="HUD/Root" unique_id=800925907]
 layout_mode = 1
-anchors_preset = 0
 offset_left = 12.0
 offset_top = 52.0
 offset_right = 300.0
 offset_bottom = 180.0
 
-[node name="TimeLabel" type="Label" parent="HUD/Root/Stats"]
+[node name="TimeLabel" type="Label" parent="HUD/Root/Stats" unique_id=153985592]
 layout_mode = 2
 text = "남은 시간: 90초"
 
-[node name="StaminaLabel" type="Label" parent="HUD/Root/Stats"]
+[node name="StaminaLabel" type="Label" parent="HUD/Root/Stats" unique_id=504687072]
 layout_mode = 2
 text = "스태미나: 100"
 
-[node name="AmmoLabel" type="Label" parent="HUD/Root/Stats"]
+[node name="AmmoLabel" type="Label" parent="HUD/Root/Stats" unique_id=421909862]
 layout_mode = 2
 text = "탄약: 12"
 
-[node name="LootLabel" type="Label" parent="HUD/Root/Stats"]
+[node name="LootLabel" type="Label" parent="HUD/Root/Stats" unique_id=791965490]
 layout_mode = 2
 text = "채집: 없음"
 
-[node name="Hint" type="Label" parent="HUD/Root"]
+[node name="Hint" type="Label" parent="HUD/Root" unique_id=1576992162]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -137,45 +155,51 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 offset_top = -40.0
 offset_bottom = -12.0
-horizontal_alignment = 1
+grow_horizontal = 2
+grow_vertical = 0
 text = "이동 WASD · 사격 좌클릭 · 근접 우클릭 · 아래 초록 출구에서 E로 귀환"
+horizontal_alignment = 1
 
-[node name="HpBar" type="TextureProgressBar" parent="HUD/Root"]
+[node name="HpBar" type="TextureProgressBar" parent="HUD/Root" unique_id=1894306449]
 texture_filter = 1
 layout_mode = 1
+anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 16.0
 offset_top = -76.0
 offset_right = 96.0
 offset_bottom = -56.0
+grow_vertical = 0
 scale = Vector2(3, 3)
-max_value = 100.0
 value = 100.0
-fill_mode = 0
-tint_under = Color(0.22, 0.22, 0.22, 1)
 texture_under = ExtResource("7")
 texture_progress = ExtResource("7")
+tint_under = Color(0.22, 0.22, 0.22, 1)
 
-[node name="HpFrame" type="TextureRect" parent="HUD/Root"]
+[node name="HpFrame" type="TextureRect" parent="HUD/Root" unique_id=2130982940]
 texture_filter = 1
 layout_mode = 1
+anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 16.0
 offset_top = -76.0
 offset_right = 96.0
 offset_bottom = -56.0
+grow_vertical = 0
 scale = Vector2(3, 3)
 mouse_filter = 2
 texture = ExtResource("8")
 
-[node name="HpText" type="Label" parent="HUD/Root"]
+[node name="HpText" type="Label" parent="HUD/Root" unique_id=355667482]
 layout_mode = 1
+anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 16.0
 offset_top = -96.0
 offset_right = 120.0
 offset_bottom = -78.0
+grow_vertical = 0
 text = "HP"
