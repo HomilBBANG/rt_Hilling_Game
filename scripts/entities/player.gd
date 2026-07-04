@@ -134,6 +134,17 @@ func take_hit(amount: float) -> void:
 	if _invuln > 0.0:
 		return
 	_invuln = 0.8
+	_flash_white()
 	stamina = maxf(0.0, stamina - amount)
 	if stamina <= 0.0:
 		stamina_depleted.emit()
+
+
+## 피격 시 흰색으로 번쩍(0.2초). modulate 를 밝게 올렸다가 원래대로 되돌린다.
+var _flash_tween: Tween
+func _flash_white() -> void:
+	if _flash_tween and _flash_tween.is_valid():
+		_flash_tween.kill()
+	modulate = Color(5, 5, 5)
+	_flash_tween = create_tween()
+	_flash_tween.tween_property(self, "modulate", Color(1, 1, 1), 0.1)

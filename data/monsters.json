@@ -15,7 +15,9 @@
     "drop_item": "scrap_metal",
     "drop_chance": 1,
     "drop_min": 1,
-    "drop_max": 2
+    "drop_max": 2,
+    "is_boss": false,
+    "scale": 1
   },
   {
     "id": "monster_b",
@@ -32,7 +34,9 @@
     "drop_item": "scrap_metal",
     "drop_chance": 1,
     "drop_min": 1,
-    "drop_max": 3
+    "drop_max": 3,
+    "is_boss": false,
+    "scale": 1
   },
   {
     "id": "monster_c",
@@ -49,6 +53,28 @@
     "drop_item": "scrap_metal",
     "drop_chance": 0.7,
     "drop_min": 1,
-    "drop_max": 1
+    "drop_max": 1,
+    "is_boss": false,
+    "scale": 1
+  },
+  {
+    "id": "ruins_boss",
+    "display_name": "폐허의 파수꾼",
+    "max_hp": 300,
+    "contact_damage": 30,
+    "speed": 72,
+    "detection_range": 340,
+    "chase_duration": 9,
+    "wander_radius": 90,
+    "wander_speed": 28,
+    "sprite": "monster_a",
+    "attack_range": 78,
+    "attack_cooldown": 1.8,
+    "drop_item": "scrap_metal",
+    "drop_chance": 1,
+    "drop_min": 6,
+    "drop_max": 12,
+    "is_boss": true,
+    "scale": 2.6
   }
 ]

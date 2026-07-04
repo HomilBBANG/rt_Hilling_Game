@@ -43,8 +43,9 @@ NUMERIC = {
     "max_hp", "contact_damage", "speed", "detection_range",
     "chase_duration", "wander_radius", "wander_speed",
     "stop_distance", "attack_range", "attack_cooldown", "attack_windup",
-    "drop_chance", "drop_min", "drop_max",
+    "drop_chance", "drop_min", "drop_max", "scale",
 }
+BOOLEAN = {"is_boss"}
 
 
 def coerce_num(v):
@@ -91,7 +92,12 @@ def main() -> int:
             val = r[i] if i < len(r) else None
             if val is None:
                 continue
-            rec[col] = coerce_num(val) if col in NUMERIC else str(val).strip()
+            if col in NUMERIC:
+                rec[col] = coerce_num(val)
+            elif col in BOOLEAN:
+                rec[col] = str(val).strip().lower() in ("1", "true", "yes", "y", "o")
+            else:
+                rec[col] = str(val).strip()
         if not rec.get("id"):
             continue
         monsters.append(rec)

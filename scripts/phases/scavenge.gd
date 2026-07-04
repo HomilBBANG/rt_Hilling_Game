@@ -58,14 +58,25 @@ func _spawn_world() -> void:
 		_player.stamina_depleted.connect(_on_stamina_depleted)
 	_set_camera_limits()
 
-	# 몬스터 종류/능력치는 엑셀(data/monsters.xlsx → MonsterDB)에서 읽어 순환 배치.
+	# 일반 몬스터(보스 제외) 순환 배치.
 	for i in monster_count:
 		var mon := monster_scene.instantiate()
-		_apply_monster_type(mon, MonsterDB.get_type(i))
+		_apply_monster_type(mon, MonsterDB.get_regular(i))
 		if mon.drop_item_id == "": # 종류에 드롭 아이템이 없으면 지역 재료로 폴백
 			mon.drop_item_id = _pick_material_id()
 		add_child(mon) # exports 를 _ready 전에 주입
 		mon.global_position = _random_spawn_pos(true)
+
+	# 지역 보스(region.boss_id) 1마리 — 플레이어 시작 반대편 먼 곳에.
+	if _region and _region.boss_id != "":
+		var boss_data := MonsterDB.get_by_id(_region.boss_id)
+		if not boss_data.is_empty():
+			var boss := monster_scene.instantiate()
+			_apply_monster_type(boss, boss_data)
+			if boss.drop_item_id == "":
+				boss.drop_item_id = _pick_material_id()
+			add_child(boss)
+			boss.global_position = Vector2(MAP_SIZE.x * 0.5, 320.0) # 상단 중앙(시작 지점서 멀리)
 
 	for i in resource_count:
 		var node := resource_scene.instantiate()
@@ -105,6 +116,10 @@ func _apply_monster_type(mon: Node, t: Dictionary) -> void:
 	mon.drop_chance = float(t.get("drop_chance", 1.0))
 	mon.drop_min = int(t.get("drop_min", 1))
 	mon.drop_max = int(t.get("drop_max", 1))
+	# 보스 여부/크기.
+	mon.is_boss = bool(t.get("is_boss", false))
+	mon.visual_scale = float(t.get("scale", 1.0))
+	mon.display_name = String(t.get("display_name", ""))
 
 
 func _process(delta: float) -> void:

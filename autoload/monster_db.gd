@@ -42,3 +42,28 @@ func get_type(i: int) -> Dictionary:
 	if types.is_empty():
 		return {}
 	return types[i % types.size()]
+
+
+## id 로 몬스터 종류 조회(보스 등). 없으면 빈 사전.
+func get_by_id(id: String) -> Dictionary:
+	for t in types:
+		if String(t.get("id", "")) == id:
+			return t
+	return {}
+
+
+## 보스를 제외한 일반 몬스터 종류 목록(일반 스폰 풀).
+func regular_types() -> Array:
+	var out: Array = []
+	for t in types:
+		if not bool(t.get("is_boss", false)):
+			out.append(t)
+	return out
+
+
+## i 번째 일반 몬스터 종류(순환). 없으면 빈 사전.
+func get_regular(i: int) -> Dictionary:
+	var reg := regular_types()
+	if reg.is_empty():
+		return {}
+	return reg[i % reg.size()]

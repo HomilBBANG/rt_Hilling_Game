@@ -30,6 +30,11 @@ enum State { IDLE, CHASE }
 @export var drop_min := 1        # 최소 수량
 @export var drop_max := 1        # 최대 수량
 
+## 보스 옵션.
+@export var is_boss := false     # 지역 보스 여부(이름표+HP 바 표시)
+@export var visual_scale := 1.0  # 스프라이트 배율(보스는 크게)
+@export var display_name := ""   # 이름표 텍스트
+
 const _LOOT_RANGE := 46.0        # 시체 루팅 상호작용 거리
 const _LOOT_TIME := 2.0          # E 누른 뒤 아이템이 나오기까지 시간(초)
 
@@ -59,6 +64,7 @@ var _wander_pause := 0.0
 func _ready() -> void:
 	hp = max_hp
 	_setup_visual()
+	_apply_scale_and_boss()
 	# 인스턴스별 고유 감지 반경 적용(공유 리소스 오염 방지).
 	var det := CircleShape2D.new()
 	det.radius = detection_range
@@ -68,6 +74,15 @@ func _ready() -> void:
 	# 감지 반경 디버그 표시 토글(테스트용).
 	Config.detection_range_visibility_changed.connect(func(_v): queue_redraw())
 	queue_redraw()
+
+
+## 비주얼 크기(보스는 크게) 적용. (보스 이름표·HP 바는 표시하지 않음)
+func _apply_scale_and_boss() -> void:
+	if visual_scale != 1.0:
+		if _sprite:
+			_sprite.scale = Vector2(visual_scale, visual_scale)
+		elif has_node("Body"):
+			$Body.scale = Vector2(visual_scale, visual_scale)
 
 
 ## sprite_id 가 지정되고 프레임이 있으면 AnimatedSprite2D 로 표시(idle + walk), 없으면 사각형 유지.
@@ -246,9 +261,22 @@ func _pick_wander_target() -> void:
 
 func take_damage(amount: float) -> void:
 	hp -= amount
+	_flash_white()
 	_aggro_from_hit() # 피격 시 감지 반경 밖이어도 추적 시작
 	if hp <= 0.0:
 		_die()
+
+
+## 피격 시 흰색으로 번쩍(0.2초).
+var _flash_tween: Tween
+func _flash_white() -> void:
+	if _dead:
+		return
+	if _flash_tween and _flash_tween.is_valid():
+		_flash_tween.kill()
+	modulate = Color(5, 5, 5)
+	_flash_tween = create_tween()
+	_flash_tween.tween_property(self, "modulate", Color(1, 1, 1), 0.1)
 
 
 ## 공격당하면(먼 거리 포함) 플레이어를 추적. 플레이어는 그룹으로 탐색.
