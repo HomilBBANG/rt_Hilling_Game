@@ -23,6 +23,7 @@ var _inv_open := false
 # 우클릭 컨텍스트 메뉴 + 버리기 수량 다이얼로그(코드로 구성).
 var _ctx_panel: PanelContainer = null
 var _ctx_use_btn: Button = null
+var _ctx_quick_btn: Button = null
 var _ctx_drop_btn: Button = null
 var _ctx_item := ""
 var _ctx_count := 0
@@ -53,12 +54,15 @@ func _build_item_menus() -> void:
 	_ctx_panel.visible = false
 	var cvb := VBoxContainer.new()
 	_ctx_use_btn = _menu_button("사용하기")
+	_ctx_quick_btn = _menu_button("퀵슬롯 등록")
 	_ctx_drop_btn = _menu_button("버리기")
 	cvb.add_child(_ctx_use_btn)
+	cvb.add_child(_ctx_quick_btn)
 	cvb.add_child(_ctx_drop_btn)
 	_ctx_panel.add_child(cvb)
 	_inventory.add_child(_ctx_panel)
 	_ctx_use_btn.pressed.connect(_on_ctx_use)
+	_ctx_quick_btn.pressed.connect(_on_ctx_quick)
 	_ctx_drop_btn.pressed.connect(_on_ctx_drop)
 
 	_drop_dialog = Control.new()
@@ -245,6 +249,7 @@ func _open_ctx(item_id: String, count: int, pos: Vector2) -> void:
 	_ctx_item = item_id
 	_ctx_count = count
 	_ctx_use_btn.visible = ItemDB.is_consumable(item_id) # 소비 아이템만 '사용하기'
+	_ctx_quick_btn.visible = ItemDB.is_consumable(item_id) # 회복 아이템만 퀵슬롯 등록
 	_ctx_panel.position = pos
 	_ctx_panel.visible = true
 	_drop_dialog.visible = false
@@ -258,6 +263,12 @@ func _on_dim_input(event: InputEvent) -> void:
 func _on_ctx_use() -> void:
 	_ctx_panel.visible = false
 	_use_item(_ctx_item)
+
+
+func _on_ctx_quick() -> void:
+	_ctx_panel.visible = false
+	GameManager.quick_slot = _ctx_item # 퀵슬롯(1번)에 등록
+	_flash("%s 을(를) 퀵슬롯 1에 등록" % ItemDB.display_name(_ctx_item))
 
 
 func _on_ctx_drop() -> void:

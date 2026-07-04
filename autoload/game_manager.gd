@@ -23,6 +23,8 @@ var storage: Dictionary = {}
 var current_region_id: String = "ruins"
 ## 토큰 재화(밤 급식 성공 보상). 추후 업그레이드 등에 사용.
 var tokens: int = 0
+## 퀵슬롯(숫자 1)에 등록된 회복 아이템 id. 탐험 중 1키로 즉시 사용.
+var quick_slot: String = ""
 
 const _SCENES := {
 	Step.MORNING_PREP: "res://scenes/phases/morning_prep.tscn",
@@ -45,6 +47,7 @@ func register_phase_container(node: Node) -> void:
 func start_new_game() -> void:
 	day = 1
 	tokens = 0
+	quick_slot = ""
 	run_inventory.clear()
 	storage.clear()
 	# 매니저 상태를 기본값으로 초기화(이전 세션 잔존 방지).
@@ -64,6 +67,7 @@ func continue_game() -> void:
 		return
 	day = int(data.get("day", 1))
 	tokens = int(data.get("tokens", 0))
+	quick_slot = String(data.get("quick_slot", ""))
 	BelamiManager.from_dict(data.get("belami", {}))
 	WeaponManager.from_dict(data.get("weapons", {}))
 	PlayerStats.from_dict(data.get("player_stats", {}))
@@ -213,6 +217,7 @@ func _autosave(phase: String) -> void:
 		"day": day,
 		"phase": phase,
 		"tokens": tokens,
+		"quick_slot": quick_slot,
 		"belami": BelamiManager.to_dict(),
 		"player": {}, # TODO: 외형 커스터마이징 상태
 		"player_stats": PlayerStats.to_dict(),

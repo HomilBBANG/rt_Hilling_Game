@@ -25,6 +25,7 @@ var _player: Node2D = null
 var _in_exit := false
 var _returning := false
 var _overweight_t := 0.0 # >0 이면 '무게 초과' 경고 표시 시간
+var _key1_was_down := false # 퀵슬롯(1) 엣지 감지
 var _overweight_label: Label = null # 플레이어 머리 위 '너무 무거워'
 
 @onready var _time_label: Label = $HUD/Root/Stats/TimeLabel
@@ -32,6 +33,8 @@ var _overweight_label: Label = null # 플레이어 머리 위 '너무 무거워'
 @onready var _ammo_label: Label = $HUD/Root/Stats/AmmoLabel
 @onready var _loot_label: Label = $HUD/Root/Stats/LootLabel
 @onready var _hp_bar: TextureProgressBar = $HUD/Root/HpBar
+@onready var _qs_item: Label = $HUD/Root/QuickSlot/QSItem
+@onready var _qs_count: Label = $HUD/Root/QuickSlot/QSCount
 
 
 func _ready() -> void:
@@ -134,6 +137,10 @@ func _process(delta: float) -> void:
 	if _in_exit and (Input.is_physical_key_pressed(KEY_E) or Input.is_physical_key_pressed(KEY_ENTER)):
 		_finish(false)
 		return
+	var k1 := Input.is_physical_key_pressed(KEY_1)
+	if k1 and not _key1_was_down: # 퀵슬롯 즉시 사용
+		_use_quick_slot()
+	_key1_was_down = k1
 	_update_hud()
 
 
@@ -223,6 +230,33 @@ func _update_hud() -> void:
 	if _overweight_t > 0.0:
 		weight_txt += "  (가방 가득!)"
 	_loot_label.text = "채집: %s · %s" % [_loot_summary(), weight_txt]
+	_update_quick_slot_hud()
+
+
+func _update_quick_slot_hud() -> void:
+	var qid := GameManager.quick_slot
+	if qid == "":
+		_qs_item.text = "-"
+		_qs_count.text = ""
+	else:
+		_qs_item.text = ItemDB.display_name(qid)
+		_qs_count.text = "×%d" % int(GameManager.run_inventory.get(qid, 0))
+
+
+## 퀵슬롯(1) 즉시 사용 — 등록된 회복 아이템으로 체력 회복(보유+체력 여유 있을 때).
+func _use_quick_slot() -> void:
+	var id := GameManager.quick_slot
+	if id == "" or not ItemDB.is_consumable(id):
+		return
+	if int(GameManager.run_inventory.get(id, 0)) <= 0:
+		return
+	if _player == null or not is_instance_valid(_player):
+		return
+	if _player.stamina >= _player.max_stamina:
+		return
+	_player.stamina = minf(_player.max_stamina, _player.stamina + float(ItemDB.heal_amount(id)))
+	GameManager.remove_item(id, 1)
+	_update_hud()
 
 
 func _update_overweight_label() -> void:
