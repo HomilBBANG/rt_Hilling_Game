@@ -9,6 +9,7 @@ const _PALETTE := [
 	Color(0.6, 0.66, 0.95), Color(0.86, 0.5, 0.72), Color(0.75, 0.8, 0.4),
 ]
 const _DEAD_TEX := preload("res://assets/npc/npc_a_dead.png") # 임시 시체 스프라이트
+const _INV_SLOT := preload("res://scripts/ui/inv_slot.gd") # 드래그앤드롭 인벤토리 칸
 
 var _figures := {} # npc_id -> {body:AnimatedSprite2D, label:Label, color:Color}
 var _npc_frames: SpriteFrames = null # NPC 공용 프레임(dead=npc_a_dead, idle=npc_a_idle)
@@ -47,11 +48,18 @@ var _tab_was_down := false
 @onready var _hp_btn: Button = $StatsScreen/Center/Panel/Margin/VBox/HpButton
 @onready var _speed_label: Label = $StatsScreen/Center/Panel/Margin/VBox/SpeedLabel
 @onready var _speed_btn: Button = $StatsScreen/Center/Panel/Margin/VBox/SpeedButton
+@onready var _explore_prep: Control = $ExplorePrep
+@onready var _carry_grid: GridContainer = $ExplorePrep/Center/Panel/Margin/VBox/Columns/CarryVB/CarryScroll/CarryGrid
+@onready var _storage_grid: GridContainer = $ExplorePrep/Center/Panel/Margin/VBox/Columns/StorageVB/StorageScroll/StorageGrid
+@onready var _carry_title: Label = $ExplorePrep/Center/Panel/Margin/VBox/Columns/CarryVB/CarryTitle
+@onready var _explore_start_btn: Button = $ExplorePrep/Center/Panel/Margin/VBox/StartButton
 
 
 func _ready() -> void:
 	_title.text = "캠프 — Day %d" % GameManager.day
-	_go_button.pressed.connect(GameManager.advance)
+	_go_button.pressed.connect(_open_explore_prep) # 탐사 나가기 → 탐험 준비 화면
+	_explore_start_btn.pressed.connect(GameManager.advance) # 탐험 시작 → 탐사 진입
+	_explore_prep.visible = false
 	_ranged_btn.pressed.connect(_on_upgrade.bind("ranged"))
 	_melee_btn.pressed.connect(_on_upgrade.bind("melee"))
 	_hp_btn.pressed.connect(_on_stat_upgrade.bind("hp"))
@@ -67,7 +75,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if _overlay.visible: # 컷씬 중엔 아무 입력도 안 받음
+	if _overlay.visible or _explore_prep.visible: # 컷씬·탐험 준비 중엔 이동/입력 정지
 		return
 	_handle_stats_toggle()
 	if not _pos_init or _stats_open: # 능력치 화면 중엔 이동 정지
@@ -137,6 +145,69 @@ func _on_stat_upgrade(stat: String) -> void:
 	if PlayerStats.try_upgrade(stat):
 		_refresh_stats()
 		_refresh_forge() # 토큰이 줄었으니 제작 패널도 갱신(열려 있으면)
+
+
+# ── 탐험 준비 (가방 ↔ 창고 드래그앤드롭) ────────────────
+
+func _open_explore_prep() -> void:
+	_rebuild_prep_grids()
+	_explore_prep.visible = true
+
+
+func _rebuild_prep_grids() -> void:
+	_fill_inv_grid(_carry_grid, GameManager.run_inventory, "carry")
+	_fill_inv_grid(_storage_grid, GameManager.storage, "storage")
+	_carry_title.text = "가져갈 가방  (무게 %0.1f/%0.0f)" % [GameManager.current_weight(), GameManager.carry_max_weight()]
+
+
+## 인벤토리 사전을 스택 단위 칸으로 채운다(빈 칸도 드롭 대상).
+func _fill_inv_grid(grid: GridContainer, inv: Dictionary, side: String) -> void:
+	for c in grid.get_children():
+		c.queue_free()
+	var stacks: Array = []
+	for id in inv:
+		var cnt := int(inv[id])
+		var per := maxi(1, ItemDB.max_stack(String(id)))
+		while cnt > 0:
+			var here := mini(cnt, per)
+			stacks.append({"id": String(id), "count": here})
+			cnt -= here
+	var cols := maxi(1, grid.columns)
+	var slot_count := maxi(stacks.size(), 12) # 빈 칸도 최소 12개(드롭 영역)
+	if slot_count % cols != 0:
+		slot_count += cols - (slot_count % cols)
+	for i in slot_count:
+		var slot: Panel = _INV_SLOT.new()
+		slot.custom_minimum_size = Vector2(68, 68)
+		slot.side = side
+		slot.on_drop = _on_item_dropped
+		if i < stacks.size():
+			slot.item_id = String(stacks[i]["id"])
+			slot.count = int(stacks[i]["count"])
+			var lbl := Label.new()
+			lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+			lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE # 드래그는 칸(Panel)이 받도록
+			lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			lbl.text = "%s\n×%d" % [ItemDB.display_name(slot.item_id), slot.count]
+			slot.add_child(lbl)
+		else:
+			slot.modulate = Color(1, 1, 1, 0.3)
+		grid.add_child(slot)
+
+
+## 칸에서 반대편 칸으로 드롭 → 아이템 이동(창고↔가방, 가방은 무게 한도).
+func _on_item_dropped(data: Dictionary, to_side: String) -> void:
+	var id := String(data.get("item_id", ""))
+	var cnt := int(data.get("count", 0))
+	if id == "" or cnt <= 0:
+		return
+	if to_side == "storage":
+		GameManager.move_to_storage(id, cnt)
+	else:
+		GameManager.move_to_carry(id, cnt) # 무게 한도 내에서만
+	_rebuild_prep_grids()
 
 
 func _input_dir() -> Vector2:

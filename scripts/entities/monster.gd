@@ -25,8 +25,21 @@ enum State { IDLE, CHASE }
 ## idle 애니 폴더 id(assets/monsters/<sprite_id>/<sprite_id>_idle_N.png). 비우면 사각형 유지.
 @export var sprite_id: String = ""
 
+## 드롭 테이블(스폰 시 엑셀에서 주입).
+@export var drop_chance := 1.0   # 드롭 확률(0~1)
+@export var drop_min := 1        # 최소 수량
+@export var drop_max := 1        # 최대 수량
+
+const _LOOT_RANGE := 46.0        # 시체 루팅 상호작용 거리
+const _LOOT_TIME := 2.0          # E 누른 뒤 아이템이 나오기까지 시간(초)
+
 var hp := 50.0
 var drop_item_id: String = ""
+
+var _dead := false               # 시체 상태
+var _loot_t := -1.0              # >=0 이면 루팅 진행 중(남은 시간)
+var _e_was_down := false
+var _corpse_hint: Label = null
 
 var _sprite: AnimatedSprite2D = null # sprite_id 지정 시 사용
 var _has_walk := false               # walk 애니 존재 여부
@@ -104,6 +117,8 @@ func _update_anim() -> void:
 
 
 func _draw() -> void:
+	if _dead:
+		return
 	# 공격 범위 표시(추적 중일 때만). 준비동작 중이면 채워서 임박함을 알림.
 	if _state == State.CHASE:
 		var attacking := _windup >= 0.0
@@ -118,6 +133,9 @@ func _draw() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if _dead: # 시체 상태: AI 정지, E 루팅만 처리
+		_dead_process(delta)
+		return
 	# 스폰 위치를 배회 기준점(home)으로 최초 1회 캡처.
 	if not _home_set:
 		_home = global_position
@@ -246,8 +264,66 @@ func _aggro_from_hit() -> void:
 		queue_redraw()
 
 
+## 사망 → 즉시 사라지지 않고 어두운 시체로 제자리에 남는다(E 로 루팅).
 func _die() -> void:
-	var s := get_tree().get_first_node_in_group("scavenge")
-	if s and s.has_method("on_monster_drop"):
-		s.on_monster_drop(global_position, drop_item_id)
+	if _dead:
+		return
+	_dead = true
+	remove_from_group("monster") # 더는 공격/탐지 대상 아님
+	velocity = Vector2.ZERO
+	_state = State.IDLE
+	# 시체 시각: 비주얼만 어둡게(png 그대로, modulate). 애니는 멈춤. (안내 라벨은 밝게 유지)
+	var dark := Color(0.42, 0.42, 0.48)
+	if _sprite:
+		_sprite.modulate = dark
+		_sprite.stop()
+	if has_node("Body"):
+		$Body.modulate = dark
+	# 상호작용 안내 라벨.
+	_corpse_hint = Label.new()
+	_corpse_hint.modulate = Color(1.0, 0.95, 0.5)
+	_corpse_hint.position = Vector2(-24.0, -46.0)
+	_corpse_hint.visible = false
+	add_child(_corpse_hint)
+	# 탐지/피격 영역 비활성(재추적·재피격 방지).
+	if has_node("DetectionArea"):
+		$DetectionArea.monitoring = false
+	if has_node("HitBox"):
+		$HitBox.monitoring = false
+	queue_redraw() # 공격 범위 원 제거
+
+
+## 시체: 플레이어가 가까이서 E → _LOOT_TIME 뒤 드롭. 멀어지면 취소.
+func _dead_process(delta: float) -> void:
+	if _corpse_hint == null:
+		return
+	if _player == null or not is_instance_valid(_player):
+		_player = get_tree().get_first_node_in_group("player")
+	var near := _player != null and _player.global_position.distance_to(global_position) < _LOOT_RANGE
+	if _loot_t >= 0.0: # 루팅 진행 중
+		if not near: # 멀어지면 취소
+			_loot_t = -1.0
+		else:
+			_loot_t -= delta
+			_corpse_hint.text = "수거 중… %.1f" % maxf(0.0, _loot_t)
+			if _loot_t <= 0.0:
+				_do_loot()
+				return
+	else:
+		var e_down := Input.is_physical_key_pressed(KEY_E)
+		if e_down and not _e_was_down and near:
+			_loot_t = _LOOT_TIME # 루팅 시작
+		_e_was_down = e_down
+	_corpse_hint.visible = near
+	if near and _loot_t < 0.0:
+		_corpse_hint.text = "E: 줍기"
+
+
+## 드롭 실행: 확률 판정 후 수량만큼 인벤토리에 지급(도감 등록 포함), 시체 제거.
+func _do_loot() -> void:
+	if drop_item_id != "" and randf() < drop_chance:
+		var amount := randi_range(mini(drop_min, drop_max), maxi(drop_min, drop_max))
+		var s := get_tree().get_first_node_in_group("scavenge")
+		if s and s.has_method("add_loot") and amount > 0:
+			s.add_loot(drop_item_id, amount)
 	queue_free()

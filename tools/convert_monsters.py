@@ -43,6 +43,7 @@ NUMERIC = {
     "max_hp", "contact_damage", "speed", "detection_range",
     "chase_duration", "wander_radius", "wander_speed",
     "stop_distance", "attack_range", "attack_cooldown", "attack_windup",
+    "drop_chance", "drop_min", "drop_max",
 }
 
 

@@ -202,3 +202,99 @@ layout_mode = 2
 horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.7, 0.7, 0.75, 1)
 text = "Tab: 닫기"
+
+[node name="ExplorePrep" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Dim" type="ColorRect" parent="ExplorePrep"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.1, 0.08, 0.09, 0.96)
+
+[node name="Center" type="CenterContainer" parent="ExplorePrep"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Panel" type="PanelContainer" parent="ExplorePrep/Center"]
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="ExplorePrep/Center/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 18
+
+[node name="VBox" type="VBoxContainer" parent="ExplorePrep/Center/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="ExplorePrep/Center/Panel/Margin/VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 28
+text = "탐험 준비"
+
+[node name="Hint" type="Label" parent="ExplorePrep/Center/Panel/Margin/VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.72, 0.72, 0.78, 1)
+text = "드래그로 창고 ↔ 가져갈 가방 사이를 옮기세요"
+
+[node name="Columns" type="HBoxContainer" parent="ExplorePrep/Center/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="CarryVB" type="VBoxContainer" parent="ExplorePrep/Center/Panel/Margin/VBox/Columns"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="CarryTitle" type="Label" parent="ExplorePrep/Center/Panel/Margin/VBox/Columns/CarryVB"]
+layout_mode = 2
+horizontal_alignment = 1
+text = "가져갈 가방"
+
+[node name="CarryScroll" type="ScrollContainer" parent="ExplorePrep/Center/Panel/Margin/VBox/Columns/CarryVB"]
+custom_minimum_size = Vector2(300, 300)
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="CarryGrid" type="GridContainer" parent="ExplorePrep/Center/Panel/Margin/VBox/Columns/CarryVB/CarryScroll"]
+layout_mode = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+columns = 4
+
+[node name="StorageVB" type="VBoxContainer" parent="ExplorePrep/Center/Panel/Margin/VBox/Columns"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="StorageTitle" type="Label" parent="ExplorePrep/Center/Panel/Margin/VBox/Columns/StorageVB"]
+layout_mode = 2
+horizontal_alignment = 1
+text = "창고"
+
+[node name="StorageScroll" type="ScrollContainer" parent="ExplorePrep/Center/Panel/Margin/VBox/Columns/StorageVB"]
+custom_minimum_size = Vector2(300, 300)
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="StorageGrid" type="GridContainer" parent="ExplorePrep/Center/Panel/Margin/VBox/Columns/StorageVB/StorageScroll"]
+layout_mode = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+columns = 4
+
+[node name="StartButton" type="Button" parent="ExplorePrep/Center/Panel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+focus_mode = 0
+text = "탐험 시작 →"

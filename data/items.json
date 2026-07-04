@@ -3,24 +3,36 @@
     "id": "potato",
     "display_name": "감자",
     "category": "food",
-    "max_stack": 99
+    "max_stack": 99,
+    "weight": 1,
+    "consumable": true,
+    "heal": 8
   },
   {
     "id": "herb",
     "display_name": "들풀",
     "category": "food",
-    "max_stack": 99
+    "max_stack": 99,
+    "weight": 0.5,
+    "consumable": true,
+    "heal": 4
   },
   {
     "id": "canned_food",
     "display_name": "통조림",
     "category": "food",
-    "max_stack": 99
+    "max_stack": 99,
+    "weight": 2,
+    "consumable": true,
+    "heal": 20
   },
   {
     "id": "scrap_metal",
     "display_name": "고철",
     "category": "material",
-    "max_stack": 99
+    "max_stack": 99,
+    "weight": 3,
+    "consumable": false,
+    "heal": 0
   }
 ]

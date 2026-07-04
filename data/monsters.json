@@ -11,7 +11,11 @@
     "wander_speed": 40,
     "sprite": "monster_a",
     "attack_range": 48,
-    "attack_cooldown": 1.2
+    "attack_cooldown": 1.2,
+    "drop_item": "scrap_metal",
+    "drop_chance": 1,
+    "drop_min": 1,
+    "drop_max": 2
   },
   {
     "id": "monster_b",
@@ -24,7 +28,11 @@
     "wander_radius": 130,
     "wander_speed": 40,
     "attack_range": 60,
-    "attack_cooldown": 1.6
+    "attack_cooldown": 1.6,
+    "drop_item": "scrap_metal",
+    "drop_chance": 1,
+    "drop_min": 1,
+    "drop_max": 3
   },
   {
     "id": "monster_c",
@@ -37,6 +45,10 @@
     "wander_radius": 60,
     "wander_speed": 45,
     "attack_range": 40,
-    "attack_cooldown": 0.9
+    "attack_cooldown": 0.9,
+    "drop_item": "scrap_metal",
+    "drop_chance": 0.7,
+    "drop_min": 1,
+    "drop_max": 1
   }
 ]

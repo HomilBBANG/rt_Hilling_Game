@@ -49,3 +49,15 @@ func max_stack(id: String) -> int:
 
 func category(id: String) -> String:
 	return String(get_item(id).get("category", ""))
+
+
+func weight(id: String) -> float:
+	return float(get_item(id).get("weight", 1.0)) # 목록에 없으면 기본 1
+
+
+func is_consumable(id: String) -> bool:
+	return bool(get_item(id).get("consumable", false))
+
+
+func heal_amount(id: String) -> int:
+	return int(get_item(id).get("heal", 0))

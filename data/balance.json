@@ -16,5 +16,6 @@
   "stat_speed_base": 280,
   "stat_speed_per_level": 20,
   "stat_speed_max_level": 5,
-  "stat_speed_cost": 15
+  "stat_speed_cost": 15,
+  "carry_max_weight": 50
 }

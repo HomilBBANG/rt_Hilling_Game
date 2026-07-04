@@ -29,7 +29,8 @@ ROOT = os.path.dirname(HERE)
 XLSX = os.path.join(ROOT, "data", "items.xlsx")
 OUT = os.path.join(ROOT, "data", "items.json")
 
-NUMERIC = {"max_stack"}
+NUMERIC = {"max_stack", "weight", "heal"}
+BOOLEAN = {"consumable"}
 
 
 def coerce_num(v):
@@ -70,7 +71,12 @@ def main() -> int:
             val = r[i] if i < len(r) else None
             if val is None:
                 continue
-            rec[col] = coerce_num(val) if col in NUMERIC else str(val).strip()
+            if col in NUMERIC:
+                rec[col] = coerce_num(val)
+            elif col in BOOLEAN:
+                rec[col] = str(val).strip().lower() in ("1", "true", "yes", "y", "o")
+            else:
+                rec[col] = str(val).strip()
         if not rec.get("id"):
             continue
         items.append(rec)

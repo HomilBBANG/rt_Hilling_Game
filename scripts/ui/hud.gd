@@ -16,8 +16,23 @@ const BAG_MIN_SLOTS := 18 # 최소 표시 칸(빈 가방도 격자로 보이게)
 @onready var _switch_note: Label = $Inventory/Equip/SwitchNote
 @onready var _weapon_list: VBoxContainer = $Inventory/Equip/WeaponList
 @onready var _bag_grid: GridContainer = $Inventory/BagScroll/BagGrid
+@onready var _bag_title: Label = $Inventory/RightTitle
 
 var _inv_open := false
+
+# 우클릭 컨텍스트 메뉴 + 버리기 수량 다이얼로그(코드로 구성).
+var _ctx_panel: PanelContainer = null
+var _ctx_use_btn: Button = null
+var _ctx_drop_btn: Button = null
+var _ctx_item := ""
+var _ctx_count := 0
+var _drop_dialog: Control = null
+var _drop_title: Label = null
+var _drop_qty_label: Label = null
+var _drop_item_id := ""
+var _drop_qty := 1
+var _drop_max := 1
+var _inv_msg: Label = null
 
 
 func _ready() -> void:
@@ -26,8 +41,84 @@ func _ready() -> void:
 	# 좌측 캐릭터: 탐사 플레이어와 동일한 idle 몸통(총/팔은 씬에서 겹침).
 	_char_body.sprite_frames = PlayerFrames.build()
 	_char_body.play("idle")
+	_build_item_menus()
+	$Inventory/Dim.gui_input.connect(_on_dim_input)
 	_inventory.visible = false
 	_refresh()
+
+
+## 우클릭 메뉴·버리기 수량 다이얼로그·안내 라벨을 코드로 생성(인벤토리 위에 겹침).
+func _build_item_menus() -> void:
+	_ctx_panel = PanelContainer.new()
+	_ctx_panel.visible = false
+	var cvb := VBoxContainer.new()
+	_ctx_use_btn = _menu_button("사용하기")
+	_ctx_drop_btn = _menu_button("버리기")
+	cvb.add_child(_ctx_use_btn)
+	cvb.add_child(_ctx_drop_btn)
+	_ctx_panel.add_child(cvb)
+	_inventory.add_child(_ctx_panel)
+	_ctx_use_btn.pressed.connect(_on_ctx_use)
+	_ctx_drop_btn.pressed.connect(_on_ctx_drop)
+
+	_drop_dialog = Control.new()
+	_drop_dialog.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_drop_dialog.visible = false
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.55)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_drop_dialog.add_child(dim)
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_drop_dialog.add_child(center)
+	var panel := PanelContainer.new()
+	center.add_child(panel)
+	var vb := VBoxContainer.new()
+	vb.custom_minimum_size = Vector2(300, 0)
+	vb.add_theme_constant_override("separation", 12)
+	panel.add_child(vb)
+	_drop_title = Label.new()
+	_drop_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vb.add_child(_drop_title)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 16)
+	var minus := _menu_button("－")
+	_drop_qty_label = Label.new()
+	_drop_qty_label.custom_minimum_size = Vector2(60, 0)
+	_drop_qty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var plus := _menu_button("＋")
+	row.add_child(minus)
+	row.add_child(_drop_qty_label)
+	row.add_child(plus)
+	vb.add_child(row)
+	var row2 := HBoxContainer.new()
+	row2.alignment = BoxContainer.ALIGNMENT_CENTER
+	row2.add_theme_constant_override("separation", 12)
+	var confirm := _menu_button("버리기")
+	var cancel := _menu_button("취소")
+	row2.add_child(confirm)
+	row2.add_child(cancel)
+	vb.add_child(row2)
+	_inventory.add_child(_drop_dialog)
+	minus.pressed.connect(func(): _drop_qty = maxi(1, _drop_qty - 1); _update_drop_qty_label())
+	plus.pressed.connect(func(): _drop_qty = mini(_drop_max, _drop_qty + 1); _update_drop_qty_label())
+	confirm.pressed.connect(_on_drop_confirm)
+	cancel.pressed.connect(func(): _drop_dialog.visible = false)
+
+	_inv_msg = Label.new()
+	_inv_msg.position = Vector2(360, 300)
+	_inv_msg.modulate = Color(1.0, 0.9, 0.4)
+	_inv_msg.z_index = 20
+	_inventory.add_child(_inv_msg)
+
+
+func _menu_button(text: String) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.focus_mode = Control.FOCUS_NONE
+	b.custom_minimum_size = Vector2(110, 34)
+	return b
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -40,6 +131,10 @@ func _toggle_inventory() -> void:
 	_inv_open = not _inv_open
 	_inventory.visible = _inv_open
 	get_tree().paused = _inv_open # 인벤토리 여는 동안 게임 정지
+	if _ctx_panel:
+		_ctx_panel.visible = false
+	if _drop_dialog:
+		_drop_dialog.visible = false
 	if _inv_open:
 		_refresh_equip()
 		_rebuild_bag()
@@ -82,6 +177,7 @@ func _on_equip(id: String) -> void:
 
 ## run_inventory 를 1칸=1개로 펼쳐 가방 그리드를 다시 채운다.
 func _rebuild_bag() -> void:
+	_bag_title.text = "가방   (무게 %0.1f / %0.0f)" % [GameManager.current_weight(), GameManager.carry_max_weight()]
 	for c in _bag_grid.get_children():
 		c.queue_free()
 	# 같은 재료는 한 칸에 최대 max_stack(기본 99)개까지 겹침. 넘치면 다음 칸으로.
@@ -117,6 +213,8 @@ func _make_slot(item_id: String, count: int) -> Control:
 		slot.modulate = Color(1, 1, 1, 0.3) # 빈 칸
 	else:
 		name_lbl.text = _item_name(item_id)
+		slot.mouse_filter = Control.MOUSE_FILTER_STOP
+		slot.gui_input.connect(_on_slot_input.bind(item_id, count))
 	slot.add_child(name_lbl)
 	if item_id != "" and count > 1: # 겹친 개수를 우측 하단에 표시
 		var cnt_lbl := Label.new()
@@ -134,6 +232,97 @@ func _make_slot(item_id: String, count: int) -> Control:
 
 func _item_name(id: String) -> String:
 	return ItemDB.display_name(id)
+
+
+# ── 우클릭 메뉴 / 사용 / 버리기 ─────────────────────────
+
+func _on_slot_input(event: InputEvent, item_id: String, count: int) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
+		_open_ctx(item_id, count, get_global_mouse_position())
+
+
+func _open_ctx(item_id: String, count: int, pos: Vector2) -> void:
+	_ctx_item = item_id
+	_ctx_count = count
+	_ctx_use_btn.visible = ItemDB.is_consumable(item_id) # 소비 아이템만 '사용하기'
+	_ctx_panel.position = pos
+	_ctx_panel.visible = true
+	_drop_dialog.visible = false
+
+
+func _on_dim_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed:
+		_ctx_panel.visible = false # 빈 곳 클릭 시 메뉴 닫기
+
+
+func _on_ctx_use() -> void:
+	_ctx_panel.visible = false
+	_use_item(_ctx_item)
+
+
+func _on_ctx_drop() -> void:
+	_ctx_panel.visible = false
+	if _ctx_count >= 2: # 2개 이상이면 수량 선택
+		_open_drop_dialog(_ctx_item, _ctx_count)
+	else:
+		_drop_item(_ctx_item, 1)
+
+
+func _open_drop_dialog(item_id: String, count: int) -> void:
+	_drop_item_id = item_id
+	_drop_max = count
+	_drop_qty = 1
+	_drop_title.text = "%s 버리기 (최대 %d개)" % [ItemDB.display_name(item_id), count]
+	_update_drop_qty_label()
+	_drop_dialog.visible = true
+
+
+func _update_drop_qty_label() -> void:
+	_drop_qty_label.text = "%d개" % _drop_qty
+
+
+func _on_drop_confirm() -> void:
+	_drop_dialog.visible = false
+	_drop_item(_drop_item_id, _drop_qty)
+
+
+## 소비 아이템 사용 → 체력(스태미나) 회복. 탐험 중 + 체력이 가득 안 찼을 때만.
+func _use_item(item_id: String) -> void:
+	if not ItemDB.is_consumable(item_id):
+		return
+	if int(GameManager.run_inventory.get(item_id, 0)) <= 0:
+		return
+	var player := get_tree().get_first_node_in_group("player")
+	if player == null:
+		_flash("탐험 중에만 사용할 수 있어요")
+		return
+	if player.stamina >= player.max_stamina:
+		_flash("체력이 가득 찼습니다")
+		return
+	player.stamina = minf(player.max_stamina, player.stamina + float(ItemDB.heal_amount(item_id)))
+	GameManager.remove_item(item_id, 1)
+	_flash("%s 사용 — 체력 +%d" % [ItemDB.display_name(item_id), ItemDB.heal_amount(item_id)])
+	_rebuild_bag()
+
+
+## 아이템 버리기 → 인벤토리에서 제거. 탐험 중이면 플레이어 발밑 바닥에 남긴다.
+func _drop_item(item_id: String, qty: int) -> void:
+	qty = clampi(qty, 1, int(GameManager.run_inventory.get(item_id, 0)))
+	if qty <= 0:
+		return
+	GameManager.remove_item(item_id, qty)
+	var s := get_tree().get_first_node_in_group("scavenge")
+	var player := get_tree().get_first_node_in_group("player")
+	if s and s.has_method("drop_on_floor") and player:
+		s.drop_on_floor(item_id, qty, player.global_position)
+	_flash("%s ×%d 버림" % [ItemDB.display_name(item_id), qty])
+	_rebuild_bag()
+
+
+func _flash(msg: String) -> void:
+	_inv_msg.text = msg
+	var t := get_tree().create_timer(2.0) # paused 여도 동작(process_always 기본)
+	t.timeout.connect(func(): if _inv_msg: _inv_msg.text = "")
 
 
 func _weapon_name(id: String) -> String:

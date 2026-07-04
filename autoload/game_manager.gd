@@ -17,6 +17,9 @@ var boot_mode: String = ""
 ## 하루 동안 탐사로 모은 채집물 {item_id: count}. 매일 아침 초기화.
 ## world_state 에 저장되어 밤 재진입 시에도 유지됨(PRD 3.7).
 var run_inventory: Dictionary = {}
+## 캠프 창고(영속). 탐험에서 돌아오면 run_inventory(총알 제외)가 여기로 예치되고,
+## 탐험 준비 화면에서 원하는 것만 run_inventory(가져갈 가방)로 다시 옮긴다.
+var storage: Dictionary = {}
 var current_region_id: String = "ruins"
 ## 토큰 재화(밤 급식 성공 보상). 추후 업그레이드 등에 사용.
 var tokens: int = 0
@@ -43,6 +46,7 @@ func start_new_game() -> void:
 	day = 1
 	tokens = 0
 	run_inventory.clear()
+	storage.clear()
 	# 매니저 상태를 기본값으로 초기화(이전 세션 잔존 방지).
 	BelamiManager.from_dict({})
 	WeaponManager.from_dict({})
@@ -70,6 +74,10 @@ func continue_game() -> void:
 	var loaded_inv: Dictionary = ws.get("run_inventory", {})
 	for k in loaded_inv.keys():
 		run_inventory[String(k)] = int(loaded_inv[k]) # JSON 실수 → 정수 정규화
+	storage = {}
+	var loaded_store: Dictionary = ws.get("storage", {})
+	for k in loaded_store.keys():
+		storage[String(k)] = int(loaded_store[k])
 	current_region_id = String(ws.get("region", "ruins"))
 	BelamiManager.refresh_preferences(_unlocked_recipe_ids())
 	# 로드된 누적 만족도 기준으로 해금 재점검(엑셀에서 임계값을 낮춘 경우도 반영).
@@ -97,6 +105,67 @@ func add_item(item_id: String, amount: int) -> void:
 	if item_id == "" or amount == 0:
 		return
 	run_inventory[item_id] = int(run_inventory.get(item_id, 0)) + amount
+
+
+## ── 무게(가방 적재량) ──────────────────────────────────
+
+## 현재 인벤토리 총 무게.
+func current_weight() -> float:
+	var w := 0.0
+	for id in run_inventory:
+		w += int(run_inventory[id]) * ItemDB.weight(String(id))
+	return w
+
+
+## 최대 적재 무게(balance 엑셀 carry_max_weight).
+func carry_max_weight() -> float:
+	return Balance.get_float("carry_max_weight", 50.0)
+
+
+## item_id 를 amount 개 담으려 할 때 무게 한도 내에서 실제로 담을 수 있는 개수.
+func units_that_fit(item_id: String, amount: int) -> int:
+	var w := ItemDB.weight(item_id)
+	if w <= 0.0:
+		return amount # 무게 0 아이템은 제한 없음
+	var remain := carry_max_weight() - current_weight()
+	var fit := int(floor(remain / w))
+	return clampi(fit, 0, amount)
+
+
+## ── 창고(storage) ──────────────────────────────────────
+
+## 캠프 복귀 시: run_inventory 의 모든 아이템을 창고로 예치하고 가방을 비운다.
+func deposit_all_to_storage() -> void:
+	for id in run_inventory:
+		storage[id] = int(storage.get(id, 0)) + int(run_inventory[id])
+	run_inventory.clear()
+
+
+## 가방 → 창고. amount 개(보유량 한도) 옮긴다.
+func move_to_storage(item_id: String, amount: int) -> void:
+	var have := int(run_inventory.get(item_id, 0))
+	var n := clampi(amount, 0, have)
+	if n <= 0:
+		return
+	remove_item(item_id, n)
+	storage[item_id] = int(storage.get(item_id, 0)) + n
+
+
+## 창고 → 가방. 무게 한도 내에서 담을 수 있는 만큼만 옮긴다. 실제 옮긴 수 반환.
+func move_to_carry(item_id: String, amount: int) -> int:
+	var have := int(storage.get(item_id, 0))
+	var want := clampi(amount, 0, have)
+	var n := units_that_fit(item_id, want)
+	if n <= 0:
+		return 0
+	# 창고에서 차감
+	var left := have - n
+	if left > 0:
+		storage[item_id] = left
+	else:
+		storage.erase(item_id)
+	add_item(item_id, n)
+	return n
 
 
 ## 인벤토리에서 아이템 제거(강제 귀환 패널티 등). 0 미만으로 내려가지 않는다.
@@ -131,7 +200,7 @@ func _goto_step(step: int) -> void:
 	current_step = step
 	# 페이즈 시작 시점 자동 저장 (PRD 3.7: 아침 시작 / 밤 시작 두 지점)
 	if step == Step.MORNING_PREP:
-		# 채집물은 비우지 않고 누적(인벤토리에 계속 쌓임). 요리로 소비.
+		deposit_all_to_storage() # 캠프 복귀 → 가방(총알 제외)을 창고로 예치
 		_autosave("morning")
 	elif step == Step.NIGHT:
 		_autosave("night")
@@ -150,6 +219,7 @@ func _autosave(phase: String) -> void:
 		"weapons": WeaponManager.to_dict(),
 		"world_state": {
 			"run_inventory": run_inventory.duplicate(),
+			"storage": storage.duplicate(),
 			"region": current_region_id,
 		},
 		"npcs": NPCManager.to_dict(),

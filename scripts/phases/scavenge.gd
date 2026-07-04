@@ -24,6 +24,8 @@ var _loot: Dictionary = {}
 var _player: Node2D = null
 var _in_exit := false
 var _returning := false
+var _overweight_t := 0.0 # >0 이면 '무게 초과' 경고 표시 시간
+var _overweight_label: Label = null # 플레이어 머리 위 '너무 무거워'
 
 @onready var _time_label: Label = $HUD/Root/Stats/TimeLabel
 @onready var _stamina_label: Label = $HUD/Root/Stats/StaminaLabel
@@ -45,6 +47,13 @@ func _spawn_world() -> void:
 	_player = player_scene.instantiate()
 	add_child(_player)
 	_player.global_position = $PlayerStart.global_position
+	# 무게 초과 시 머리 위에 뜨는 경고 라벨(월드 좌표).
+	_overweight_label = Label.new()
+	_overweight_label.text = "너무 무거워"
+	_overweight_label.modulate = Color(1.0, 0.25, 0.2)
+	_overweight_label.z_index = 50
+	_overweight_label.visible = false
+	add_child(_overweight_label)
 	if _player.has_signal("stamina_depleted"):
 		_player.stamina_depleted.connect(_on_stamina_depleted)
 	_set_camera_limits()
@@ -53,7 +62,8 @@ func _spawn_world() -> void:
 	for i in monster_count:
 		var mon := monster_scene.instantiate()
 		_apply_monster_type(mon, MonsterDB.get_type(i))
-		mon.drop_item_id = _pick_material_id()
+		if mon.drop_item_id == "": # 종류에 드롭 아이템이 없으면 지역 재료로 폴백
+			mon.drop_item_id = _pick_material_id()
 		add_child(mon) # exports 를 _ready 전에 주입
 		mon.global_position = _random_spawn_pos(true)
 
@@ -90,11 +100,18 @@ func _apply_monster_type(mon: Node, t: Dictionary) -> void:
 	mon.attack_cooldown = float(t.get("attack_cooldown", mon.attack_cooldown))
 	mon.attack_windup = float(t.get("attack_windup", mon.attack_windup))
 	mon.sprite_id = String(t.get("sprite", ""))
+	# 드롭 테이블(아이템/확률/수량).
+	mon.drop_item_id = String(t.get("drop_item", ""))
+	mon.drop_chance = float(t.get("drop_chance", 1.0))
+	mon.drop_min = int(t.get("drop_min", 1))
+	mon.drop_max = int(t.get("drop_max", 1))
 
 
 func _process(delta: float) -> void:
 	if _returning:
 		return
+	_overweight_t = maxf(0.0, _overweight_t - delta)
+	_update_overweight_label()
 	_time_left = maxf(0.0, _time_left - delta)
 	if _time_left <= 0.0:
 		_finish(true)
@@ -105,12 +122,21 @@ func _process(delta: float) -> void:
 	_update_hud()
 
 
-## ResourceNode / 몬스터 드롭이 호출. 채집 즉시 인벤토리(run_inventory)에 반영.
-func add_loot(item_id: String, amount: int) -> void:
-	_loot[item_id] = int(_loot.get(item_id, 0)) + amount # 이번 탐사분(HUD 요약 + 패널티 계산용)
-	GameManager.add_item(item_id, amount)                 # 인벤토리에 즉시 누적
+## ResourceNode / 몬스터 드롭이 호출. 무게 한도 내에서 담을 수 있는 만큼만 채집.
+## 실제로 담은 개수를 반환(0이면 무게 초과로 못 담음).
+func add_loot(item_id: String, amount: int) -> int:
+	var fit := GameManager.units_that_fit(item_id, amount)
+	if fit <= 0:
+		_overweight_t = 1.5 # HUD 경고 표시
+		_update_hud()
+		return 0
+	_loot[item_id] = int(_loot.get(item_id, 0)) + fit # 이번 탐사분(HUD 요약 + 패널티)
+	GameManager.add_item(item_id, fit)                 # 인벤토리에 누적
 	_discover_item(item_id) # 도감 등록 → 레시피 해금 트리거(예: 감자 → 감자튀김)
+	if fit < amount:
+		_overweight_t = 1.5 # 일부만 담김
 	_update_hud()
+	return fit
 
 
 func _discover_item(item_id: String) -> void:
@@ -178,7 +204,30 @@ func _update_hud() -> void:
 		_hp_bar.value = st / mx * 100.0
 	_stamina_label.text = "스태미나: %0.0f" % st
 	_ammo_label.text = "탄약: %d" % WeaponManager.ammo
-	_loot_label.text = "채집: %s" % _loot_summary()
+	var weight_txt := "무게 %0.1f/%0.0f" % [GameManager.current_weight(), GameManager.carry_max_weight()]
+	if _overweight_t > 0.0:
+		weight_txt += "  (가방 가득!)"
+	_loot_label.text = "채집: %s · %s" % [_loot_summary(), weight_txt]
+
+
+func _update_overweight_label() -> void:
+	if _overweight_label == null:
+		return
+	var show := _overweight_t > 0.0 and _player != null and is_instance_valid(_player)
+	_overweight_label.visible = show
+	if show:
+		_overweight_label.position = _player.global_position + Vector2(-34.0, -64.0)
+
+
+## 인벤토리에서 '버리기' 시 호출 — 플레이어 발밑 근처 바닥에 아이템 노드를 남긴다.
+func drop_on_floor(item_id: String, amount: int, pos: Vector2) -> void:
+	if amount <= 0 or item_id == "":
+		return
+	var node := resource_scene.instantiate()
+	add_child(node)
+	node.global_position = pos + Vector2(randf_range(-24.0, 24.0), randf_range(12.0, 34.0))
+	node.item_id = item_id
+	node.amount = amount
 
 
 func _loot_summary() -> String:
