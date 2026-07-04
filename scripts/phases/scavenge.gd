@@ -29,12 +29,10 @@ var _key1_was_down := false # 퀵슬롯(1) 엣지 감지
 var _overweight_label: Label = null # 플레이어 머리 위 '너무 무거워'
 
 @onready var _time_label: Label = $HUD/Root/Stats/TimeLabel
-@onready var _stamina_label: Label = $HUD/Root/Stats/StaminaLabel
-@onready var _ammo_label: Label = $HUD/Root/Stats/AmmoLabel
-@onready var _loot_label: Label = $HUD/Root/Stats/LootLabel
 @onready var _hp_bar: TextureProgressBar = $HUD/Root/HpBar
 @onready var _qs_item: Label = $HUD/Root/QuickSlot/QSItem
 @onready var _qs_count: Label = $HUD/Root/QuickSlot/QSCount
+@onready var _ammo_count: Label = $HUD/Root/AmmoCount
 
 
 func _ready() -> void:
@@ -218,18 +216,11 @@ func _finish(forced: bool) -> void:
 
 func _update_hud() -> void:
 	_time_label.text = "남은 시간: %0.0f초" % _time_left
-	var st := 0.0
 	if _player and is_instance_valid(_player):
-		st = _player.stamina
 		# HP 바(빨간 면)를 스태미나 비율로 채운다 → 깎이면 좌→우로 줄어듦.
 		var mx: float = maxf(1.0, _player.max_stamina)
-		_hp_bar.value = st / mx * 100.0
-	_stamina_label.text = "스태미나: %0.0f" % st
-	_ammo_label.text = "탄약: %d" % WeaponManager.ammo
-	var weight_txt := "무게 %0.1f/%0.0f" % [GameManager.current_weight(), GameManager.carry_max_weight()]
-	if _overweight_t > 0.0:
-		weight_txt += "  (가방 가득!)"
-	_loot_label.text = "채집: %s · %s" % [_loot_summary(), weight_txt]
+		_hp_bar.value = _player.stamina / mx * 100.0
+	_ammo_count.text = "×%d" % WeaponManager.ammo
 	_update_quick_slot_hud()
 
 

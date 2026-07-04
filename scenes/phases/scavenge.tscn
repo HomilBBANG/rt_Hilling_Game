@@ -9,6 +9,7 @@
 [ext_resource type="Texture2D" uid="uid://bdc5n5nfraldp" path="res://assets/ui/hp_fill.png" id="7"]
 [ext_resource type="Texture2D" uid="uid://dwbuvuslj6ddj" path="res://assets/ui/hp_frame.png" id="8"]
 [ext_resource type="PackedScene" uid="uid://c77o3mrl2phx7" path="res://scenes/entities/props/tree.tscn" id="9"]
+[ext_resource type="Texture2D" path="res://assets/ui/bullet.png" id="10"]
 
 [sub_resource type="RectangleShape2D" id="wallH"]
 size = Vector2(3200, 20)
@@ -135,18 +136,6 @@ offset_bottom = 180.0
 layout_mode = 2
 text = "남은 시간: 90초"
 
-[node name="StaminaLabel" type="Label" parent="HUD/Root/Stats" unique_id=504687072]
-layout_mode = 2
-text = "스태미나: 100"
-
-[node name="AmmoLabel" type="Label" parent="HUD/Root/Stats" unique_id=421909862]
-layout_mode = 2
-text = "탄약: 12"
-
-[node name="LootLabel" type="Label" parent="HUD/Root/Stats" unique_id=791965490]
-layout_mode = 2
-text = "채집: 없음"
-
 [node name="Hint" type="Label" parent="HUD/Root" unique_id=1576992162]
 layout_mode = 1
 anchors_preset = 12
@@ -204,15 +193,43 @@ offset_bottom = -78.0
 grow_vertical = 0
 text = "HP"
 
+[node name="AmmoIcon" type="TextureRect" parent="HUD/Root"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 266.0
+offset_top = -52.0
+offset_right = 302.0
+offset_bottom = -16.0
+grow_vertical = 0
+texture_filter = 1
+texture = ExtResource("10")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="AmmoCount" type="Label" parent="HUD/Root"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 306.0
+offset_top = -52.0
+offset_right = 380.0
+offset_bottom = -16.0
+grow_vertical = 0
+vertical_alignment = 1
+text = "×12"
+
 [node name="QuickSlot" type="Panel" parent="HUD/Root"]
 layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 272.0
-offset_top = -90.0
-offset_right = 346.0
-offset_bottom = -18.0
+offset_left = 392.0
+offset_top = -80.0
+offset_right = 466.0
+offset_bottom = -16.0
 grow_vertical = 0
 
 [node name="QSKey" type="Label" parent="HUD/Root/QuickSlot"]

@@ -178,20 +178,11 @@ func _fill_inv_grid(grid: GridContainer, inv: Dictionary, side: String) -> void:
 		slot_count += cols - (slot_count % cols)
 	for i in slot_count:
 		var slot: Panel = _INV_SLOT.new()
-		slot.custom_minimum_size = Vector2(68, 68)
+		slot.custom_minimum_size = Vector2(64, 64)
 		slot.side = side
 		slot.on_drop = _on_item_dropped
 		if i < stacks.size():
-			slot.item_id = String(stacks[i]["id"])
-			slot.count = int(stacks[i]["count"])
-			var lbl := Label.new()
-			lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-			lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE # 드래그는 칸(Panel)이 받도록
-			lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-			lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			lbl.text = "%s\n×%d" % [ItemDB.display_name(slot.item_id), slot.count]
-			slot.add_child(lbl)
+			slot.fill(String(stacks[i]["id"]), int(stacks[i]["count"])) # 아이콘/이름 + 수량
 		else:
 			slot.modulate = Color(1, 1, 1, 0.3)
 		grid.add_child(slot)

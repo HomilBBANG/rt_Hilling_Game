@@ -61,3 +61,12 @@ func is_consumable(id: String) -> bool:
 
 func heal_amount(id: String) -> int:
 	return int(get_item(id).get("heal", 0))
+
+
+## 아이템 아이콘 텍스처 경로(icon 열, assets/items/<icon>.png). 없거나 파일 없으면 "".
+func icon_path(id: String) -> String:
+	var ic := String(get_item(id).get("icon", ""))
+	if ic == "":
+		return ""
+	var p := "res://assets/items/%s.png" % ic
+	return p if ResourceLoader.exists(p) else ""

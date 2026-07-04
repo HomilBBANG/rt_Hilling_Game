@@ -21,6 +21,9 @@ var stamina := 100.0
 var _invuln := 0.0
 var _fire_cd := 0.0
 var _melee_cd := 0.0
+var _noammo_cd := 0.0
+var _noammo_label: Label = null
+var _noammo_tween: Tween
 
 @onready var _aim: Node2D = $Aim
 @onready var _muzzle: Marker2D = $Aim/Muzzle
@@ -35,6 +38,7 @@ func _ready() -> void:
 	speed = PlayerStats.move_speed()
 	melee_range = WeaponManager.melee_range()        # 무기별 사거리(엑셀 조정 가능)
 	_setup_animation()
+	_setup_noammo_label()
 
 
 ## idle(정지 스프라이트) + run(player_run.gif 프레임) 애니메이션을 코드로 구성.
@@ -55,6 +59,7 @@ func _physics_process(delta: float) -> void:
 	_invuln = maxf(0.0, _invuln - delta)
 	_fire_cd = maxf(0.0, _fire_cd - delta)
 	_melee_cd = maxf(0.0, _melee_cd - delta)
+	_noammo_cd = maxf(0.0, _noammo_cd - delta)
 
 	velocity = _input_dir() * speed
 	move_and_slide()
@@ -86,6 +91,7 @@ func _input_dir() -> Vector2:
 func _shoot() -> void:
 	# 탄약 소모 실패 시 발사하지 않음(PRD 3.3 — 탄약은 소모성 자원).
 	if not WeaponManager.consume_ammo(1):
+		_show_no_ammo() # 머리 위 '탄약이 부족합니다'
 		return
 	_fire_cd = fire_cooldown
 	if bullet_scene == null:
@@ -138,6 +144,28 @@ func take_hit(amount: float) -> void:
 	stamina = maxf(0.0, stamina - amount)
 	if stamina <= 0.0:
 		stamina_depleted.emit()
+
+
+## 머리 위 '탄약이 부족합니다' 라벨 생성(숨김).
+func _setup_noammo_label() -> void:
+	_noammo_label = Label.new()
+	_noammo_label.text = "탄약이 부족합니다"
+	_noammo_label.position = Vector2(-46.0, -66.0)
+	_noammo_label.modulate = Color(1.0, 0.3, 0.25, 0.0)
+	add_child(_noammo_label)
+
+
+## 탄약 부족 시 0.2초 유지 후 천천히 사라지는 안내(연사 중 도배 방지 쿨다운).
+func _show_no_ammo() -> void:
+	if _noammo_cd > 0.0 or _noammo_label == null:
+		return
+	_noammo_cd = 1.4
+	if _noammo_tween and _noammo_tween.is_valid():
+		_noammo_tween.kill()
+	_noammo_label.modulate = Color(1.0, 0.3, 0.25, 1.0)
+	_noammo_tween = create_tween()
+	_noammo_tween.tween_interval(0.2) # 0.2초 유지
+	_noammo_tween.tween_property(_noammo_label, "modulate:a", 0.0, 0.9) # 천천히 사라짐
 
 
 ## 피격 시 흰색으로 번쩍(0.2초). modulate 를 밝게 올렸다가 원래대로 되돌린다.

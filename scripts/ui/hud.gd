@@ -207,31 +207,49 @@ func _rebuild_bag() -> void:
 
 func _make_slot(item_id: String, count: int) -> Control:
 	var slot := Panel.new()
-	slot.custom_minimum_size = Vector2(80, 80)
-	var name_lbl := Label.new()
-	name_lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	slot.custom_minimum_size = Vector2(64, 64)
 	if item_id == "":
 		slot.modulate = Color(1, 1, 1, 0.3) # 빈 칸
-	else:
-		name_lbl.text = _item_name(item_id)
-		slot.mouse_filter = Control.MOUSE_FILTER_STOP
-		slot.gui_input.connect(_on_slot_input.bind(item_id, count))
-	slot.add_child(name_lbl)
-	if item_id != "" and count > 1: # 겹친 개수를 우측 하단에 표시
+		return slot
+	_add_item_visual(slot, item_id) # 아이콘 있으면 아이콘, 없으면 이름
+	slot.mouse_filter = Control.MOUSE_FILTER_STOP
+	slot.gui_input.connect(_on_slot_input.bind(item_id, count))
+	if count > 1: # 겹친 개수를 우측 하단에 표시
 		var cnt_lbl := Label.new()
 		cnt_lbl.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
 		cnt_lbl.offset_left = -34.0
 		cnt_lbl.offset_top = -24.0
 		cnt_lbl.offset_right = -4.0
 		cnt_lbl.offset_bottom = -2.0
+		cnt_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		cnt_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		cnt_lbl.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
 		cnt_lbl.text = "×%d" % count
 		slot.add_child(cnt_lbl)
 	return slot
+
+
+## 칸에 아이템 아이콘(있으면) 또는 이름 라벨을 채운다. 공용.
+static func _add_item_visual(slot: Control, item_id: String) -> void:
+	var icon := ItemDB.icon_path(item_id)
+	if icon != "":
+		var tex := TextureRect.new()
+		tex.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		tex.texture = load(icon)
+		tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tex.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		slot.add_child(tex)
+	else:
+		var lbl := Label.new()
+		lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		lbl.text = ItemDB.display_name(item_id)
+		slot.add_child(lbl)
 
 
 func _item_name(id: String) -> String:

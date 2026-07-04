@@ -6,7 +6,8 @@
     "max_stack": 99,
     "weight": 1,
     "consumable": true,
-    "heal": 8
+    "heal": 8,
+    "icon": "potato"
   },
   {
     "id": "herb",
@@ -24,7 +25,8 @@
     "max_stack": 99,
     "weight": 2,
     "consumable": true,
-    "heal": 20
+    "heal": 20,
+    "icon": "can"
   },
   {
     "id": "scrap_metal",
