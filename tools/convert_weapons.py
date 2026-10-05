@@ -33,7 +33,7 @@ ROOT = os.path.dirname(HERE)
 XLSX = os.path.join(ROOT, "data", "weapons.xlsx")
 OUT = os.path.join(ROOT, "data", "weapons.json")
 
-NUMERIC = {"base_damage", "craft_cost"}
+NUMERIC = {"base_damage", "craft_cost", "muzzle_x"}
 BOOLEAN = {"uses_ammo"}
 
 

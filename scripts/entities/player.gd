@@ -39,6 +39,16 @@ func _ready() -> void:
 	melee_range = WeaponManager.melee_range()        # 무기별 사거리(엑셀 조정 가능)
 	_setup_animation()
 	_setup_noammo_label()
+	_apply_weapon_sprite() # 장착 원거리 무기에 맞는 총 스프라이트
+
+
+## 장착한 원거리 무기의 스프라이트를 Gun 노드에 적용 + 총구 위치(muzzle) 조정.
+func _apply_weapon_sprite() -> void:
+	var rid := String(WeaponManager.equipped.get("ranged", ""))
+	var p := WeaponDB.sprite_path(rid)
+	if p != "":
+		$Aim/Gun.texture = load(p)
+	_muzzle.position.x = WeaponDB.muzzle_x(rid) # 무기별 총열 길이에 맞춰 발사 위치
 
 
 ## idle(정지 스프라이트) + run(player_run.gif 프레임) 애니메이션을 코드로 구성.
@@ -166,6 +176,30 @@ func _show_no_ammo() -> void:
 	_noammo_tween = create_tween()
 	_noammo_tween.tween_interval(0.2) # 0.2초 유지
 	_noammo_tween.tween_property(_noammo_label, "modulate:a", 0.0, 0.9) # 천천히 사라짐
+
+
+## 아이템 획득 텍스트를 머리 위에 1초 띄운다(살짝 떠오르며 끝에 페이드).
+## 연속 획득 시 위로 한 줄씩 쌓인다.
+const _PICKUP_TIME := 1.0
+var _pickup_labels: Array[Label] = []
+func show_pickup(text: String) -> void:
+	_pickup_labels = _pickup_labels.filter(func(l): return is_instance_valid(l))
+	var lb := Label.new()
+	lb.text = text
+	lb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lb.size = Vector2(160.0, 20.0)
+	lb.add_theme_font_size_override("font_size", 12)
+	lb.add_theme_color_override("font_outline_color", Color.BLACK)
+	lb.add_theme_constant_override("outline_size", 4)
+	lb.modulate = Color(1.0, 0.95, 0.6)
+	var y := -72.0 - 14.0 * _pickup_labels.size()
+	lb.position = Vector2(-80.0, y)
+	add_child(lb)
+	_pickup_labels.append(lb)
+	var tw := lb.create_tween()
+	tw.tween_property(lb, "position:y", y - 10.0, _PICKUP_TIME)
+	tw.parallel().tween_property(lb, "modulate:a", 0.0, 0.3).set_delay(_PICKUP_TIME - 0.3)
+	tw.tween_callback(lb.queue_free)
 
 
 ## 피격 시 흰색으로 번쩍(0.2초). modulate 를 밝게 올렸다가 원래대로 되돌린다.

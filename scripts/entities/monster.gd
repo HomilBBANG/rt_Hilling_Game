@@ -178,7 +178,7 @@ func _chase_and_attack(delta: float) -> void:
 	if dist > stop_distance:
 		# 코앞에서 딱 멈추도록 남은 거리만큼만 이동(오버슈트로 인한 버벅임 방지).
 		var reach := minf(speed, (dist - stop_distance) / maxf(delta, 0.0001))
-		velocity = to.normalized() * reach
+		velocity = _avoid_obstacles(to.normalized()) * reach # 나무 등 장애물 우회
 		move_and_slide()
 		if _windup >= 0.0: # 이동하면 준비동작 취소
 			_windup = -1.0
@@ -249,14 +249,35 @@ func _wander(delta: float) -> void:
 		_pick_wander_target()
 		velocity = Vector2.ZERO
 	else:
-		velocity = to.normalized() * wander_speed
+		velocity = _avoid_obstacles(to.normalized()) * wander_speed # 장애물 우회
 	move_and_slide()
+	# 배회 중 장애물에 오래 막히면 다른 지점으로 목표 변경.
+	if velocity.length() > 1.0 and get_real_velocity().length() < wander_speed * 0.2:
+		_pick_wander_target()
 
 
 func _pick_wander_target() -> void:
 	var ang := randf() * TAU
 	var r := sqrt(randf()) * wander_radius # 원판 내 균일 분포
 	_wander_target = _home + Vector2(cos(ang), sin(ang)) * r
+
+
+## 장애물(나무·벽)에 파고들면 벽을 따라 우회하는 방향을 돌려준다(직전 충돌 노말 기준).
+## 막히지 않았으면 원래 방향 그대로.
+func _avoid_obstacles(dir: Vector2) -> Vector2:
+	var n := Vector2.ZERO
+	for i in get_slide_collision_count():
+		n += get_slide_collision(i).get_normal()
+	if n == Vector2.ZERO:
+		return dir
+	n = n.normalized()
+	if dir.dot(n) >= -0.1: # 벽으로 파고드는 중이 아니면 그대로
+		return dir
+	# 벽을 따라가는 두 접선 중 진행 방향에 더 가까운 쪽 선택 + 살짝 벽에서 떨어지게.
+	var t1 := Vector2(-n.y, n.x)
+	var t2 := Vector2(n.y, -n.x)
+	var tangent := t1 if t1.dot(dir) >= t2.dot(dir) else t2
+	return (tangent * 0.85 + n * 0.25).normalized()
 
 
 func take_damage(amount: float) -> void:

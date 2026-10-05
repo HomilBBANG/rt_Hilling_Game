@@ -5,7 +5,9 @@
     "kind": "ranged",
     "base_damage": 25,
     "craft_cost": 0,
-    "uses_ammo": true
+    "uses_ammo": true,
+    "sprite": "pistol",
+    "muzzle_x": 13
   },
   {
     "id": "knife",
@@ -21,7 +23,9 @@
     "kind": "ranged",
     "base_damage": 40,
     "craft_cost": 60,
-    "uses_ammo": true
+    "uses_ammo": true,
+    "sprite": "riffle",
+    "muzzle_x": 19
   },
   {
     "id": "shotgun",
@@ -29,7 +33,8 @@
     "kind": "ranged",
     "base_damage": 60,
     "craft_cost": 120,
-    "uses_ammo": true
+    "uses_ammo": true,
+    "muzzle_x": 17
   },
   {
     "id": "sword",

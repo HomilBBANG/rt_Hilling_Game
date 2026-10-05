@@ -58,6 +58,20 @@ func uses_ammo(id: String) -> bool:
 	return bool(get_weapon(id).get("uses_ammo", false))
 
 
+## 총구 X 위치(Aim 로컬, 무기별 총열 길이). 없으면 기본 19.
+func muzzle_x(id: String) -> float:
+	return float(get_weapon(id).get("muzzle_x", 19.0))
+
+
+## 무기 스프라이트 텍스처 경로(sprite 열, assets/characters/<sprite>.png). 없으면 "".
+func sprite_path(id: String) -> String:
+	var sp := String(get_weapon(id).get("sprite", ""))
+	if sp == "":
+		return ""
+	var p := "res://assets/characters/%s.png" % sp
+	return p if ResourceLoader.exists(p) else ""
+
+
 ## craft_cost=0 인 기본 보유 무기 id 목록.
 func default_owned() -> Array:
 	var out: Array = []

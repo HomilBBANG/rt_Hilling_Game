@@ -13,4 +13,6 @@ func _on_body_entered(body: Node) -> void:
 	if not body.is_in_group("player"):
 		return
 	WeaponManager.add_ammo(ammo)
+	if body.has_method("show_pickup"):
+		body.show_pickup("탄약 +%d" % ammo) # 머리 위 획득 표시
 	queue_free()

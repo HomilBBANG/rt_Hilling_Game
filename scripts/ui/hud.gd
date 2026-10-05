@@ -11,6 +11,7 @@ const BAG_MIN_SLOTS := 18 # 최소 표시 칸(빈 가방도 격자로 보이게)
 @onready var _phase_label: Label = $TopBar/PhaseLabel
 @onready var _inventory: Control = $Inventory
 @onready var _char_body: AnimatedSprite2D = $Inventory/CharView/Body
+@onready var _char_gun: Sprite2D = $Inventory/CharView/Gun
 @onready var _ranged_label: Label = $Inventory/Equip/RangedLabel
 @onready var _melee_label: Label = $Inventory/Equip/MeleeLabel
 @onready var _switch_note: Label = $Inventory/Equip/SwitchNote
@@ -147,6 +148,9 @@ func _toggle_inventory() -> void:
 func _refresh_equip() -> void:
 	_ranged_label.text = "원거리: %s" % _weapon_name(String(WeaponManager.equipped.get("ranged", "")))
 	_melee_label.text = "근접: %s" % _weapon_name(String(WeaponManager.equipped.get("melee", "")))
+	var gp := WeaponDB.sprite_path(String(WeaponManager.equipped.get("ranged", ""))) # 장착 무기 총 스프라이트
+	if gp != "":
+		_char_gun.texture = load(gp)
 	_rebuild_weapon_switch()
 
 

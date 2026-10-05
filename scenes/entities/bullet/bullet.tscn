@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/entities/bullet.gd" id="1"]
 
 [sub_resource type="CircleShape2D" id="c"]
-radius = 4.0
+radius = 2.5
 
 [node name="Bullet" type="Area2D"]
 collision_layer = 0
@@ -15,4 +15,4 @@ shape = SubResource("c")
 
 [node name="Vis" type="Polygon2D" parent="."]
 color = Color(1, 0.92, 0.45, 1)
-polygon = PackedVector2Array(-4, -4, 4, -4, 4, 4, -4, 4)
+polygon = PackedVector2Array(-2.5, -2.5, 2.5, -2.5, 2.5, 2.5, -2.5, 2.5)

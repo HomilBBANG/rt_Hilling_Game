@@ -153,6 +153,8 @@ func add_loot(item_id: String, amount: int) -> int:
 	_loot[item_id] = int(_loot.get(item_id, 0)) + fit # 이번 탐사분(HUD 요약 + 패널티)
 	GameManager.add_item(item_id, fit)                 # 인벤토리에 누적
 	_discover_item(item_id) # 도감 등록 → 레시피 해금 트리거(예: 감자 → 감자튀김)
+	if _player and is_instance_valid(_player):
+		_player.show_pickup("%s +%d" % [ItemDB.display_name(item_id), fit]) # 머리 위 획득 표시
 	if fit < amount:
 		_overweight_t = 1.5 # 일부만 담김
 	_update_hud()
