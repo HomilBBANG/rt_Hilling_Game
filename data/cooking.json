@@ -2,8 +2,6 @@
   "settings": {
     "night_seconds": 60,
     "target_satisfaction": 60,
-    "stack_a_max_mistakes": 0,
-    "stack_b_max_mistakes": 1,
     "timer_a_max_diff": 0.4,
     "timer_b_max_diff": 1,
     "timer_burn_seconds": 2,
@@ -17,8 +15,42 @@
     "kitchen_helper_bonus": 1.25,
     "server_speed": 300,
     "station_range": 24,
-    "table_slots": 3
+    "table_slots": 6,
+    "floor_rot_seconds": 20,
+    "floor_grade_drop": 1
   },
+  "ingredients": [
+    {
+      "id": "potato",
+      "chop_count": 4,
+      "color": "#C9A66B"
+    },
+    {
+      "id": "herb",
+      "chop_count": 2,
+      "color": "#6BAA4F"
+    },
+    {
+      "id": "canned_food",
+      "chop_count": 0,
+      "color": "#9FA8B3"
+    },
+    {
+      "id": "tomato",
+      "chop_count": 3,
+      "color": "#C42A12"
+    },
+    {
+      "id": "cheese",
+      "chop_count": 0,
+      "color": "#FFD400"
+    },
+    {
+      "id": "meat",
+      "chop_count": 1,
+      "color": "#FFC0CB"
+    }
+  ],
   "recipes": [
     {
       "id": "herb_bite",
@@ -31,7 +63,7 @@
             "herb",
             "canned_food"
           ],
-          "station": "",
+          "station": "bowl",
           "timer_seconds": 0,
           "sat": {
             "A": 20,
@@ -47,7 +79,7 @@
             "herb",
             "canned_food"
           ],
-          "station": "",
+          "station": "bowl",
           "timer_seconds": 0,
           "sat": {
             "A": 28,
@@ -64,7 +96,7 @@
             "canned_food",
             "herb"
           ],
-          "station": "",
+          "station": "bowl",
           "timer_seconds": 0,
           "sat": {
             "A": 36,
@@ -87,7 +119,7 @@
             "herb",
             "canned_food"
           ],
-          "station": "",
+          "station": "bowl",
           "timer_seconds": 0,
           "sat": {
             "A": 25,
@@ -246,7 +278,7 @@
             "potato",
             "canned_food"
           ],
-          "station": "",
+          "station": "bowl",
           "timer_seconds": 0,
           "sat": {
             "A": 22,
@@ -302,7 +334,7 @@
             "herb",
             "potato"
           ],
-          "station": "",
+          "station": "bowl",
           "timer_seconds": 0,
           "sat": {
             "A": 28,

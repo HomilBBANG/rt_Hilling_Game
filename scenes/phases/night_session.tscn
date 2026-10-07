@@ -66,6 +66,16 @@ offset_right = -24.0
 offset_bottom = 648.0
 grow_horizontal = 2
 
+[node name="PlaceArea" type="ReferenceRect" parent="Field" unique_id=864424504]
+layout_mode = 0
+offset_left = 26.0
+offset_top = 68.0
+offset_right = 560.0
+offset_bottom = 460.0
+mouse_filter = 2
+border_color = Color(0.55, 0.9, 0.2, 1)
+border_width = 2.0
+
 [node name="Counter" type="ColorRect" parent="Field" unique_id=2131241749 instance=ExtResource("2")]
 layout_mode = 0
 offset_left = 203.0
@@ -100,10 +110,10 @@ station_id = "pot"
 
 [node name="Table" type="ColorRect" parent="Field" unique_id=274811406 instance=ExtResource("2")]
 layout_mode = 0
-offset_left = 438.0
-offset_top = 254.0
-offset_right = 534.0
-offset_bottom = 310.0
+offset_left = 397.0
+offset_top = 258.0
+offset_right = 493.0
+offset_bottom = 314.0
 mouse_filter = 2
 color = Color(0.46, 0.32, 0.2, 1)
 script = ExtResource("3_552im")
@@ -119,6 +129,17 @@ mouse_filter = 2
 color = Color(0.3, 0.34, 0.3, 1)
 script = ExtResource("3_552im")
 station_id = "trash"
+
+[node name="Bowl" type="ColorRect" parent="Field" unique_id=2131782790 instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 397.0
+offset_top = 116.0
+offset_right = 493.0
+offset_bottom = 172.0
+mouse_filter = 2
+color = Color(0.6, 0.48, 0.66, 1)
+script = ExtResource("3_552im")
+station_id = "bowl"
 
 [node name="God" type="AnimatedSprite2D" parent="Field" unique_id=1930137843]
 texture_filter = 1
@@ -144,24 +165,6 @@ scale = Vector2(3, 3)
 visible = false
 layout_mode = 0
 theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
-
-[node name="SequenceRow" type="HBoxContainer" parent="Field" unique_id=1853909327]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_top = 14.0
-offset_bottom = 46.0
-grow_horizontal = 2
-alignment = 1
-
-[node name="MistakeLabel" type="Label" parent="Field" unique_id=522510771]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_top = 50.0
-offset_bottom = 74.0
-grow_horizontal = 2
-horizontal_alignment = 1
 
 [node name="Ingredients" type="HBoxContainer" parent="Field" unique_id=365819056]
 layout_mode = 1

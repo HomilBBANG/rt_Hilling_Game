@@ -1,29 +1,36 @@
 extends Control
 ## 밤 세션 — 쿠킹 + 서빙 + 급식 (PRD 3.2/3.4/3.5 + 급식 스펙).
-## 1분 타이머 동안 여러 조리 기구를 오가며 요리해 god에게 서빙한다(WASD 이동, E 상호작용).
+## 1분 타이머 동안 주방 기구를 오가며 재료를 손질·조합·조리해 god에게 서빙한다.
+##
+## 조작: WASD 이동 · E 집기 · R 내려놓기 · 마우스 왼클릭 = 조리대 위 재료 썰기 · 하단 목록 클릭
 ##
 ## 조리 기구(station)
-##   조리대   : 재료를 순서대로 손질(마우스 클릭). 무침·샐러드처럼 불이 필요 없는 요리는 여기서 완성.
-##   튀김기/냄비: 손질한 재료를 넣으면(E) 플레이어가 자리를 비워도 게이지가 알아서 오른다.
-##              적정 순간에 꺼내야(E) 좋은 등급. 너무 오래 두면 타서 버려야 한다.
-##   테이블   : 완성 요리를 올려두는 곳(E). 서빙 도우미(카밀라)가 최우선으로 가져가 god에게 전달.
-##   쓰레기통 : 들고 있는 것(손질 재료/요리/탄 요리)을 버린다(E). 재료는 날아간다.
+##   조리대   : 근접하면 하단에 보유 재료 목록 → 클릭해 하나 꺼내면 조리대 위에 생성(한 번에 하나).
+##              조리대 위 재료를 클릭(클리커)해 손질 — 재료마다 써는 횟수(cooking.xlsx ingredients).
+##   튀김기/냄비: 손질 재료를 넣어(R) 오늘 메뉴 레시피와 재료가 일치하면 자동으로 조리 시작.
+##              자리를 비워도 게이지가 오르고, 적정 순간 E로 꺼낸다. 너무 오래 두면 탄다.
+##   믹싱볼   : 불 없이 재료가 모이면 바로 완성(무침류). E로 꺼낸다.
+##   테이블   : 무엇이든 6개까지 보관. 근접하면 하단에 목록. 카밀라가 요리를 최우선으로 가져가 서빙.
+##   쓰레기통 : 들고 있는 것을 버린다(R). 재료는 날아간다.
+##   바닥     : 기구 근처가 아닌 곳에서 R → 바닥에 떨어짐(등급 1단계 하락), 20초 지나면 썩음.
 ##
-## 플레이어는 한 번에 하나만 든다: 손질한 재료(prepped) / 완성 요리(dish) / 탄 요리(burnt).
-## 재료(직전 탐사 가방 + 창고)는 조리대 손질이 끝나는 순간 소모(가방 먼저).
-## 등급 = 손질(실수 횟수)과 조리 기구(타이밍 오차) 중 낮은 쪽. 완성 시 레시피 숙련도 누적.
+## 물건 형식은 KitchenItem 참고(재료/요리/탄 요리/썩은 것). 플레이어는 한 번에 하나만 든다.
+## 재료(직전 탐사 가방 + 창고)는 조리대에 꺼내는 순간 소모(가방 먼저).
+## 요리 등급 = 들어간 재료 중 가장 낮은 등급과 조리 타이밍 등급 중 낮은 쪽. 완성 시 숙련도 누적.
 ## 서빙마다 만족↑ + 토큰↑. 종료 시 만족≥목표면 성공(토큰 획득 + 누적 만족도), 미달이면 실패.
-## 모든 쿠킹 밸런스·레시피는 data/cooking.xlsx(RecipeDB).
-## 기구 위치·크기는 night_session.tscn 의 Field 아래 CookStation 노드를 에디터에서 드래그해 조정.
+## 모든 쿠킹 밸런스·식재료·레시피는 data/cooking.xlsx(RecipeDB).
+## 기구 위치·크기는 night_session.tscn 의 Field 아래 CookStation 노드(에디터 또는 게임 내 배치 편집).
 
 @export var run_seconds := 60.0
 @export var target_satisfaction := 60.0
 @export var move_speed := 260.0
 
-## 조리 기구는 Field 아래 CookStation 인스턴스(에디터에서 드래그해 배치). 이름·색은 CookStation.INFO.
-const COOKERS := ["fryer", "pot"]
+## 재료를 모아 요리를 만드는 기구. 튀김기/냄비는 타이머, 믹싱볼은 즉시 완성.
+const COMBINERS := ["fryer", "pot", "bowl"]
+const TIMED := ["fryer", "pot"]
 const Z_UI := 2000      # 필드 위 안내·말풍선(깊이 정렬보다 위)
 const Z_OVERLAY := 3000 # 준비/결과/배치 화면
+const _FLOOR_PICK := 30.0 # 바닥 물건을 E로 주울 수 있는 거리(발 기준)
 
 var _time_left := 0.0
 var _satisfaction := 0.0
@@ -31,29 +38,26 @@ var _tokens_pending := 0
 var _fed := 0
 var _ended := false
 
-## 조리대에서 손질 중인 요리(RecipeDB.cook_data). 비어 있으면 손질할 요리 없음.
-var _current: Dictionary = {}
-var _seq_index := 0
-var _mistakes := 0
-
-## 들고 있는 것: {} | {kind:"prepped", recipe, mistakes} | {kind:"dish", recipe, grade} | {kind:"burnt", recipe}
-var _held: Dictionary = {}
-## 튀김기/냄비 상태: {} 비어 있음 | {recipe, mistakes, elapsed, target}
-var _cookers := {"fryer": {}, "pot": {}}
-## 테이블 위 완성 요리(먼저 놓은 순). 원소: {kind:"dish", recipe, grade}
-var _table: Array = []
+var _held: Dictionary = {}          # 손에 든 물건(KitchenItem 형식) — 비어 있으면 빈손
+var _counter_item: Dictionary = {}  # 조리대 위 재료(한 번에 하나)
+var _cookers := {}                  # station id -> {items, state(fill|cooking|ready), recipe, base, elapsed, target, dish}
+var _table: Array = []              # 테이블 위 물건(놓은 순)
+var _floor: Array = []              # 바닥 물건 [{item, pos(발 좌표), node}]
 
 var _mastery_log: Dictionary = {} # 오늘 밤 레시피별 숙련도 획득(결과 화면 표시)
 
 var _player_pos := Vector2.ZERO
 var _pos_init := false
 var _e_was_down := false
+var _r_was_down := false
 var _st_pos := {}   # station id -> 필드 좌표(중심, 매 프레임 노드에서 읽음)
 var _st_nodes := {} # station id -> CookStation 노드
+var _tray_key := "" # 하단 목록 내용이 바뀔 때만 다시 만들기 위한 키
+var _hand_vis: KitchenItem
 
 ## 주방 준비 화면(배치+레시피 선택). _started 전에는 조리/타이머가 진행되지 않는다.
 var _started := false
-var _selected: Dictionary = {} # 오늘 밤 조리할 레시피 id 집합
+var _selected: Dictionary = {} # 오늘 밤 메뉴(레시피 id 집합)
 
 ## 서빙 도우미 NPC: 테이블(최우선) 또는 곁에 온 플레이어 손에서 요리를 받아 god 에게 전달.
 enum ServerState { IDLE, FETCHING, CARRYING, RETURNING }
@@ -73,10 +77,8 @@ var _server_dish: Dictionary = {}
 @onready var _belami: Label = $Field/Belami # god 머리 위 반응(표정) 버블
 @onready var _serve_hint: Label = $Field/ServeHint
 @onready var _recipe_label: Label = $BottomBar/RecipeLabel
-@onready var _seq_row: HBoxContainer = $Field/SequenceRow
-@onready var _mistake_label: Label = $Field/MistakeLabel
 @onready var _held_label: Label = $BottomBar/HeldLabel
-@onready var _ingredients_box: HBoxContainer = $Field/Ingredients
+@onready var _tray: HBoxContainer = $Field/Ingredients # 근접한 기구의 하단 목록(조리대=보유 재료, 테이블=올린 물건)
 @onready var _server: AnimatedSprite2D = $Field/Server
 @onready var _server_dish_label: Label = $Field/ServerDish
 @onready var _results: Control = $Results
@@ -94,7 +96,12 @@ func _ready() -> void:
 	_sat_bar.max_value = target_satisfaction
 	_sat_bar.value = 0
 	_collect_stations()
-	_build_ingredient_buttons()
+	for st in COMBINERS:
+		_reset_cooker(st)
+	_hand_vis = KitchenItem.new()
+	_hand_vis.visible = false
+	_field.add_child(_hand_vis)
+	_tray.visible = false
 	_results.visible = false
 	_god.sprite_frames = GodFrames.build()
 	_god.play("idle")
@@ -102,12 +109,12 @@ func _ready() -> void:
 	_held_label.text = ""
 	_apply_gauge_visibility()
 	Config.gauges_visibility_changed.connect(_on_gauges_visibility_changed)
-	# 요리 전 '주방 준비' 화면 먼저(배치 + 레시피 선택/강화). 시작 버튼 전엔 조리 진행 안 함.
+	# 요리 전 '주방 준비' 화면 먼저(배치 + 메뉴 선택/강화). 시작 버튼 전엔 조리 진행 안 함.
 	_start_button.pressed.connect(_start_cooking)
 	_build_prep()
 	_build_layout_tools() # 개발용: 게임 화면에서 기구 드래그 배치
 	# 필드는 발 높이로 깊이 정렬(z_index = y)되므로, 항상 위에 보여야 하는 것들은 더 높게.
-	for c in [_belami, _server_dish_label, _seq_row, _mistake_label, _ingredients_box, _serve_hint]:
+	for c in [_belami, _server_dish_label, _tray, _serve_hint, _hand_vis]:
 		c.z_index = Z_UI
 	for c in [_prep, _results, _layout_bar]:
 		if c:
@@ -122,12 +129,13 @@ func _process(delta: float) -> void:
 	_time_left = maxf(0.0, _time_left - delta)
 	_time_label.text = "남은 시간: %0.0f초" % _time_left
 	_update_cookers(delta) # 튀김기/냄비는 플레이어 위치와 무관하게 진행
+	_update_floor(delta)
 	_update_field(delta)
 	if _time_left <= 0.0:
 		_end_session()
 
 
-# ── 필드: 이동 · 기구 배치 · 상호작용 ───────────────────
+# ── 필드: 이동 · 상호작용 ───────────────────────────────
 
 func _update_field(delta: float) -> void:
 	if _field.size.x <= 0.0:
@@ -176,21 +184,25 @@ func _update_field(delta: float) -> void:
 	_belami.position = god_pos + Vector2(0.0, -72.0) - _belami.size * 0.5 # 머리 위 반응 버블
 
 	var near := _nearest_station()
-	# E(엣지) — 가까운 기구와 상호작용.
+	# E = 집기 / R = 내려놓기 (엣지)
 	var e_down := Input.is_physical_key_pressed(KEY_E)
-	if e_down and not _e_was_down and near != "":
-		_interact(near)
+	if e_down and not _e_was_down:
+		_on_e(near)
 	_e_was_down = e_down
-
-	# 조리대 손질은 손이 비어 있고 조리대 곁일 때만.
-	_set_cooking_enabled(near == "counter" and _held.is_empty() and not _current.is_empty())
+	var r_down := Input.is_physical_key_pressed(KEY_R)
+	if r_down and not _r_was_down:
+		_on_r(near)
+	_r_was_down = r_down
 
 	# god 곁(발 ↔ god 가장자리)에 완성 요리를 들고 오면 바로 서빙.
-	if _held.get("kind", "") == "dish" and _foot_dist(_player_pos, _god_rect()) <= _station_range():
+	if _held.get("type", "") == "dish" and _foot_dist(_player_pos, _god_rect()) <= _station_range():
 		_serve_from_hands()
 
 	_update_server(delta)
 	_refresh_stations(near)
+	_refresh_tray(near)
+	_hand_vis.visible = not _held.is_empty()
+	_hand_vis.position = _player_pos + Vector2(-14.0, -82.0)
 	_update_hint(near)
 	_update_depth()
 
@@ -214,6 +226,399 @@ func _nearest_station() -> String:
 			best_d = dist
 			best = id
 	return best
+
+
+# ── E 집기 / R 내려놓기 ────────────────────────────────
+
+func _on_e(near: String) -> void:
+	# 대기 중인 조합(더 큰 레시피 가능성 때문에 자동 시작 안 함)은 손 상태와 상관없이 E로 시작.
+	if near in COMBINERS and _cookers[near]["state"] == "fill":
+		var ex := _exact_recipe(near)
+		if not ex.is_empty():
+			_start_cooker(near, ex)
+			return
+	if not _held.is_empty():
+		_toast("손이 가득 찼어요 (R로 내려놓기)")
+		return
+	var fi := _nearest_floor()
+	if fi >= 0: # 발밑 물건 먼저
+		var e: Dictionary = _floor[fi]
+		e["node"].queue_free()
+		_floor.remove_at(fi)
+		_set_held(e["item"])
+		return
+	match near:
+		"counter":
+			if _counter_item.is_empty():
+				_toast("아래 목록에서 재료를 꺼내세요")
+			else:
+				_set_held(_counter_item)
+				_counter_item = {}
+		"fryer", "pot", "bowl":
+			_take_from_cooker(near)
+		"table":
+			if _table.is_empty():
+				_toast("테이블이 비어 있어요")
+			else:
+				_set_held(_table.pop_back())
+
+
+func _on_r(near: String) -> void:
+	if _held.is_empty():
+		return
+	var it := _held
+	var type := String(it.get("type", ""))
+	match near:
+		"counter":
+			if type != "ing":
+				_toast("조리대에는 재료만 올릴 수 있어요")
+			elif not _counter_item.is_empty():
+				_toast("조리대가 이미 차 있어요")
+			else:
+				_counter_item = it
+				_set_held({})
+		"fryer", "pot", "bowl":
+			_add_to_cooker(near, it)
+		"table":
+			if type == "burnt" or type == "rotten":
+				_toast("쓰레기통에 버려야 해요")
+			elif _table.size() >= _table_slots():
+				_toast("테이블이 가득 찼어요 (%d개)" % _table_slots())
+			else:
+				_table.append(it)
+				_set_held({})
+		"trash":
+			_toast("%s 버림" % KitchenItem.label_of(it))
+			_set_held({})
+		_:
+			_drop_floor(it)
+
+
+# ── 조리대: 재료 꺼내기 · 손질(클릭) ─────────────────────
+
+## 하단 목록에서 재료 하나 꺼내기 → 조리대 위에 생성(재고 1 소모).
+func _take_from_stock(id: String) -> void:
+	if _ended or _nearest_station() != "counter":
+		return
+	if not _counter_item.is_empty():
+		_toast("조리대를 비워야 꺼낼 수 있어요 — 올려둔 재료를 테이블로 옮기세요")
+		return
+	if GameManager.cooking_stock(id) <= 0:
+		return
+	GameManager.consume_for_cooking(id, 1)
+	_counter_item = KitchenItem.make_ingredient(id)
+	_tray_key = "" # 수량 갱신
+
+
+## 조리대 위 재료 클릭 = 한 번 썰기. 재료마다 정해진 횟수를 채우면 손질 완료.
+func _chop() -> void:
+	if _counter_item.is_empty():
+		return
+	if _nearest_station() != "counter":
+		_toast("조리대 가까이에서 손질하세요")
+		return
+	var it := _counter_item
+	var need := RecipeDB.chop_count(String(it["id"]))
+	if need <= 0:
+		_toast("손질 없이 바로 쓸 수 있어요")
+		return
+	if it.get("chopped", false):
+		return
+	it["chops"] = int(it["chops"]) + 1
+	_st_nodes["counter"].pulse()
+	if int(it["chops"]) >= need:
+		it["chopped"] = true
+		_toast("%s 손질 완료!" % ItemDB.display_name(String(it["id"])))
+
+
+# ── 튀김기 · 냄비 · 믹싱볼 ─────────────────────────────
+
+func _reset_cooker(st: String) -> void:
+	_cookers[st] = {"items": [], "state": "fill", "recipe": {}, "base": "A",
+		"elapsed": 0.0, "target": 0.0, "dish": {}}
+
+
+## 오늘 메뉴 중 이 기구에서 만드는 레시피(현재 레벨).
+func _menu_recipes(st: String) -> Array:
+	var out: Array = []
+	for id in RecipeDB.unlocked_ids():
+		if bool(_selected.get(id, false)):
+			var d := RecipeDB.cook_data(id)
+			if String(d["station"]) == st:
+				out.append(d)
+	return out
+
+
+func _counts(ids: Array) -> Dictionary:
+	var c := {}
+	for i in ids:
+		c[String(i)] = int(c.get(String(i), 0)) + 1
+	return c
+
+
+## have 가 need 의 부분집합(개수 포함)인지.
+func _fits(have: Dictionary, need: Dictionary) -> bool:
+	for k in have:
+		if int(have[k]) > int(need.get(k, 0)):
+			return false
+	return true
+
+
+func _ids_of(items: Array) -> Array:
+	return items.map(func(x): return String(x["id"]))
+
+
+## 기구 안 재료와 정확히 일치하는 메뉴 레시피(없으면 {}).
+func _exact_recipe(st: String) -> Dictionary:
+	var have := _counts(_ids_of(_cookers[st]["items"]))
+	if have.is_empty():
+		return {}
+	for r in _menu_recipes(st):
+		var need := _counts(r["ingredients"])
+		if _fits(have, need) and _fits(need, have):
+			return r
+	return {}
+
+
+## 재료 넣기. 오늘 메뉴 중 이 조합으로 완성될 수 있는 레시피가 있어야 받는다.
+## 정확히 일치하면 자동 시작 — 단, 재료를 더 넣어 만들 수 있는 더 큰 레시피가 있으면 대기(E로 시작).
+func _add_to_cooker(st: String, it: Dictionary) -> void:
+	var c: Dictionary = _cookers[st]
+	var st_name: String = CookStation.INFO[st]["name"]
+	if c["state"] != "fill":
+		_toast("%s 사용 중이에요" % st_name)
+		return
+	if it.get("type", "") != "ing":
+		_toast("%s에는 재료만 넣을 수 있어요" % st_name)
+		return
+	if not KitchenItem.is_usable(it):
+		_toast("먼저 조리대에서 손질하세요")
+		return
+	var ids := _ids_of(c["items"])
+	ids.append(String(it["id"]))
+	var have := _counts(ids)
+	var exact: Dictionary = {}
+	var bigger := false
+	for r in _menu_recipes(st):
+		var need := _counts(r["ingredients"])
+		if not _fits(have, need):
+			continue
+		if _fits(need, have):
+			exact = r
+		else:
+			bigger = true
+	if exact.is_empty() and not bigger:
+		_toast("이 조합으로 만들 수 있는 메뉴가 없어요")
+		return
+	c["items"].append(it)
+	_set_held({})
+	if not exact.is_empty():
+		if bigger:
+			_toast("%s 가능 — E로 시작 / 재료 더 넣기" % exact["display_name"])
+		else:
+			_start_cooker(st, exact)
+
+
+func _start_cooker(st: String, recipe: Dictionary) -> void:
+	var c: Dictionary = _cookers[st]
+	c["recipe"] = recipe
+	c["base"] = _worst_grade(c["items"])
+	if st == "bowl": # 불 없이 바로 완성
+		c["dish"] = _complete_dish(recipe, c["base"])
+		c["items"] = []
+		c["state"] = "ready"
+	else:
+		c["state"] = "cooking"
+		c["elapsed"] = 0.0
+		c["target"] = maxf(0.5, float(recipe["timer_seconds"]))
+
+
+## E(빈손): 조리 중이면 꺼내기 / 완성품 꺼내기 / 아직 시작 전이면 마지막 재료 빼기.
+func _take_from_cooker(st: String) -> void:
+	var c: Dictionary = _cookers[st]
+	match String(c["state"]):
+		"cooking":
+			var recipe: Dictionary = c["recipe"]
+			var elapsed: float = c["elapsed"]
+			var target: float = c["target"]
+			var base: String = c["base"]
+			_reset_cooker(st)
+			if _is_burnt(elapsed, target):
+				_set_held({"type": "burnt", "recipe": recipe})
+				_toast("타 버렸다… 쓰레기통에 버리세요")
+			else:
+				_set_held(_complete_dish(recipe, _worse(base, _timer_grade(absf(elapsed - target)))))
+		"ready":
+			_set_held(c["dish"])
+			_reset_cooker(st)
+		_:
+			if c["items"].is_empty():
+				_toast("%s가 비어 있어요" % CookStation.INFO[st]["name"])
+			else:
+				_set_held(c["items"].pop_back())
+
+
+func _update_cookers(delta: float) -> void:
+	for st in TIMED:
+		var c: Dictionary = _cookers[st]
+		if c["state"] == "cooking":
+			c["elapsed"] = float(c["elapsed"]) + delta
+
+
+func _is_burnt(elapsed: float, target: float) -> bool:
+	return elapsed > target + RecipeDB.setting("timer_burn_seconds", 2.0)
+
+
+# ── 테이블 ────────────────────────────────────────────
+
+func _table_slots() -> int:
+	return int(RecipeDB.setting("table_slots", 6.0))
+
+
+## 하단 목록에서 테이블 물건 클릭 → 손에 들기.
+func _take_from_table(i: int) -> void:
+	if _nearest_station() != "table" or i >= _table.size():
+		return
+	if not _held.is_empty():
+		_toast("손이 가득 찼어요 (R로 내려놓기)")
+		return
+	_set_held(_table.pop_at(i))
+
+
+func _table_dish_index() -> int:
+	for i in _table.size():
+		if _table[i].get("type", "") == "dish":
+			return i
+	return -1
+
+
+# ── 바닥 ──────────────────────────────────────────────
+
+## 빈 바닥에 떨어뜨림 — 재료·요리는 등급 하락, 일정 시간 뒤 썩는다.
+func _drop_floor(it: Dictionary) -> void:
+	var type := String(it.get("type", ""))
+	if type == "ing" or type == "dish":
+		var before := String(it["grade"])
+		it["grade"] = KitchenItem.grade_down(before, int(RecipeDB.setting("floor_grade_drop", 1.0)))
+		_toast("바닥에 떨어뜨림 — 등급 %s → %s" % [before, it["grade"]])
+	var pos := _player_pos + _FOOT_OFFSET + Vector2(randf_range(-6.0, 6.0), 4.0)
+	var node := KitchenItem.new()
+	node.size = Vector2(24, 24)
+	node.position = pos - node.size * 0.5
+	node.set_item(it)
+	_field.add_child(node)
+	_floor.append({"item": it, "pos": pos, "node": node})
+	_set_held({})
+
+
+func _update_floor(delta: float) -> void:
+	var rot := RecipeDB.setting("floor_rot_seconds", 20.0)
+	for e in _floor:
+		var it: Dictionary = e["item"]
+		var type := String(it.get("type", ""))
+		if type != "ing" and type != "dish":
+			continue
+		it["floor_t"] = float(it.get("floor_t", 0.0)) + delta
+		var t := float(it["floor_t"]) / rot
+		e["node"].modulate = Color(1, 1, 1).lerp(Color(0.7, 0.75, 0.45), clampf(t, 0.0, 1.0))
+		if t >= 1.0:
+			e["item"] = {"type": "rotten", "name": _plain_name(it)}
+			e["node"].modulate = Color(1, 1, 1)
+			e["node"].set_item(e["item"])
+
+
+func _nearest_floor() -> int:
+	var foot := _player_pos + _FOOT_OFFSET
+	var best := -1
+	var best_d := _FLOOR_PICK
+	for i in _floor.size():
+		var dd := foot.distance_to(_floor[i]["pos"])
+		if dd < best_d:
+			best_d = dd
+			best = i
+	return best
+
+
+func _plain_name(it: Dictionary) -> String:
+	if it.get("type", "") == "ing":
+		return ItemDB.display_name(String(it["id"]))
+	return String(it.get("recipe", {}).get("display_name", "음식"))
+
+
+# ── 완성 · 서빙 ──────────────────────────────────────
+
+## 요리 완성 → 숙련도 누적 + 요리 물건 반환.
+func _complete_dish(recipe: Dictionary, grade: String) -> Dictionary:
+	var id := String(recipe["id"])
+	var gain := RecipeDB.add_mastery(id, grade) # 숙련도 누적(엑셀 mastery_a/b/c)
+	_mastery_log[id] = int(_mastery_log.get(id, 0)) + gain
+	_toast("%s %s등급! 숙련 +%d" % [recipe["display_name"], grade, gain])
+	return {"type": "dish", "recipe": recipe, "grade": grade, "floor_t": 0.0}
+
+
+func _serve_from_hands() -> void:
+	_apply_serve(_held["recipe"], _held["grade"])
+	_set_held({})
+
+
+func _apply_serve(recipe: Dictionary, grade: String) -> void:
+	var bonus := 1.0
+	if BelamiManager.is_preferred(String(recipe["id"])):
+		bonus *= RecipeDB.setting("preferred_bonus", 1.5)
+	if _has_helper("kitchen"): # 주방 도우미: 만족/토큰 보너스
+		bonus *= RecipeDB.setting("kitchen_helper_bonus", 1.25)
+	_satisfaction += float(recipe["sat"].get(grade, 0.0)) * bonus # 레시피·레벨별 만족도(엑셀)
+	_tokens_pending += int(_token_gain(grade) * bonus)
+	_fed += 1
+	_belami.text = _belami_face(grade)
+	_update_hud()
+
+
+## 서빙 도우미: 테이블에 요리가 있으면 최우선으로 가져가고(재료는 건드리지 않음),
+## 없으면 곁에 온 플레이어의 손에서 받아 god 에게 전달한다.
+## 이동은 길찾기(기구·god를 돌아서) + 발 충돌.
+func _update_server(delta: float) -> void:
+	if not _has_helper("serving"):
+		_server.visible = false
+		_server_dish_label.visible = false
+		return
+	_server.visible = true
+	var reach := _station_range()
+	match _server_state:
+		ServerState.IDLE, ServerState.RETURNING:
+			if _table_dish_index() >= 0 and _st_nodes.has("table"):
+				_server_state = ServerState.FETCHING
+			elif _held.get("type", "") == "dish" and _player_pos.distance_to(_server_pos) < 80.0:
+				_server_dish = _held
+				_set_held({})
+				_server_state = ServerState.CARRYING
+			elif _server_state == ServerState.RETURNING:
+				_server_walk(_server_home + _FOOT_OFFSET, delta)
+				if _server_pos.distance_to(_server_home) < 4.0:
+					_server_state = ServerState.IDLE
+		ServerState.FETCHING:
+			var tr: Rect2 = _st_nodes["table"].get_rect()
+			_server_walk(Vector2(tr.get_center().x, tr.end.y + _FOOT_SIZE.y * 0.5 + 4.0), delta)
+			if _foot_dist(_server_pos, tr) <= reach:
+				var di := _table_dish_index()
+				if di < 0: # 그 사이 플레이어가 집어 갔으면 복귀
+					_server_state = ServerState.RETURNING
+				else:
+					_server_dish = _table.pop_at(di)
+					_server_state = ServerState.CARRYING
+		ServerState.CARRYING:
+			var gr := _god_rect()
+			_server_walk(Vector2(gr.position.x - _FOOT_SIZE.x * 0.5 - 4.0, gr.get_center().y), delta)
+			if _foot_dist(_server_pos, gr) <= reach:
+				_apply_serve(_server_dish["recipe"], _server_dish["grade"])
+				_server_dish = {}
+				_server_state = ServerState.RETURNING
+	_server.position = _server_pos
+	var carrying := _server_state == ServerState.CARRYING and not _server_dish.is_empty()
+	_server_dish_label.visible = carrying
+	if carrying:
+		_server_dish_label.text = String(_server_dish["recipe"]["display_name"])
+		_server_dish_label.position = _server_pos + Vector2(-30.0, -72.0)
 
 
 # ── 충돌(발 기준) ────────────────────────────────────
@@ -302,236 +707,8 @@ func _update_depth() -> void:
 	_god.z_index = int(_god_rect().end.y)
 	_player_node.z_index = int(_foot_rect(_player_pos).end.y)
 	_server.z_index = int(_foot_rect(_server_pos).end.y)
-
-
-func _set_cooking_enabled(on: bool) -> void:
-	for b in _ingredients_box.get_children():
-		if b is Button:
-			b.disabled = not on
-
-
-func _interact(station: String) -> void:
-	match station:
-		"fryer", "pot":
-			_interact_cooker(station)
-		"table":
-			_interact_table()
-		"trash":
-			_interact_trash()
-
-
-## 튀김기/냄비: 손질 재료 넣기 / 다 된 요리 꺼내기.
-func _interact_cooker(st: String) -> void:
-	var c: Dictionary = _cookers[st]
-	if c.is_empty():
-		if _held.get("kind", "") != "prepped":
-			_toast("넣을 손질 재료가 없어요")
-			return
-		var need := String(_held["recipe"]["station"])
-		if need != st:
-			_toast("이 재료는 %s에서 조리해요" % CookStation.INFO[need]["name"])
-			return
-		_cookers[st] = {
-			"recipe": _held["recipe"], "mistakes": int(_held["mistakes"]),
-			"elapsed": 0.0, "target": maxf(0.5, float(_held["recipe"]["timer_seconds"])),
-		}
-		_set_held({})
-		return
-	if not _held.is_empty():
-		_toast("손이 비어야 꺼낼 수 있어요")
-		return
-	var recipe: Dictionary = c["recipe"]
-	var elapsed: float = c["elapsed"]
-	var target: float = c["target"]
-	_cookers[st] = {}
-	if _is_burnt(elapsed, target):
-		_set_held({"kind": "burnt", "recipe": recipe})
-		_toast("타 버렸다… 쓰레기통에 버리세요")
-		return
-	# 등급 = 손질 등급과 타이밍 등급 중 낮은 쪽.
-	var grade := _worse(_stack_grade(int(c["mistakes"])), _timer_grade(absf(elapsed - target)))
-	_complete_dish(recipe, grade)
-
-
-## 테이블: 완성 요리 올리기 / (손이 비면) 하나 집기.
-func _interact_table() -> void:
-	match String(_held.get("kind", "")):
-		"dish":
-			if _table.size() >= int(RecipeDB.setting("table_slots", 3.0)):
-				_toast("테이블이 가득 찼어요")
-				return
-			_table.append(_held)
-			_set_held({})
-		"burnt":
-			_toast("탄 요리는 쓰레기통에 버려야 해요")
-		"prepped":
-			_toast("아직 조리가 끝나지 않았어요")
-		_:
-			if not _table.is_empty():
-				_set_held(_table.pop_back())
-
-
-## 쓰레기통: 들고 있는 것을 버린다(재료 손실).
-func _interact_trash() -> void:
-	if _held.is_empty():
-		_toast("버릴 것이 없어요")
-		return
-	_toast("%s 버림" % _held_name(_held))
-	_set_held({})
-
-
-# ── 조리대: 재료 손질(순서 클릭) ────────────────────────
-
-## 모든 레시피·레벨에 등장하는 재료 버튼(관계없는 재료는 오답 유도).
-func _build_ingredient_buttons() -> void:
-	var ids := {}
-	for r in RecipeDB.recipes:
-		for lv in r.get("levels", []):
-			for ing in lv.get("ingredients", []):
-				ids[String(ing)] = true
-	for ing in ids.keys():
-		var b := Button.new()
-		b.text = _item_name(ing)
-		b.custom_minimum_size = Vector2(120, 44)
-		b.focus_mode = Control.FOCUS_NONE # WASD 이동과 포커스 충돌 방지
-		b.pressed.connect(_on_ingredient.bind(String(ing)))
-		_ingredients_box.add_child(b)
-
-
-## 조리대에 다음 요리를 올린다(선택한 레시피 중 재료가 있는 것 무작위).
-func _next_recipe() -> void:
-	var options: Array = []
-	for id in RecipeDB.unlocked_ids():
-		if not bool(_selected.get(id, false)): # 준비 화면에서 고른 것만
-			continue
-		var d := RecipeDB.cook_data(id)
-		if _can_afford(d):
-			options.append(d)
-	_seq_index = 0
-	_mistakes = 0
-	_mistake_label.text = ""
-	if options.is_empty():
-		_current = {}
-		_recipe_label.text = "조리대: 선택한 레시피 재료가 부족합니다"
-		_render_sequence()
-		return
-	_current = options[randi() % options.size()]
-	var pref := " ★선호" if BelamiManager.is_preferred(String(_current["id"])) else ""
-	_recipe_label.text = "조리대: %s Lv%d%s" % [_current["display_name"], int(_current["level"]), pref]
-	_render_sequence()
-
-
-func _on_ingredient(ing_id: String) -> void:
-	if _ended or not _held.is_empty() or _current.is_empty() or _nearest_station() != "counter":
-		return
-	var seq: Array = _current["ingredients"]
-	if _seq_index >= seq.size():
-		return
-	if ing_id != String(seq[_seq_index]):
-		_mistakes += 1
-		_mistake_label.text = "실수 %d회" % _mistakes
-		return
-	_seq_index += 1
-	_render_sequence()
-	if _seq_index < seq.size():
-		return
-	# 손질 완료 → 재료 소모. 불 조리가 필요하면 손질 재료를 들고, 아니면 여기서 완성.
-	_consume(_current)
-	var recipe := _current
-	if String(recipe["station"]) != "":
-		_set_held({"kind": "prepped", "recipe": recipe, "mistakes": _mistakes})
-		_toast("%s에 넣으세요" % CookStation.INFO[recipe["station"]]["name"])
-	else:
-		_complete_dish(recipe, _stack_grade(_mistakes))
-	_next_recipe()
-
-
-# ── 튀김기 / 냄비 ─────────────────────────────────────
-
-func _update_cookers(delta: float) -> void:
-	for st in COOKERS:
-		var c: Dictionary = _cookers[st]
-		if not c.is_empty():
-			c["elapsed"] = float(c["elapsed"]) + delta
-
-
-func _is_burnt(elapsed: float, target: float) -> bool:
-	return elapsed > target + RecipeDB.setting("timer_burn_seconds", 2.0)
-
-
-# ── 완성 · 서빙 ──────────────────────────────────────
-
-## 요리 완성 → 손에 든다 + 숙련도 누적.
-func _complete_dish(recipe: Dictionary, grade: String) -> void:
-	var id := String(recipe["id"])
-	var gain := RecipeDB.add_mastery(id, grade) # 숙련도 누적(엑셀 mastery_a/b/c)
-	_mastery_log[id] = int(_mastery_log.get(id, 0)) + gain
-	_set_held({"kind": "dish", "recipe": recipe, "grade": grade})
-	_toast("%s %s등급! 숙련 +%d" % [recipe["display_name"], grade, gain])
-
-
-func _serve_from_hands() -> void:
-	_apply_serve(_held["recipe"], _held["grade"])
-	_set_held({})
-
-
-func _apply_serve(recipe: Dictionary, grade: String) -> void:
-	var bonus := 1.0
-	if BelamiManager.is_preferred(String(recipe["id"])):
-		bonus *= RecipeDB.setting("preferred_bonus", 1.5)
-	if _has_helper("kitchen"): # 주방 도우미: 만족/토큰 보너스
-		bonus *= RecipeDB.setting("kitchen_helper_bonus", 1.25)
-	_satisfaction += float(recipe["sat"].get(grade, 0.0)) * bonus # 레시피·레벨별 만족도(엑셀)
-	_tokens_pending += int(_token_gain(grade) * bonus)
-	_fed += 1
-	_belami.text = _belami_face(grade)
-	_update_hud()
-
-
-## 서빙 도우미: 테이블에 요리가 있으면 최우선으로 가져가고,
-## 없으면 곁에 온 플레이어의 손에서 받아 god 에게 전달한다.
-## 이동은 길찾기(기구·god를 돌아서) + 발 충돌.
-func _update_server(delta: float) -> void:
-	if not _has_helper("serving"):
-		_server.visible = false
-		_server_dish_label.visible = false
-		return
-	_server.visible = true
-	var reach := _station_range()
-	match _server_state:
-		ServerState.IDLE, ServerState.RETURNING:
-			if not _table.is_empty() and _st_nodes.has("table"):
-				_server_state = ServerState.FETCHING
-			elif _held.get("kind", "") == "dish" and _player_pos.distance_to(_server_pos) < 80.0:
-				_server_dish = _held
-				_set_held({})
-				_server_state = ServerState.CARRYING
-			elif _server_state == ServerState.RETURNING:
-				_server_walk(_server_home + _FOOT_OFFSET, delta)
-				if _server_pos.distance_to(_server_home) < 4.0:
-					_server_state = ServerState.IDLE
-		ServerState.FETCHING:
-			var tr: Rect2 = _st_nodes["table"].get_rect()
-			_server_walk(Vector2(tr.get_center().x, tr.end.y + _FOOT_SIZE.y * 0.5 + 4.0), delta)
-			if _foot_dist(_server_pos, tr) <= reach:
-				if _table.is_empty(): # 그 사이 플레이어가 집어 갔으면 복귀
-					_server_state = ServerState.RETURNING
-				else:
-					_server_dish = _table.pop_front()
-					_server_state = ServerState.CARRYING
-		ServerState.CARRYING:
-			var gr := _god_rect()
-			_server_walk(Vector2(gr.position.x - _FOOT_SIZE.x * 0.5 - 4.0, gr.get_center().y), delta)
-			if _foot_dist(_server_pos, gr) <= reach:
-				_apply_serve(_server_dish["recipe"], _server_dish["grade"])
-				_server_dish = {}
-				_server_state = ServerState.RETURNING
-	_server.position = _server_pos
-	var carrying := _server_state == ServerState.CARRYING and not _server_dish.is_empty()
-	_server_dish_label.visible = carrying
-	if carrying:
-		_server_dish_label.text = String(_server_dish["recipe"]["display_name"])
-		_server_dish_label.position = _server_pos + Vector2(-30.0, -72.0)
+	for e in _floor:
+		e["node"].z_index = int(e["pos"].y)
 
 
 # ── 카밀라 길찾기 ─────────────────────────────────────
@@ -613,7 +790,7 @@ func _npc_idle_frames() -> SpriteFrames:
 	return sf
 
 
-# ── 기구 표시 ─────────────────────────────────────────
+# ── 기구 · 하단 목록 · 안내 표시 ─────────────────────────
 
 ## Field 아래에 배치된 CookStation 노드를 id 별로 수집.
 func _collect_stations() -> void:
@@ -625,86 +802,193 @@ func _collect_stations() -> void:
 			push_warning("NightSession: Field 에 '%s' 기구(CookStation)가 없습니다." % id)
 
 
-## 매 프레임 기구 상태(게이지·문구·근접 강조) 갱신.
+## 매 프레임 기구 위 물건·게이지·상태 문구·근접 강조 갱신.
 func _refresh_stations(near: String) -> void:
 	for id in _st_nodes:
 		_st_nodes[id].modulate = Color(1.35, 1.35, 1.35) if id == near else Color(1, 1, 1)
-	# 조리대: 손질 중인 요리
+	# 조리대: 올려둔 재료 + 손질 진행
 	if _st_nodes.has("counter"):
-		_st_nodes["counter"].status.text = String(_current.get("display_name", ""))
-	# 튀김기/냄비: 게이지(초록=적정 구간, 빨강=타는 중)
-	for st in COOKERS:
+		var cn: CookStation = _st_nodes["counter"]
+		cn.show_items([] if _counter_item.is_empty() else [_counter_item], 40.0)
+		var txt := ""
+		if not _counter_item.is_empty():
+			var need := RecipeDB.chop_count(String(_counter_item["id"]))
+			if need <= 0:
+				txt = "바로 사용 가능 (E로 들기)"
+			elif _counter_item.get("chopped", false):
+				txt = "손질 완료 (E로 들기)"
+			else:
+				txt = "클릭해서 손질 %d/%d" % [int(_counter_item["chops"]), need]
+		cn.status.text = txt
+	# 튀김기/냄비/믹싱볼
+	for st in COMBINERS:
 		if not _st_nodes.has(st):
 			continue
 		var c: Dictionary = _cookers[st]
-		var bar: ProgressBar = _st_nodes[st].bar
-		var status: Label = _st_nodes[st].status
-		bar.visible = not c.is_empty()
-		if c.is_empty():
-			status.text = ""
-			continue
-		var elapsed: float = c["elapsed"]
-		var target: float = c["target"]
-		var burn := RecipeDB.setting("timer_burn_seconds", 2.0)
-		bar.max_value = target + burn
-		bar.value = minf(elapsed, target + burn)
-		var diff := elapsed - target
-		var dish_name := String(c["recipe"]["display_name"])
-		if _is_burnt(elapsed, target):
-			bar.modulate = Color(0.3, 0.3, 0.3)
-			status.text = "%s — 탔다!" % dish_name
-		elif diff > RecipeDB.setting("timer_a_max_diff", 0.4):
-			bar.modulate = Color(1.0, 0.3, 0.25)
-			status.text = "%s — 타는 중! (E)" % dish_name
-		elif diff >= -RecipeDB.setting("timer_a_max_diff", 0.4):
-			bar.modulate = Color(0.4, 1.0, 0.4)
-			status.text = "%s — 지금! (E)" % dish_name
-		else:
-			bar.modulate = Color(1, 1, 1)
-			status.text = "%s %s 중…" % [dish_name, CookStation.INFO[st]["verb"]]
-	# 테이블: 올려둔 요리
-	var names: Array[String] = []
-	for dish in _table:
-		names.append("%s(%s)" % [dish["recipe"]["display_name"], dish["grade"]])
+		var node: CookStation = _st_nodes[st]
+		node.show_items([c["dish"]] if c["state"] == "ready" else c["items"], 24.0)
+		node.bar.visible = c["state"] == "cooking"
+		match String(c["state"]):
+			"ready":
+				node.status.text = "%s 완성! (E)" % c["dish"]["recipe"]["display_name"]
+			"cooking":
+				_refresh_timer(node, c, st)
+			_:
+				var ex := _exact_recipe(st)
+				if not ex.is_empty():
+					node.status.text = "%s 가능 — E로 시작" % ex["display_name"]
+				elif not c["items"].is_empty():
+					node.status.text = "재료 %d개 (E: 빼기)" % c["items"].size()
+				else:
+					node.status.text = ""
+	# 테이블
 	if _st_nodes.has("table"):
-		_st_nodes["table"].status.text = ", ".join(names)
+		_st_nodes["table"].show_items(_table, 24.0)
+		_st_nodes["table"].status.text = "%d/%d" % [_table.size(), _table_slots()] if not _table.is_empty() else ""
+
+
+## 튀김기/냄비 게이지(초록=적정 구간, 빨강=타는 중, 회색=탐).
+func _refresh_timer(node: CookStation, c: Dictionary, st: String) -> void:
+	var elapsed: float = c["elapsed"]
+	var target: float = c["target"]
+	var burn := RecipeDB.setting("timer_burn_seconds", 2.0)
+	var ok := RecipeDB.setting("timer_a_max_diff", 0.4)
+	node.bar.max_value = target + burn
+	node.bar.value = minf(elapsed, target + burn)
+	var diff := elapsed - target
+	var dish_name := String(c["recipe"]["display_name"])
+	if _is_burnt(elapsed, target):
+		node.bar.modulate = Color(0.3, 0.3, 0.3)
+		node.status.text = "%s — 탔다!" % dish_name
+	elif diff > ok:
+		node.bar.modulate = Color(1.0, 0.3, 0.25)
+		node.status.text = "%s — 타는 중! (E)" % dish_name
+	elif diff >= -ok:
+		node.bar.modulate = Color(0.4, 1.0, 0.4)
+		node.status.text = "%s — 지금! (E)" % dish_name
+	else:
+		node.bar.modulate = Color(1, 1, 1)
+		node.status.text = "%s %s 중…" % [dish_name, CookStation.INFO[st]["verb"]]
+
+
+## 하단 목록: 조리대 근처 = 보유 재료(클릭해 꺼내기), 테이블 근처 = 테이블 위 물건(클릭해 들기).
+func _refresh_tray(near: String) -> void:
+	var key := near
+	if near == "counter":
+		for id in RecipeDB.ingredient_ids():
+			key += "|%s:%d" % [id, GameManager.cooking_stock(id)]
+		key += "|busy" if not _counter_item.is_empty() else ""
+	elif near == "table":
+		for it in _table:
+			key += "|" + KitchenItem.label_of(it)
+	else:
+		key = ""
+	if key == _tray_key:
+		return
+	_tray_key = key
+	for ch in _tray.get_children():
+		ch.queue_free()
+	_tray.visible = key != ""
+	if near == "counter":
+		_tray.add_child(_tray_label("재료 꺼내기"))
+		var any := false
+		for id in RecipeDB.ingredient_ids():
+			var n := GameManager.cooking_stock(id)
+			if n <= 0:
+				continue # 보유한 것만
+			any = true
+			var b := _tray_button(KitchenItem.make_ingredient(id), "%s ×%d" % [ItemDB.display_name(id), n])
+			b.disabled = not _counter_item.is_empty()
+			b.pressed.connect(_take_from_stock.bind(id))
+			_tray.add_child(b)
+		if not any:
+			_tray.add_child(_tray_label("꺼낼 재료가 없어요"))
+	elif near == "table":
+		_tray.add_child(_tray_label("테이블 %d/%d" % [_table.size(), _table_slots()]))
+		for i in _table.size():
+			var b := _tray_button(_table[i], KitchenItem.label_of(_table[i]))
+			b.pressed.connect(_take_from_table.bind(i))
+			_tray.add_child(b)
+
+
+func _tray_label(text: String) -> Label:
+	var lb := Label.new()
+	lb.text = text
+	lb.add_theme_color_override("font_outline_color", Color.BLACK)
+	lb.add_theme_constant_override("outline_size", 4)
+	return lb
+
+
+## 아이콘(임시 도형) + 이름 버튼.
+func _tray_button(it: Dictionary, text: String) -> Button:
+	var b := Button.new()
+	b.focus_mode = Control.FOCUS_NONE # WASD 이동과 포커스 충돌 방지
+	b.custom_minimum_size = Vector2(150, 44)
+	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	b.text = "        " + text
+	var vis := KitchenItem.new()
+	vis.position = Vector2(8, 8)
+	vis.set_item(it)
+	b.add_child(vis)
+	return b
 
 
 ## 상황별 안내 문구.
 func _update_hint(near: String) -> void:
-	match String(_held.get("kind", "")):
-		"prepped":
-			_serve_hint.text = "손질 완료 → %s로 가서 E로 넣으세요" % CookStation.INFO[_held["recipe"]["station"]]["name"]
+	var type := String(_held.get("type", ""))
+	if type == "":
+		if _nearest_floor() >= 0:
+			_serve_hint.text = "E로 줍기"
+			return
+		match near:
+			"counter":
+				if _counter_item.is_empty():
+					_serve_hint.text = "아래 목록에서 재료를 꺼내세요"
+				elif RecipeDB.needs_chop(String(_counter_item["id"])) and not _counter_item.get("chopped", false):
+					_serve_hint.text = "조리대 위 재료를 마우스로 클릭해 손질하세요"
+				else:
+					_serve_hint.text = "E로 들어서 튀김기·냄비·믹싱볼에 넣으세요"
+			"fryer", "pot", "bowl":
+				var c: Dictionary = _cookers[near]
+				match String(c["state"]):
+					"cooking":
+						_serve_hint.text = "적정 순간에 E로 꺼내세요"
+					"ready":
+						_serve_hint.text = "E로 완성된 요리를 꺼내세요"
+					_:
+						_serve_hint.text = "재료를 넣으면(R) 메뉴와 맞을 때 조리가 시작돼요"
+			"table":
+				_serve_hint.text = "아래 목록을 클릭하거나 E로 집기"
+			_:
+				_serve_hint.text = "조리대로 가서 재료를 꺼내세요"
+		return
+	match type:
+		"ing":
+			if KitchenItem.is_usable(_held):
+				_serve_hint.text = "튀김기·냄비·믹싱볼에 R로 넣기 · 테이블에 보관(R)"
+			else:
+				_serve_hint.text = "조리대에 R로 올려 클릭해 손질하세요"
 		"dish":
 			if _has_helper("serving"):
-				_serve_hint.text = "테이블에 두면(E) 카밀라가 서빙해요 · 직접 god에게 가져가도 돼요"
+				_serve_hint.text = "테이블에 두면(R) 카밀라가 서빙해요 · 직접 god에게 가져가도 돼요"
 			else:
-				_serve_hint.text = "god에게 가져가 서빙 · 테이블에 잠시 둘 수 있어요(E)"
-		"burnt":
-			_serve_hint.text = "탄 요리 → 쓰레기통에 버리세요(E)"
+				_serve_hint.text = "god에게 가져가 서빙 · 테이블에 잠시 둘 수 있어요(R)"
 		_:
-			if near == "counter" and not _current.is_empty():
-				_serve_hint.text = "재료를 순서대로 클릭해 손질하세요"
-			elif near in COOKERS and not _cookers[near].is_empty():
-				_serve_hint.text = "적정 순간에 E로 꺼내세요"
-			elif _current.is_empty():
-				_serve_hint.text = "재료가 부족해 더 손질할 요리가 없어요"
-			else:
-				_serve_hint.text = "조리대로 가서 요리를 손질하세요"
+			_serve_hint.text = "쓰레기통에 R로 버리세요"
 
 
 ## 머리 위로 떠올랐다 사라지는 짧은 안내.
 func _toast(text: String) -> void:
 	var lb := Label.new()
 	lb.text = text
-	lb.size = Vector2(320.0, 22.0)
+	lb.size = Vector2(420.0, 22.0)
 	lb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lb.add_theme_color_override("font_outline_color", Color.BLACK)
 	lb.add_theme_constant_override("outline_size", 4)
 	lb.modulate = Color(1.0, 0.95, 0.6)
 	lb.z_index = Z_UI
 	var at := _player_pos if _pos_init else _field.size * 0.5 # 준비 화면에선 필드 중앙
-	lb.position = at + Vector2(-160.0, -86.0)
+	lb.position = at + Vector2(-210.0, -104.0)
 	_field.add_child(lb)
 	var tw := lb.create_tween()
 	tw.tween_property(lb, "position:y", lb.position.y - 16.0, 1.0)
@@ -714,31 +998,37 @@ func _toast(text: String) -> void:
 
 func _set_held(h: Dictionary) -> void:
 	_held = h
-	_held_label.text = "" if h.is_empty() else "손: %s" % _held_name(h)
+	_held_label.text = "" if h.is_empty() else "손: %s" % KitchenItem.label_of(h)
+	_hand_vis.set_item(h)
 
 
-func _held_name(h: Dictionary) -> String:
-	var n := String(h["recipe"]["display_name"])
-	match String(h["kind"]):
-		"prepped":
-			return "%s 손질 재료" % n
-		"dish":
-			return "%s (%s등급)" % [n, h["grade"]]
-		"burnt":
-			return "탄 %s" % n
-	return n
+## 들어간 재료 중 가장 낮은 등급.
+func _worst_grade(items: Array) -> String:
+	var g := "A"
+	for it in items:
+		g = _worse(g, String(it.get("grade", "A")))
+	return g
 
 
 # ── 기구 배치 모드(개발용) ──────────────────────────────
 ## 주방 준비 화면의 '기구 배치 편집' → 마우스로 기구를 끌어 옮기고 '저장'하면
 ## night_session.tscn 에 위치가 그대로 기록된다(에디터 배치와 같은 데이터).
 ## 에디터/개발 실행에서만 노출(배포 빌드는 res:// 에 쓸 수 없음).
+##
+## - 배치 가능 범위 = Field/PlaceArea(초록 사각형, 에디터에서 크기 조절). 기구는 범위 밖으로 못 나감.
+## - 자석: 다른 기구 가장자리(맞붙이기·정렬)와 범위 가장자리에 _SNAP px 안이면 달라붙음. Alt = 자석 끄기.
+## - 1px 단위: 기구를 클릭해 선택 → 방향키 1px, Shift+방향키 10px.
+## - 기구끼리 겹치는 위치로는 옮겨지지 않음(충돌·길찾기가 깨지지 않게).
+
+const _SNAP := 10.0
 
 var _layout_mode := false
 var _drag: CookStation = null
 var _drag_off := Vector2.ZERO
+var _sel: CookStation = null # 방향키로 미세 조정할 기구
 var _layout_backup := {} # station id -> 편집 전 위치(취소용)
 var _layout_bar: PanelContainer
+var _layout_info: Label
 
 
 func _build_layout_tools() -> void:
@@ -756,9 +1046,8 @@ func _build_layout_tools() -> void:
 	_layout_bar = PanelContainer.new()
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
-	var info := Label.new()
-	info.text = "기구 배치 모드 — 마우스로 끌어서 옮기세요"
-	row.add_child(info)
+	_layout_info = Label.new()
+	row.add_child(_layout_info)
 	var save := Button.new()
 	save.text = "저장"
 	save.focus_mode = Control.FOCUS_NONE
@@ -773,7 +1062,7 @@ func _build_layout_tools() -> void:
 	add_child(_layout_bar)
 	_layout_bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
 	_layout_bar.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_layout_bar.position.y = 12.0
+	_layout_bar.position.y = 52.0 # 전역 HUD 상단 바(일차·페이즈, y 10~42) 아래
 	_layout_bar.visible = false
 
 
@@ -782,17 +1071,36 @@ func _enter_layout_mode() -> void:
 	for id in _st_nodes:
 		_layout_backup[id] = _st_nodes[id].position
 	_layout_mode = true
+	_sel = null
 	_prep.visible = false
 	_layout_bar.visible = true
+	_set_place_area_visible(true)
+	_refresh_layout_info()
 
 
 func _exit_layout_mode() -> void:
 	_layout_mode = false
 	_drag = null
+	_sel = null
 	for id in _st_nodes:
 		_st_nodes[id].modulate = Color(1, 1, 1)
 	_layout_bar.visible = false
+	_set_place_area_visible(false)
 	_prep.visible = true
+
+
+## 초록 배치 범위(Field/PlaceArea). 없으면 필드 전체.
+func _place_rect() -> Rect2:
+	var a := _field.get_node_or_null("PlaceArea") as Control
+	return a.get_rect() if a else Rect2(Vector2.ZERO, _field.size)
+
+
+func _set_place_area_visible(on: bool) -> void:
+	var a := _field.get_node_or_null("PlaceArea") as ReferenceRect
+	if a:
+		a.editor_only = false
+		a.visible = on
+		a.z_index = Z_UI - 1
 
 
 func _cancel_layout() -> void:
@@ -802,8 +1110,17 @@ func _cancel_layout() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if not _layout_mode:
+	if _layout_mode:
+		_layout_input(event)
 		return
+	# 조리 중: 조리대 위를 왼클릭하면 한 번 썰기(클리커).
+	if _started and not _ended and event is InputEventMouseButton and event.pressed \
+			and event.button_index == MOUSE_BUTTON_LEFT and _st_nodes.has("counter"):
+		if _st_nodes["counter"].get_rect().has_point(_field.get_local_mouse_position()):
+			_chop()
+
+
+func _layout_input(event: InputEvent) -> void:
 	var mouse := _field.get_local_mouse_position()
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
@@ -815,18 +1132,102 @@ func _input(event: InputEvent) -> void:
 			for n in nodes:
 				if n.get_rect().has_point(mouse):
 					_drag = n
+					_sel = n
 					_drag_off = mouse - n.position
-					n.modulate = Color(1.4, 1.4, 1.4)
 					get_viewport().set_input_as_handled()
 					break
-		elif _drag:
-			_drag.modulate = Color(1, 1, 1)
+		else:
 			_drag = null
+		_refresh_layout_info()
 	elif event is InputEventMouseMotion and _drag:
 		var p := (mouse - _drag_off).round()
-		p.x = clampf(p.x, 0.0, maxf(0.0, _field.size.x - _drag.size.x))
-		p.y = clampf(p.y, 0.0, maxf(0.0, _field.size.y - _drag.size.y))
-		_drag.position = p
+		if not Input.is_key_pressed(KEY_ALT):
+			p = _snap_pos(_drag, p)
+		_try_place(_drag, p)
+		_refresh_layout_info()
+	elif event is InputEventKey and event.pressed and _sel:
+		var step := 10.0 if event.shift_pressed else 1.0
+		var d := Vector2.ZERO
+		match event.keycode:
+			KEY_LEFT:
+				d.x = -step
+			KEY_RIGHT:
+				d.x = step
+			KEY_UP:
+				d.y = -step
+			KEY_DOWN:
+				d.y = step
+		if d != Vector2.ZERO:
+			_try_place(_sel, _sel.position + d)
+			_refresh_layout_info()
+			get_viewport().set_input_as_handled()
+
+
+## 배치 범위 안으로 1px 단위 고정 + 다른 기구와 겹치면 이동하지 않음.
+func _try_place(n: CookStation, p: Vector2) -> void:
+	var area := _place_rect()
+	p = p.round()
+	p.x = clampf(p.x, area.position.x, maxf(area.position.x, area.end.x - n.size.x))
+	p.y = clampf(p.y, area.position.y, maxf(area.position.y, area.end.y - n.size.y))
+	var r := Rect2(p, n.size)
+	for id in _st_nodes:
+		var o: CookStation = _st_nodes[id]
+		if o != n and r.intersects(o.get_rect()): # 맞닿는 건 허용, 겹침은 불가
+			return
+	n.position = p
+
+
+## 자석: 축마다 가장 가까운 후보(_SNAP px 이내)에 달라붙는다.
+## 후보 = 배치 범위 가장자리, 다른 기구와 가장자리 정렬(왼쪽/오른쪽/위/아래 맞춤),
+## 그리고 맞붙이기(옆/위아래에 딱 붙이기) — 맞붙이기는 실제로 나란히 놓인 기구일 때만
+## (예: 좌우로 붙이려면 세로 범위가 겹쳐야 함). 멀리 있는 기구에 1px 어긋나게 붙는 것 방지.
+func _snap_pos(n: CookStation, p: Vector2) -> Vector2:
+	var sz := n.size
+	var area := _place_rect()
+	# x 먼저 정한 뒤, 그 x 기준으로 위아래 맞붙이기 대상을 고른다(덜 정렬된 x로 엉뚱한 기구에 붙지 않게).
+	var xs := [area.position.x, area.end.x - sz.x]
+	for o in _other_rects(n):
+		xs.append_array([o.position.x, o.end.x - sz.x])
+		if minf(p.y + sz.y, o.end.y) - maxf(p.y, o.position.y) > 0.0: # 세로로 나란함 → 좌우 맞붙이기
+			xs.append_array([o.end.x, o.position.x - sz.x])
+	p.x = _nearest_snap(p.x, xs)
+	var ys := [area.position.y, area.end.y - sz.y]
+	for o in _other_rects(n):
+		ys.append_array([o.position.y, o.end.y - sz.y])
+		if minf(p.x + sz.x, o.end.x) - maxf(p.x, o.position.x) > 0.0: # 가로로 나란함 → 위아래 맞붙이기
+			ys.append_array([o.end.y, o.position.y - sz.y])
+	p.y = _nearest_snap(p.y, ys)
+	return p
+
+
+func _other_rects(n: CookStation) -> Array[Rect2]:
+	var out: Array[Rect2] = []
+	for id in _st_nodes:
+		if _st_nodes[id] != n:
+			out.append(_st_nodes[id].get_rect())
+	return out
+
+
+func _nearest_snap(v: float, cands: Array) -> float:
+	var best := v
+	var best_d := _SNAP
+	for c in cands:
+		var dd := absf(float(c) - v)
+		if dd <= best_d:
+			best_d = dd
+			best = float(c)
+	return best
+
+
+## 배치 바 안내 + 선택 기구 좌표, 선택/드래그 강조.
+func _refresh_layout_info() -> void:
+	for id in _st_nodes:
+		var n: CookStation = _st_nodes[id]
+		n.modulate = Color(1.45, 1.45, 1.45) if n == _drag else (Color(1.2, 1.2, 1.2) if n == _sel else Color(1, 1, 1))
+	var sel := ""
+	if _sel:
+		sel = "   ·   %s (%d, %d)" % [_sel.display_name(), int(_sel.position.x), int(_sel.position.y)]
+	_layout_info.text = "드래그로 이동(자석 정렬, Alt: 끄기) · 방향키 1px / Shift 10px" + sel
 
 
 ## 현재 기구 위치를 night_session.tscn 에 기록(씬 파일을 새로 읽어 위치만 바꿔 저장).
@@ -867,7 +1268,7 @@ func _on_gauges_visibility_changed(_visible: bool) -> void:
 	_apply_gauge_visibility()
 
 
-# ── 주방 준비 (NPC 배치 + 레시피 선택/강화) ──────────────
+# ── 주방 준비 (NPC 배치 + 메뉴 선택/강화) ────────────────
 
 func _build_prep() -> void:
 	_build_npc_rows()
@@ -966,7 +1367,7 @@ func _on_upgrade_recipe(id: String) -> void:
 		_build_recipe_rows()
 
 
-## "[✓] 감자튀김 Lv2  감자 → 감자 → 튀김기 4초  · 만족 32/21/10"
+## "[✓] 감자튀김 Lv2   감자✂3 + 감자✂3 → 튀김기 4초   · 만족 32/21/10"
 func _recipe_row_text(id: String, selected: bool) -> String:
 	var mark := "✓" if selected else " "
 	var d := RecipeDB.cook_data(id)
@@ -977,15 +1378,19 @@ func _recipe_row_text(id: String, selected: bool) -> String:
 		int(sat.get("A", 0)), int(sat.get("B", 0)), int(sat.get("C", 0))]
 
 
-## 제작 과정 요약: 조리대 재료 순서 + (있으면) 튀김기/냄비 단계.
+## 제작 과정 요약: 재료(✂N = 썰기 횟수) → 기구(+시간).
 func _process_text(d: Dictionary) -> String:
 	var parts: Array[String] = []
 	for ing in d.get("ingredients", []):
-		parts.append(_item_name(String(ing)))
+		var n := RecipeDB.chop_count(String(ing))
+		parts.append(_item_name(String(ing)) + ("✂%d" % n if n > 0 else ""))
 	var st := String(d.get("station", ""))
-	if st in CookStation.INFO and float(d.get("timer_seconds", 0.0)) > 0.0:
-		parts.append("%s %s초" % [CookStation.INFO[st]["name"], _sec_text(d["timer_seconds"])])
-	return " → ".join(parts)
+	var tail := ""
+	if st in CookStation.INFO:
+		tail = " → " + String(CookStation.INFO[st]["name"])
+		if float(d.get("timer_seconds", 0.0)) > 0.0:
+			tail += " %s초" % _sec_text(d["timer_seconds"])
+	return " + ".join(parts) + tail
 
 
 ## 4.0 → "4", 4.5 → "4.5"
@@ -1015,9 +1420,13 @@ func _start_cooking() -> void:
 	if not any:
 		for id in RecipeDB.unlocked_ids():
 			_selected[id] = true
+	var menu: Array[String] = []
+	for id in RecipeDB.unlocked_ids():
+		if bool(_selected.get(id, false)):
+			menu.append(RecipeDB.display_name(id) + (" ★" if BelamiManager.is_preferred(id) else ""))
+	_recipe_label.text = "오늘 메뉴: " + ", ".join(menu)
 	_prep.visible = false
 	_started = true
-	_next_recipe()
 	_update_hud()
 
 
@@ -1079,14 +1488,6 @@ func _show_results(success: bool, awarded: int) -> void:
 
 # ── 헬퍼 ──────────────────────────────────────────────
 
-func _stack_grade(mistakes: int) -> String:
-	if mistakes <= int(RecipeDB.setting("stack_a_max_mistakes", 0)):
-		return "A"
-	if mistakes <= int(RecipeDB.setting("stack_b_max_mistakes", 1)):
-		return "B"
-	return "C"
-
-
 func _timer_grade(diff: float) -> String:
 	if diff <= RecipeDB.setting("timer_a_max_diff", 0.4):
 		return "A"
@@ -1115,63 +1516,6 @@ func _belami_face(grade: String) -> String:
 
 func _belami_face_final(success: bool) -> String:
 	return "( ◕ ᴗ ◕ )" if success else "( ˘ ︵ ˘ )"
-
-
-func _recipe_cost(d: Dictionary) -> Dictionary:
-	var cost := {}
-	for ing in d.get("ingredients", []):
-		var key := String(ing)
-		cost[key] = int(cost.get(key, 0)) + 1
-	return cost
-
-
-## 재료는 직전 탐사 가방 + 창고를 합쳐서 판정.
-func _can_afford(d: Dictionary) -> bool:
-	var cost := _recipe_cost(d)
-	for ing in cost:
-		if GameManager.cooking_stock(String(ing)) < int(cost[ing]):
-			return false
-	return true
-
-
-## 가방에서 먼저, 모자라면 창고에서 소모.
-func _consume(d: Dictionary) -> void:
-	var cost := _recipe_cost(d)
-	for ing in cost:
-		GameManager.consume_for_cooking(String(ing), int(cost[ing]))
-
-
-## 조리대 손질 순서 표시(진행=초록, 다음=노랑) + 뒤에 이어질 기구 단계.
-func _render_sequence() -> void:
-	for c in _seq_row.get_children():
-		c.queue_free()
-	var on := not _current.is_empty()
-	_seq_row.visible = on
-	_mistake_label.visible = on
-	_ingredients_box.visible = on
-	if not on:
-		return
-	var seq: Array = _current["ingredients"]
-	for i in seq.size():
-		var lbl := Label.new()
-		lbl.text = _item_name(String(seq[i]))
-		if i < _seq_index:
-			lbl.modulate = Color(0.5, 0.9, 0.5)
-		elif i == _seq_index:
-			lbl.modulate = Color(1.0, 0.9, 0.4)
-		else:
-			lbl.modulate = Color(0.7, 0.7, 0.7)
-		_seq_row.add_child(lbl)
-		if i < seq.size() - 1:
-			var arrow := Label.new()
-			arrow.text = "  →  "
-			_seq_row.add_child(arrow)
-	var st := String(_current.get("station", ""))
-	if st in CookStation.INFO:
-		var t := Label.new()
-		t.text = "  →  %s %s초" % [CookStation.INFO[st]["name"], _sec_text(_current["timer_seconds"])]
-		t.modulate = Color(0.7, 0.7, 0.7)
-		_seq_row.add_child(t)
 
 
 func _update_hud() -> void:

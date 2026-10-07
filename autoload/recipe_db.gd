@@ -1,8 +1,9 @@
 extends Node
 ## 쿠킹 데이터 + 레시피 진행도 — data/cooking.json(엑셀 data/cooking.xlsx 에서 변환)을 읽는다.
 ##
-## settings : 쿠킹 전역 밸런스(밤 시간, 목표 만족도, 등급 기준, 토큰, 숙련도 증가량 …)
-## recipes  : 레시피별 해금 조건 + 레벨(1~3)별 재료(=투입 순서)/타이머 단계/등급별 만족도/강화 숙련도
+## settings    : 쿠킹 전역 밸런스(밤 시간, 목표 만족도, 등급 기준, 토큰, 숙련도 증가량 …)
+## ingredients : 조리대에서 꺼낼 수 있는 식재료 — 써는 횟수(chop_count), 임시 도형 색
+## recipes     : 레시피별 해금 조건 + 레벨(1~3)별 재료(순서 무관)/조리 기구/시간/등급별 만족도/강화 숙련도
 ##
 ## 진행도(세이브): 레시피별 현재 레벨(levels)과 누적 숙련도(mastery).
 ## 요리를 완성할 때마다 등급에 따라 숙련도가 쌓이고, 현재 레벨의 upgrade_mastery 를 넘으면
@@ -12,7 +13,9 @@ const DATA_PATH := "res://data/cooking.json"
 
 var settings: Dictionary = {}
 var recipes: Array = [] # 각 원소: {id, display_name, unlock, levels:[...]}
+var ingredients: Array = [] # 각 원소: {id, chop_count, color}
 var _by_id: Dictionary = {}
+var _ing_by_id: Dictionary = {}
 
 var levels: Dictionary = {}  # recipe_id -> 현재 레벨(기본 1)
 var mastery: Dictionary = {} # recipe_id -> 누적 숙련도
@@ -25,7 +28,9 @@ func _ready() -> void:
 func reload() -> void:
 	settings.clear()
 	recipes.clear()
+	ingredients.clear()
 	_by_id.clear()
+	_ing_by_id.clear()
 	if not FileAccess.file_exists(DATA_PATH):
 		push_warning("RecipeDB: %s 없음 — 변환 스크립트를 먼저 실행하세요." % DATA_PATH)
 		return
@@ -39,8 +44,11 @@ func reload() -> void:
 		return
 	settings = parsed.get("settings", {})
 	recipes = parsed.get("recipes", [])
+	ingredients = parsed.get("ingredients", [])
 	for r in recipes:
 		_by_id[String(r["id"])] = r
+	for g in ingredients:
+		_ing_by_id[String(g["id"])] = g
 
 
 func setting(key: String, default: float) -> float:
@@ -53,6 +61,29 @@ func get_recipe(id: String) -> Dictionary:
 
 func display_name(id: String) -> String:
 	return String(get_recipe(id).get("display_name", id))
+
+
+# ── 식재료 ─────────────────────────────────────────────
+
+func ingredient_ids() -> Array[String]:
+	var out: Array[String] = []
+	for g in ingredients:
+		out.append(String(g["id"]))
+	return out
+
+
+## 조리대에서 클릭해 써는 횟수. 0 이면 손질 없이 바로 사용.
+func chop_count(id: String) -> int:
+	return int(_ing_by_id.get(id, {}).get("chop_count", 0))
+
+
+func needs_chop(id: String) -> bool:
+	return chop_count(id) > 0
+
+
+## 이미지가 없을 때 쓰는 임시 도형 색.
+func ingredient_color(id: String) -> Color:
+	return Color.from_string(String(_ing_by_id.get(id, {}).get("color", "#B0B0B0")), Color(0.7, 0.7, 0.7))
 
 
 # ── 해금 ───────────────────────────────────────────────
@@ -134,8 +165,8 @@ func add_mastery(id: String, grade: String) -> int:
 
 
 ## 조리할 요리 데이터(기본: 현재 레벨) — 밤 세션이 사용.
-## {id, display_name, level, ingredients:Array, station("fryer"|"pot"|""), timer_seconds, sat:{A,B,C}}
-## station 이 비어 있으면 조리대에서 바로 완성되는 요리.
+## {id, display_name, level, ingredients:Array, station("fryer"|"pot"|"bowl"), timer_seconds, sat:{A,B,C}}
+## bowl(믹싱볼)은 불 없이 재료가 모이면 바로 완성(timer_seconds = 0).
 func cook_data(id: String, lv: int = -1) -> Dictionary:
 	if lv < 1:
 		lv = level_of(id)
@@ -143,11 +174,15 @@ func cook_data(id: String, lv: int = -1) -> Dictionary:
 	d["id"] = id
 	d["display_name"] = display_name(id)
 	d["level"] = lv
-	if float(d.get("timer_seconds", 0.0)) <= 0.0:
-		d["station"] = ""
-	elif String(d.get("station", "")) == "":
-		# 구버전 json(timer_name) 호환
-		d["station"] = "pot" if String(d.get("timer_name", "")).contains("끓") else "fryer"
+	var st := String(d.get("station", ""))
+	if st == "": # 구버전 json 호환
+		if float(d.get("timer_seconds", 0.0)) <= 0.0:
+			st = "bowl"
+		else:
+			st = "pot" if String(d.get("timer_name", "")).contains("끓") else "fryer"
+	d["station"] = st
+	if st == "bowl":
+		d["timer_seconds"] = 0.0
 	return d
 
 
