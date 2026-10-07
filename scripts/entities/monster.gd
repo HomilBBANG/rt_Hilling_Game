@@ -26,7 +26,6 @@ enum State { IDLE, CHASE }
 @export var sprite_id: String = ""
 
 ## 드롭 테이블(스폰 시 엑셀에서 주입).
-@export var drop_chance := 1.0   # 드롭 확률(0~1)
 @export var drop_min := 1        # 최소 수량
 @export var drop_max := 1        # 최대 수량
 
@@ -368,11 +367,13 @@ func _dead_process(delta: float) -> void:
 		_corpse_hint.text = "E: 줍기"
 
 
-## 드롭 실행: 확률 판정 후 수량만큼 인벤토리에 지급(도감 등록 포함), 시체 제거.
+## 드롭 실행: 반드시 drop_min~drop_max 개를 인벤토리에 지급(도감 등록 포함), 시체 제거.
+## 가방 무게가 넘쳐 다 못 담으면 남은 만큼 시체 자리 바닥에 떨군다(E로 다시 줍기 가능).
 func _do_loot() -> void:
-	if drop_item_id != "" and randf() < drop_chance:
-		var amount := randi_range(mini(drop_min, drop_max), maxi(drop_min, drop_max))
-		var s := get_tree().get_first_node_in_group("scavenge")
-		if s and s.has_method("add_loot") and amount > 0:
-			s.add_loot(drop_item_id, amount)
+	var s := get_tree().get_first_node_in_group("scavenge")
+	if drop_item_id != "" and s and s.has_method("add_loot"):
+		var amount := maxi(1, randi_range(mini(drop_min, drop_max), maxi(drop_min, drop_max)))
+		var picked: int = s.add_loot(drop_item_id, amount)
+		if picked < amount and s.has_method("drop_on_floor"):
+			s.drop_on_floor(drop_item_id, amount - picked, global_position)
 	queue_free()

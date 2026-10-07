@@ -114,7 +114,6 @@ func _apply_monster_type(mon: Node, t: Dictionary) -> void:
 	mon.sprite_id = String(t.get("sprite", ""))
 	# 드롭 테이블(아이템/확률/수량).
 	mon.drop_item_id = String(t.get("drop_item", ""))
-	mon.drop_chance = float(t.get("drop_chance", 1.0))
 	mon.drop_min = int(t.get("drop_min", 1))
 	mon.drop_max = int(t.get("drop_max", 1))
 	# 보스 여부/크기.

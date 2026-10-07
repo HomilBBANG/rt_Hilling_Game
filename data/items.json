@@ -36,5 +36,23 @@
     "weight": 3,
     "consumable": false,
     "heal": 0
+  },
+  {
+    "id": "meat",
+    "display_name": "고기",
+    "category": "food",
+    "max_stack": 99,
+    "weight": 1.5,
+    "consumable": true,
+    "heal": 12
+  },
+  {
+    "id": "cheese",
+    "display_name": "치즈",
+    "category": "food",
+    "max_stack": 99,
+    "weight": 0.5,
+    "consumable": true,
+    "heal": 6
   }
 ]
