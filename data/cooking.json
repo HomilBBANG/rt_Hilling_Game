@@ -1,0 +1,352 @@
+{
+  "settings": {
+    "night_seconds": 60,
+    "target_satisfaction": 60,
+    "stack_a_max_mistakes": 0,
+    "stack_b_max_mistakes": 1,
+    "timer_a_max_diff": 0.4,
+    "timer_b_max_diff": 1,
+    "timer_burn_seconds": 2,
+    "token_a": 30,
+    "token_b": 18,
+    "token_c": 8,
+    "mastery_a": 3,
+    "mastery_b": 2,
+    "mastery_c": 1,
+    "preferred_bonus": 1.5,
+    "kitchen_helper_bonus": 1.25,
+    "server_speed": 300,
+    "station_range": 24,
+    "table_slots": 3
+  },
+  "recipes": [
+    {
+      "id": "herb_bite",
+      "display_name": "들풀 무침",
+      "unlock": "default",
+      "levels": [
+        {
+          "level": 1,
+          "ingredients": [
+            "herb",
+            "canned_food"
+          ],
+          "station": "",
+          "timer_seconds": 0,
+          "sat": {
+            "A": 20,
+            "B": 13,
+            "C": 6
+          },
+          "upgrade_mastery": 9
+        },
+        {
+          "level": 2,
+          "ingredients": [
+            "herb",
+            "herb",
+            "canned_food"
+          ],
+          "station": "",
+          "timer_seconds": 0,
+          "sat": {
+            "A": 28,
+            "B": 18,
+            "C": 9
+          },
+          "upgrade_mastery": 24
+        },
+        {
+          "level": 3,
+          "ingredients": [
+            "herb",
+            "herb",
+            "canned_food",
+            "herb"
+          ],
+          "station": "",
+          "timer_seconds": 0,
+          "sat": {
+            "A": 36,
+            "B": 24,
+            "C": 12
+          },
+          "upgrade_mastery": 0
+        }
+      ]
+    },
+    {
+      "id": "canned_stew",
+      "display_name": "통조림 스튜",
+      "unlock": "default",
+      "levels": [
+        {
+          "level": 1,
+          "ingredients": [
+            "canned_food",
+            "herb",
+            "canned_food"
+          ],
+          "station": "",
+          "timer_seconds": 0,
+          "sat": {
+            "A": 25,
+            "B": 16,
+            "C": 8
+          },
+          "upgrade_mastery": 9
+        },
+        {
+          "level": 2,
+          "ingredients": [
+            "canned_food",
+            "herb",
+            "canned_food"
+          ],
+          "station": "pot",
+          "timer_seconds": 3,
+          "sat": {
+            "A": 33,
+            "B": 22,
+            "C": 11
+          },
+          "upgrade_mastery": 24
+        },
+        {
+          "level": 3,
+          "ingredients": [
+            "canned_food",
+            "herb",
+            "canned_food",
+            "herb"
+          ],
+          "station": "pot",
+          "timer_seconds": 4,
+          "sat": {
+            "A": 42,
+            "B": 28,
+            "C": 14
+          },
+          "upgrade_mastery": 0
+        }
+      ]
+    },
+    {
+      "id": "herb_fry",
+      "display_name": "들풀 튀김",
+      "unlock": "default",
+      "levels": [
+        {
+          "level": 1,
+          "ingredients": [
+            "herb"
+          ],
+          "station": "fryer",
+          "timer_seconds": 3,
+          "sat": {
+            "A": 20,
+            "B": 13,
+            "C": 6
+          },
+          "upgrade_mastery": 9
+        },
+        {
+          "level": 2,
+          "ingredients": [
+            "herb",
+            "herb"
+          ],
+          "station": "fryer",
+          "timer_seconds": 3,
+          "sat": {
+            "A": 27,
+            "B": 18,
+            "C": 9
+          },
+          "upgrade_mastery": 24
+        },
+        {
+          "level": 3,
+          "ingredients": [
+            "herb",
+            "herb",
+            "herb"
+          ],
+          "station": "fryer",
+          "timer_seconds": 3.5,
+          "sat": {
+            "A": 35,
+            "B": 23,
+            "C": 11
+          },
+          "upgrade_mastery": 0
+        }
+      ]
+    },
+    {
+      "id": "fries",
+      "display_name": "감자튀김",
+      "unlock": "item:potato",
+      "levels": [
+        {
+          "level": 1,
+          "ingredients": [
+            "potato"
+          ],
+          "station": "fryer",
+          "timer_seconds": 4,
+          "sat": {
+            "A": 24,
+            "B": 16,
+            "C": 8
+          },
+          "upgrade_mastery": 9
+        },
+        {
+          "level": 2,
+          "ingredients": [
+            "potato",
+            "potato"
+          ],
+          "station": "fryer",
+          "timer_seconds": 4,
+          "sat": {
+            "A": 32,
+            "B": 21,
+            "C": 10
+          },
+          "upgrade_mastery": 24
+        },
+        {
+          "level": 3,
+          "ingredients": [
+            "potato",
+            "potato",
+            "herb"
+          ],
+          "station": "fryer",
+          "timer_seconds": 4.5,
+          "sat": {
+            "A": 40,
+            "B": 27,
+            "C": 13
+          },
+          "upgrade_mastery": 0
+        }
+      ]
+    },
+    {
+      "id": "potato_soup",
+      "display_name": "감자 수프",
+      "unlock": "item:potato",
+      "levels": [
+        {
+          "level": 1,
+          "ingredients": [
+            "potato",
+            "canned_food"
+          ],
+          "station": "",
+          "timer_seconds": 0,
+          "sat": {
+            "A": 22,
+            "B": 15,
+            "C": 7
+          },
+          "upgrade_mastery": 9
+        },
+        {
+          "level": 2,
+          "ingredients": [
+            "potato",
+            "potato",
+            "canned_food"
+          ],
+          "station": "pot",
+          "timer_seconds": 3,
+          "sat": {
+            "A": 30,
+            "B": 20,
+            "C": 10
+          },
+          "upgrade_mastery": 24
+        },
+        {
+          "level": 3,
+          "ingredients": [
+            "potato",
+            "potato",
+            "canned_food",
+            "herb"
+          ],
+          "station": "pot",
+          "timer_seconds": 4,
+          "sat": {
+            "A": 39,
+            "B": 26,
+            "C": 13
+          },
+          "upgrade_mastery": 0
+        }
+      ]
+    },
+    {
+      "id": "hearty_stew",
+      "display_name": "든든한 스튜",
+      "unlock": "item:potato",
+      "levels": [
+        {
+          "level": 1,
+          "ingredients": [
+            "canned_food",
+            "herb",
+            "potato"
+          ],
+          "station": "",
+          "timer_seconds": 0,
+          "sat": {
+            "A": 28,
+            "B": 19,
+            "C": 9
+          },
+          "upgrade_mastery": 12
+        },
+        {
+          "level": 2,
+          "ingredients": [
+            "canned_food",
+            "herb",
+            "potato",
+            "potato"
+          ],
+          "station": "pot",
+          "timer_seconds": 3,
+          "sat": {
+            "A": 37,
+            "B": 25,
+            "C": 12
+          },
+          "upgrade_mastery": 30
+        },
+        {
+          "level": 3,
+          "ingredients": [
+            "canned_food",
+            "canned_food",
+            "herb",
+            "potato",
+            "potato"
+          ],
+          "station": "pot",
+          "timer_seconds": 4,
+          "sat": {
+            "A": 46,
+            "B": 31,
+            "C": 15
+          },
+          "upgrade_mastery": 0
+        }
+      ]
+    }
+  ]
+}

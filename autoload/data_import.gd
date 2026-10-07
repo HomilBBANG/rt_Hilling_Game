@@ -13,6 +13,7 @@ const CONVERTERS := [
 	"tools/convert_npc_unlocks.py",
 	"tools/convert_weapons.py",
 	"tools/convert_items.py",
+	"tools/convert_cooking.py",
 ]
 
 

@@ -56,6 +56,7 @@ func start_new_game() -> void:
 	PlayerStats.from_dict({})
 	NPCManager.from_dict({})
 	CodexManager.from_dict({})
+	RecipeDB.from_dict({})
 	BelamiManager.refresh_preferences(_unlocked_recipe_ids())
 	_goto_step(Step.MORNING_PREP)
 
@@ -73,6 +74,7 @@ func continue_game() -> void:
 	PlayerStats.from_dict(data.get("player_stats", {}))
 	NPCManager.from_dict(data.get("npcs", {}))
 	CodexManager.from_dict(data.get("codex", {}))
+	RecipeDB.from_dict(data.get("cooking", {})) # 레시피 레벨·숙련도
 	var ws: Dictionary = data.get("world_state", {})
 	run_inventory = {}
 	var loaded_inv: Dictionary = ws.get("run_inventory", {})
@@ -183,6 +185,27 @@ func remove_item(item_id: String, amount: int) -> void:
 		run_inventory.erase(item_id)
 
 
+## ── 밤 요리 재료(가방 + 창고) ─────────────────────────
+
+## 요리에 쓸 수 있는 재료 수 = 직전 탐사 가방 + 창고.
+func cooking_stock(item_id: String) -> int:
+	return int(run_inventory.get(item_id, 0)) + int(storage.get(item_id, 0))
+
+
+## 요리 재료 소모: 가방(직전 탐사분)에서 먼저, 모자라면 창고에서 차감.
+func consume_for_cooking(item_id: String, amount: int) -> void:
+	var from_bag := mini(amount, int(run_inventory.get(item_id, 0)))
+	remove_item(item_id, from_bag)
+	var rest := amount - from_bag
+	if rest <= 0:
+		return
+	var left := int(storage.get(item_id, 0)) - rest
+	if left > 0:
+		storage[item_id] = left
+	else:
+		storage.erase(item_id)
+
+
 ## 탐사 종료 시 Scavenge 씬이 호출(채집물은 이미 add_item 으로 반영됨). 밤으로 진행.
 func finish_scavenge() -> void:
 	advance()
@@ -229,6 +252,7 @@ func _autosave(phase: String) -> void:
 		},
 		"npcs": NPCManager.to_dict(),
 		"codex": CodexManager.to_dict(),
+		"cooking": RecipeDB.to_dict(),
 	}
 	SaveManager.save_game(data)
 
