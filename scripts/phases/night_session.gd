@@ -45,6 +45,9 @@ var _table: Array = []              # 테이블 위 물건(놓은 순)
 var _floor: Array = []              # 바닥 물건 [{item, pos(발 좌표), node}]
 
 var _mastery_log: Dictionary = {} # 오늘 밤 레시피별 숙련도 획득(결과 화면 표시)
+var _menu_ings: Array[String] = [] # 오늘 메뉴에 쓰이는 재료(조리대 목록에 이것만 표시)
+var _recipe_panel: PanelContainer   # 요리 중 왼쪽 위 오늘 레시피 표
+var _hungry := false                # 재료 소진 + 만족 미달 → 시간 2배, god 재촉, 타임오버 = 게임 오버
 
 var _player_pos := Vector2.ZERO
 var _pos_init := false
@@ -126,13 +129,19 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if _ended or not _started: # 준비 화면 동안엔 타이머·조리 정지
 		return
-	_time_left = maxf(0.0, _time_left - delta)
+	# 배고픈 god: 남은 시간이 2배 빠르게 흐른다.
+	_time_left = maxf(0.0, _time_left - delta * (2.0 if _hungry else 1.0))
 	_time_label.text = "남은 시간: %0.0f초" % _time_left
 	_update_cookers(delta) # 튀김기/냄비는 플레이어 위치와 무관하게 진행
 	_update_floor(delta)
 	_update_field(delta)
+	if not _hungry and _out_of_food():
+		_start_hungry()
 	if _time_left <= 0.0:
-		_end_session()
+		if _hungry:
+			_game_over() # 배고픈 god에게 잡아먹힘
+		else:
+			_end_session()
 
 
 # ── 필드: 이동 · 상호작용 ───────────────────────────────
@@ -182,6 +191,8 @@ func _update_field(delta: float) -> void:
 	var god_pos := _god_pos()
 	_god.position = god_pos # AnimatedSprite2D 는 중심 기준
 	_belami.position = god_pos + Vector2(0.0, -72.0) - _belami.size * 0.5 # 머리 위 반응 버블
+	if _hungry: # 재촉 — 버블이 들썩인다
+		_belami.position += Vector2(randf_range(-3.0, 3.0), randf_range(-3.0, 3.0))
 
 	var near := _nearest_station()
 	# E = 집기 / R = 내려놓기 (엣지)
@@ -875,7 +886,7 @@ func _refresh_timer(node: CookStation, c: Dictionary, st: String) -> void:
 func _refresh_tray(near: String) -> void:
 	var key := near
 	if near == "counter":
-		for id in RecipeDB.ingredient_ids():
+		for id in _menu_ings:
 			key += "|%s:%d" % [id, GameManager.cooking_stock(id)]
 		key += "|busy" if not _counter_item.is_empty() else ""
 	elif near == "table":
@@ -892,7 +903,7 @@ func _refresh_tray(near: String) -> void:
 	if near == "counter":
 		_tray.add_child(_tray_label("재료 꺼내기"))
 		var any := false
-		for id in RecipeDB.ingredient_ids():
+		for id in _menu_ings: # 오늘 메뉴에 쓰이는 재료 중
 			var n := GameManager.cooking_stock(id)
 			if n <= 0:
 				continue # 보유한 것만
@@ -902,7 +913,7 @@ func _refresh_tray(near: String) -> void:
 			b.pressed.connect(_take_from_stock.bind(id))
 			_tray.add_child(b)
 		if not any:
-			_tray.add_child(_tray_label("꺼낼 재료가 없어요"))
+			_tray.add_child(_tray_label("오늘 메뉴에 쓸 재료가 없어요"))
 	elif near == "table":
 		_tray.add_child(_tray_label("테이블 %d/%d" % [_table.size(), _table_slots()]))
 		for i in _table.size():
@@ -1425,6 +1436,13 @@ func _start_cooking() -> void:
 		if bool(_selected.get(id, false)):
 			menu.append(RecipeDB.display_name(id) + (" ★" if BelamiManager.is_preferred(id) else ""))
 	_recipe_label.text = "오늘 메뉴: " + ", ".join(menu)
+	_menu_ings.clear()
+	for st in COMBINERS:
+		for r in _menu_recipes(st):
+			for ing in r["ingredients"]:
+				if not (String(ing) in _menu_ings):
+					_menu_ings.append(String(ing))
+	_build_recipe_panel()
 	_prep.visible = false
 	_started = true
 	_update_hud()
@@ -1449,6 +1467,134 @@ func _npc_name(npc_id: String) -> String:
 func _has_helper(slot: String) -> bool:
 	var id := String(NPCManager.placement.get(slot, ""))
 	return id != "" and NPCManager.is_revived(id)
+
+
+# ── 오늘 레시피 표(왼쪽 위) ────────────────────────────
+
+## 요리 중 왼쪽 위에 오늘 메뉴 레시피(재료·써는 횟수·기구)를 띄운다.
+func _build_recipe_panel() -> void:
+	if _recipe_panel:
+		_recipe_panel.queue_free()
+	_recipe_panel = PanelContainer.new()
+	_recipe_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.0, 0.0, 0.0, 0.55)
+	sb.set_corner_radius_all(4)
+	sb.set_content_margin_all(6)
+	_recipe_panel.add_theme_stylebox_override("panel", sb)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 0)
+	_recipe_panel.add_child(box)
+	var title := Label.new()
+	title.text = "오늘 레시피"
+	title.add_theme_font_size_override("font_size", 13)
+	title.add_theme_color_override("font_color", Color(1.0, 0.85, 0.45))
+	box.add_child(title)
+	for id in RecipeDB.unlocked_ids():
+		if not bool(_selected.get(id, false)):
+			continue
+		var d := RecipeDB.cook_data(id)
+		var lb := Label.new()
+		lb.text = "%s%s · %s" % [d["display_name"], (" ★" if BelamiManager.is_preferred(id) else ""), _process_text(d)]
+		lb.add_theme_font_size_override("font_size", 12)
+		box.add_child(lb)
+	add_child(_recipe_panel)
+	_recipe_panel.position = Vector2(12.0, 44.0) # 전역 HUD 일차 표시(y 10~42) 아래
+	_recipe_panel.z_index = Z_UI
+
+
+# ── 배고픈 god (재료 소진) · 게임 오버 ───────────────────
+
+## 만족 미달인데 더 이상 서빙할 수 있는 게 없는지:
+## 어디에도 요리(완성/조리 중/카밀라 운반)가 없고, 재고 + 주방에 남은 재료로 만들 수 있는 메뉴가 없으면 true.
+func _out_of_food() -> bool:
+	if _satisfaction >= target_satisfaction:
+		return false
+	if not _server_dish.is_empty():
+		return false
+	var loose: Array = [] # 주방에 흩어진 재료(썩지 않은 것)
+	var all_items: Array = [_held, _counter_item]
+	all_items.append_array(_table)
+	for e in _floor:
+		all_items.append(e["item"])
+	for st in COMBINERS:
+		var c: Dictionary = _cookers[st]
+		if c["state"] != "fill":
+			return false # 조리 중이거나 완성품 대기
+		all_items.append_array(c["items"])
+	for it in all_items:
+		match String(it.get("type", "")):
+			"dish":
+				return false
+			"ing":
+				loose.append(String(it["id"]))
+	var pool := _counts(loose)
+	for id in _menu_ings:
+		pool[id] = int(pool.get(id, 0)) + GameManager.cooking_stock(id)
+	for st in COMBINERS:
+		for r in _menu_recipes(st):
+			if _fits(_counts(r["ingredients"]), pool):
+				return false
+	return true
+
+
+func _start_hungry() -> void:
+	_hungry = true
+	_belami.text = "배고파!!"
+	_belami.add_theme_color_override("font_color", Color(1.0, 0.22, 0.18))
+	_time_label.modulate = Color(1.0, 0.35, 0.3)
+	_toast("재료가 다 떨어졌다… god이 배고파한다! (시간 2배)")
+
+
+## 타임오버 + 배고픔 → god이 플레이어를 잡아먹는 연출 후 게임 오버 화면.
+func _game_over() -> void:
+	_ended = true
+	_tray.visible = false
+	_hand_vis.visible = false
+	_serve_hint.text = ""
+	_belami.text = "냠!"
+	_player_node.z_index = _god.z_index + 1
+	var god_scale := _god.scale
+	var tw := create_tween()
+	tw.tween_property(_player_node, "position", _god.position, 0.6).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	tw.parallel().tween_property(_player_node, "scale", Vector2.ZERO, 0.6).set_ease(Tween.EASE_IN)
+	tw.tween_property(_god, "scale", god_scale * 1.2, 0.12)
+	tw.tween_property(_god, "scale", god_scale, 0.15)
+	tw.tween_interval(0.6)
+	tw.tween_callback(_show_game_over)
+
+
+func _show_game_over() -> void:
+	var over := Control.new()
+	over.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	over.z_index = Z_OVERLAY
+	add_child(over)
+	var dim := ColorRect.new()
+	dim.color = Color(0.25, 0.0, 0.0, 0.85)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	over.add_child(dim)
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	over.add_child(center)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 14)
+	center.add_child(box)
+	var title := Label.new()
+	title.text = "게임 오버"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 40)
+	title.add_theme_color_override("font_color", Color(1.0, 0.3, 0.25))
+	box.add_child(title)
+	var sub := Label.new()
+	sub.text = "배고픈 god에게 잡아먹혔다…"
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(sub)
+	var btn := Button.new()
+	btn.text = "Day %d 아침부터 다시 시작" % GameManager.day
+	btn.custom_minimum_size = Vector2(280, 48)
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.pressed.connect(GameManager.restart_day)
+	box.add_child(btn)
 
 
 # ── 세션 종료 ──────────────────────────────────────────

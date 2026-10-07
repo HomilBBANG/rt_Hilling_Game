@@ -33,6 +33,8 @@ const _SCENES := {
 }
 
 var _phase_container: Node = null
+## 오늘 아침 시작 시점 세이브 사본. 밤 세이브에도 함께 저장 → 밤에 게임 오버되면 이 아침으로 되돌림.
+var _morning_snapshot: Dictionary = {}
 
 
 func _ready() -> void:
@@ -92,7 +94,19 @@ func continue_game() -> void:
 	for revived_id in NPCManager.revived_ids:
 		_apply_npc_effect(revived_id)
 	var phase := String(data.get("phase", "morning"))
+	if phase != "morning":
+		_morning_snapshot = data.get("morning_snapshot", {}) # 아침 진입 시엔 _autosave 가 새로 만든다
 	_goto_step(Step.MORNING_PREP if phase == "morning" else Step.NIGHT)
+
+
+## 게임 오버(밤에 god에게 잡아먹힘) → 오늘 아침 시작 시점으로 되돌려 다시 시작.
+## 그날 탐사에서 얻은 것·밤 진행은 모두 사라진다.
+func restart_day() -> void:
+	if _morning_snapshot.is_empty():
+		push_warning("GameManager: 아침 세이브 사본이 없어 마지막 세이브로 이어합니다.")
+	else:
+		SaveManager.save_game(_morning_snapshot.duplicate(true))
+	continue_game()
 
 
 ## 현재 스텝에서 다음 스텝으로 진행.
@@ -254,6 +268,10 @@ func _autosave(phase: String) -> void:
 		"codex": CodexManager.to_dict(),
 		"cooking": RecipeDB.to_dict(),
 	}
+	if phase == "morning":
+		_morning_snapshot = data.duplicate(true)
+	else:
+		data["morning_snapshot"] = _morning_snapshot # 밤 게임 오버 시 되돌아갈 아침
 	SaveManager.save_game(data)
 
 
