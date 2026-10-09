@@ -40,6 +40,9 @@ func _ready() -> void:
 	_setup_animation()
 	_setup_noammo_label()
 	_apply_weapon_sprite() # 장착 원거리 무기에 맞는 총 스프라이트
+	# 탐사 카메라 줌(balance.xlsx camera_zoom). 1920x1080 기준 2 = 넓게, 3 = 예전(1280x720) 화면 비율.
+	var z := Balance.get_float("camera_zoom", 2.0)
+	$Camera.zoom = Vector2(z, z)
 
 
 ## 장착한 원거리 무기의 스프라이트를 Gun 노드에 적용 + 총구 위치(muzzle) 조정.
@@ -159,6 +162,7 @@ func take_hit(amount: float) -> void:
 ## 머리 위 '탄약이 부족합니다' 라벨 생성(숨김).
 func _setup_noammo_label() -> void:
 	_noammo_label = Label.new()
+	_noammo_label.add_theme_font_size_override("font_size", 16) # 월드 좌표 라벨: 카메라 줌 기준 크기 유지(전역 기본 24 미적용)
 	_noammo_label.text = "탄약이 부족합니다"
 	_noammo_label.position = Vector2(-46.0, -66.0)
 	_noammo_label.modulate = Color(1.0, 0.3, 0.25, 0.0)

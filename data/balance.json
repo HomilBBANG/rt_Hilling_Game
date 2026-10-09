@@ -15,5 +15,18 @@
   "stat_speed_per_level": 20,
   "stat_speed_max_level": 5,
   "stat_speed_cost": 15,
-  "carry_max_weight": 50
+  "carry_max_weight": 50,
+  "camera_zoom": 2,
+  "day_targets": {
+    "1": 60,
+    "2": 70,
+    "3": 80,
+    "4": 95,
+    "5": 110,
+    "6": 125,
+    "7": 140,
+    "8": 160,
+    "9": 180,
+    "10": 200
+  }
 }

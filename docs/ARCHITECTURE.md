@@ -7,7 +7,7 @@ Godot 4.7 / GDScript. 수치·콘텐츠는 엑셀(→json) 데이터 드리븐, 
 
 ```
 hilling-game/
-├── project.godot            # autoload 등록, 시작 씬 = scenes/ui/lobby.tscn, 1280×720
+├── project.godot            # autoload 등록, 시작 씬 = scenes/ui/lobby.tscn, 1920×1080, UI 기본 글자 24px
 ├── autoload/                # 싱글톤(아래 표)
 ├── data/                    # *.xlsx(기획자 편집) + *.json(변환 결과, 게임이 읽음)
 ├── tools/convert_*.py       # xlsx → json 변환기(openpyxl). DataImport 가 실행 시 자동 호출
@@ -35,7 +35,7 @@ hilling-game/
 | 이름 | 파일 | 역할 |
 |---|---|---|
 | DataImport | data_import.gd | **가장 먼저** 실행. 에디터/개발 실행 시 `tools/convert_*.py` 전부 실행해 json 갱신 |
-| Config | config.gd | 게이지 노출 등 설정 |
+| Config | config.gd | 게이지 노출 등 설정, `SCREEN_SCALE`(1.5 — 720p→1080p 화면 좌표 배율, 캠프·밤 이동 속도에 곱함) |
 | Balance | balance.gd | `balance.json` 키-값 조회(`get_float`) |
 | SaveManager | save_manager.gd | `user://savegame.json` 읽기/쓰기/삭제(슬롯 1개) |
 | BelamiManager | belami_manager.gd | god 누적 만족도(trust, 비노출)·불만도·선호 음식(옛 이름 유지) |
@@ -84,10 +84,11 @@ lobby ─(새 게임/불러오기)─▶ MORNING_PREP ─▶ SCAVENGE ─▶ NIG
 - **레시피 판별**: `_menu_recipes(st)` = 오늘 메뉴 ∩ 해금 ∩ 해당 기구. 재료 개수 사전(`_counts`)으로 부분집합(`_fits`) 판정 →
   넣을 수 있는지 / 정확히 일치하는지 / 더 큰 레시피가 있는지.
 - **입력**: E(`_on_e`) 집기, R(`_on_r`) 내려놓기, `_input`에서 조리대 왼클릭 → `_chop()`, 하단 목록(`_tray`) 버튼.
-- **이동·충돌**: 수동 좌표(`_player_pos`) + 발 상자(`_FOOT_OFFSET/_FOOT_SIZE`) vs 장애물(기구 사각형 + `_god_rect`),
+- **이동·충돌**: 수동 좌표(`_player_pos`) + 발 상자(`_FOOT_OFFSET/_FOOT_SIZE`, `_SPRITE_SCALE`에서 계산) vs 장애물(기구 사각형 + `_god_rect`),
   축 분리 이동(`_move_body`/`_push_out`, 4px 이하 모서리는 미끄러짐). 깊이 = `z_index`를 발 y로(`_update_depth`),
   안내·오버레이는 `Z_UI`/`Z_OVERLAY`로 항상 위.
-- **카밀라(서빙 NPC)**: `AStarGrid2D`(16px, 장애물을 발 크기만큼 부풀림) 경로 + 같은 발 충돌. 테이블 요리 최우선.
+- **카밀라(서빙 NPC)**: `AStarGrid2D`(24px, 장애물을 발 크기만큼 부풀림) 경로 + 같은 발 충돌. 테이블 요리 최우선.
+- **그리기 순서**: 기구 위 물건(`CookStation.show_items`)은 z 1900 고정 — 캐릭터(z = 발 y)보다 위, 안내 UI(2000)보다 아래.
 - **배치 편집(개발용)**: `_layout_input` — 범위(`Field/PlaceArea`) 클램프, 자석(`_snap_pos`, x 먼저 → y), 겹침 거부(`_try_place`), 방향키 미세 조정.
 - **주의**: 전역 HUD(CanvasLayer 10)가 모든 페이즈 위에 있음. HUD 노드에 `mouse_filter`가 STOP/PASS인 컨트롤을 넣으면
   아래 페이즈 UI 클릭을 가로챔(상단 바는 IGNORE로 설정됨).

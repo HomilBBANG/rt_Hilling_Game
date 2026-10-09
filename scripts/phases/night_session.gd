@@ -30,7 +30,7 @@ const COMBINERS := ["fryer", "pot", "bowl"]
 const TIMED := ["fryer", "pot"]
 const Z_UI := 2000      # 필드 위 안내·말풍선(깊이 정렬보다 위)
 const Z_OVERLAY := 3000 # 준비/결과/배치 화면
-const _FLOOR_PICK := 30.0 # 바닥 물건을 E로 주울 수 있는 거리(발 기준)
+const _FLOOR_PICK := 45.0 # 바닥 물건을 E로 주울 수 있는 거리(발 기준)
 
 var _time_left := 0.0
 var _satisfaction := 0.0
@@ -93,8 +93,8 @@ var _server_dish: Dictionary = {}
 
 func _ready() -> void:
 	run_seconds = RecipeDB.setting("night_seconds", run_seconds) # cooking.xlsx settings
-	target_satisfaction = RecipeDB.setting("target_satisfaction", target_satisfaction)
-	move_speed = PlayerStats.move_speed() # 탐사·캠프와 동일한 이동 속도(Tab 업그레이드 반영)
+	target_satisfaction = Balance.day_target(GameManager.day, target_satisfaction) # balance.xlsx day_targets
+	move_speed = PlayerStats.move_speed() * Config.SCREEN_SCALE # 탐사·캠프와 동일 속도(화면 좌표 1080p 배율)
 	_time_left = run_seconds
 	_sat_bar.max_value = target_satisfaction
 	_sat_bar.value = 0
@@ -115,6 +115,7 @@ func _ready() -> void:
 	# 요리 전 '주방 준비' 화면 먼저(배치 + 메뉴 선택/강화). 시작 버튼 전엔 조리 진행 안 함.
 	_start_button.pressed.connect(_start_cooking)
 	_build_prep()
+	$Prep/Center/Panel/Margin/VBox/Title.text = "주방 준비  ·  Day %d 목표 만족 %d" % [GameManager.day, int(target_satisfaction)]
 	_build_layout_tools() # 개발용: 게임 화면에서 기구 드래그 배치
 	# 필드는 발 높이로 깊이 정렬(z_index = y)되므로, 항상 위에 보여야 하는 것들은 더 높게.
 	for c in [_belami, _server_dish_label, _tray, _serve_hint, _hand_vis]:
@@ -159,9 +160,9 @@ func _update_field(delta: float) -> void:
 		# 서빙 도우미는 테이블 아래에서 대기.
 		if _st_nodes.has("table"):
 			var tr: Rect2 = _st_nodes["table"].get_rect()
-			_server_home = _unstick(Vector2(tr.get_center().x, tr.end.y + 60.0) - _FOOT_OFFSET)
+			_server_home = _unstick(Vector2(tr.get_center().x, tr.end.y + 90.0) - _FOOT_OFFSET)
 		else:
-			_server_home = _unstick(Vector2(120.0, _field.size.y * 0.5))
+			_server_home = _unstick(Vector2(180.0, _field.size.y * 0.5))
 		_server_pos = _server_home
 		_server.sprite_frames = _npc_idle_frames()
 		_server.play("idle")
@@ -178,8 +179,8 @@ func _update_field(delta: float) -> void:
 	if Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN):
 		d.y += 1.0
 	_player_pos = _move_body(_player_pos, d.normalized() * move_speed * delta) # 기구·god에 막힘(발 충돌)
-	_player_pos.x = clampf(_player_pos.x, 48.0, _field.size.x - 48.0)
-	_player_pos.y = clampf(_player_pos.y, 48.0, _field.size.y - 48.0)
+	_player_pos.x = clampf(_player_pos.x, _EDGE, _field.size.x - _EDGE)
+	_player_pos.y = clampf(_player_pos.y, _EDGE, _field.size.y - _EDGE)
 	_player_node.position = _player_pos
 	if d != Vector2.ZERO:
 		if _player_node.animation != "run":
@@ -190,7 +191,7 @@ func _update_field(delta: float) -> void:
 
 	var god_pos := _god_pos()
 	_god.position = god_pos # AnimatedSprite2D 는 중심 기준
-	_belami.position = god_pos + Vector2(0.0, -72.0) - _belami.size * 0.5 # 머리 위 반응 버블
+	_belami.position = god_pos + Vector2(0.0, -108.0) - _belami.size * 0.5 # 머리 위 반응 버블
 	if _hungry: # 재촉 — 버블이 들썩인다
 		_belami.position += Vector2(randf_range(-3.0, 3.0), randf_range(-3.0, 3.0))
 
@@ -213,17 +214,17 @@ func _update_field(delta: float) -> void:
 	_refresh_stations(near)
 	_refresh_tray(near)
 	_hand_vis.visible = not _held.is_empty()
-	_hand_vis.position = _player_pos + Vector2(-14.0, -82.0)
+	_hand_vis.position = _player_pos + Vector2(-21.0, -118.0)
 	_update_hint(near)
 	_update_depth()
 
 
 func _god_pos() -> Vector2:
-	return Vector2(_field.size.x - 60.0, _field.size.y * 0.5)
+	return Vector2(_field.size.x - 90.0, _field.size.y * 0.5)
 
 
 func _station_range() -> float:
-	return RecipeDB.setting("station_range", 24.0) # 발 ↔ 기구 가장자리 거리(px)
+	return RecipeDB.setting("station_range", 36.0) # 발 ↔ 기구 가장자리 거리(px)
 
 
 ## 범위 안에서 가장 가까운 기구 id. 없으면 "".
@@ -512,9 +513,9 @@ func _drop_floor(it: Dictionary) -> void:
 		var before := String(it["grade"])
 		it["grade"] = KitchenItem.grade_down(before, int(RecipeDB.setting("floor_grade_drop", 1.0)))
 		_toast("바닥에 떨어뜨림 — 등급 %s → %s" % [before, it["grade"]])
-	var pos := _player_pos + _FOOT_OFFSET + Vector2(randf_range(-6.0, 6.0), 4.0)
+	var pos := _player_pos + _FOOT_OFFSET + Vector2(randf_range(-9.0, 9.0), 6.0)
 	var node := KitchenItem.new()
-	node.size = Vector2(24, 24)
+	node.size = Vector2(36, 36)
 	node.position = pos - node.size * 0.5
 	node.set_item(it)
 	_field.add_child(node)
@@ -599,7 +600,7 @@ func _update_server(delta: float) -> void:
 		ServerState.IDLE, ServerState.RETURNING:
 			if _table_dish_index() >= 0 and _st_nodes.has("table"):
 				_server_state = ServerState.FETCHING
-			elif _held.get("type", "") == "dish" and _player_pos.distance_to(_server_pos) < 80.0:
+			elif _held.get("type", "") == "dish" and _player_pos.distance_to(_server_pos) < 120.0:
 				_server_dish = _held
 				_set_held({})
 				_server_state = ServerState.CARRYING
@@ -609,7 +610,7 @@ func _update_server(delta: float) -> void:
 					_server_state = ServerState.IDLE
 		ServerState.FETCHING:
 			var tr: Rect2 = _st_nodes["table"].get_rect()
-			_server_walk(Vector2(tr.get_center().x, tr.end.y + _FOOT_SIZE.y * 0.5 + 4.0), delta)
+			_server_walk(Vector2(tr.get_center().x, tr.end.y + _FOOT_SIZE.y * 0.5 + 6.0), delta)
 			if _foot_dist(_server_pos, tr) <= reach:
 				var di := _table_dish_index()
 				if di < 0: # 그 사이 플레이어가 집어 갔으면 복귀
@@ -619,7 +620,7 @@ func _update_server(delta: float) -> void:
 					_server_state = ServerState.CARRYING
 		ServerState.CARRYING:
 			var gr := _god_rect()
-			_server_walk(Vector2(gr.position.x - _FOOT_SIZE.x * 0.5 - 4.0, gr.get_center().y), delta)
+			_server_walk(Vector2(gr.position.x - _FOOT_SIZE.x * 0.5 - 6.0, gr.get_center().y), delta)
 			if _foot_dist(_server_pos, gr) <= reach:
 				_apply_serve(_server_dish["recipe"], _server_dish["grade"])
 				_server_dish = {}
@@ -629,17 +630,20 @@ func _update_server(delta: float) -> void:
 	_server_dish_label.visible = carrying
 	if carrying:
 		_server_dish_label.text = String(_server_dish["recipe"]["display_name"])
-		_server_dish_label.position = _server_pos + Vector2(-30.0, -72.0)
+		_server_dish_label.position = _server_pos + Vector2(-45.0, -110.0)
 
 
 # ── 충돌(발 기준) ────────────────────────────────────
-## 플레이어·카밀라 스프라이트(32px ×3, 중심 기준)의 발 부분만 충돌 →
+## 플레이어·카밀라 스프라이트(32px ×4, 중심 기준)의 발 부분만 충돌 →
 ## 기구/god 아래쪽에 서면 몸이 앞에 겹쳐 보인다(깊이 정렬은 _update_depth).
-const _FOOT_OFFSET := Vector2(0.0, 36.0)
-const _FOOT_SIZE := Vector2(24.0, 12.0)
-const _SLIP := 4.0 # 이 이하로 걸친 모서리는 미끄러져 통과
-## god(64px ×2, 중심 기준)이 막는 영역 — 하반신~발밑.
-const _GOD_BLOCK := Rect2(-40.0, 14.0, 80.0, 40.0)
+## 값은 스프라이트 배율(_SPRITE_SCALE)에서 계산 — 씬의 Player/Server scale 과 맞출 것.
+const _SPRITE_SCALE := 4.0
+const _FOOT_OFFSET := Vector2(0.0, 12.0 * _SPRITE_SCALE)
+const _FOOT_SIZE := Vector2(8.0 * _SPRITE_SCALE, 4.0 * _SPRITE_SCALE)
+const _EDGE := 16.0 * _SPRITE_SCALE # 필드 가장자리 여백(스프라이트 반폭)
+const _SLIP := 6.0 # 이 이하로 걸친 모서리는 미끄러져 통과
+## god(64px ×3, 중심 기준)이 막는 영역 — 하반신~발밑.
+const _GOD_BLOCK := Rect2(-60.0, 21.0, 120.0, 60.0)
 
 
 func _god_rect() -> Rect2:
@@ -723,8 +727,8 @@ func _update_depth() -> void:
 
 
 # ── 카밀라 길찾기 ─────────────────────────────────────
-## 필드를 16px 격자로 나눠 기구·god(발 크기만큼 부풀림)를 막힌 칸으로 표시 → A* 경로.
-const _NAV_CELL := 16.0
+## 필드를 24px 격자로 나눠 기구·god(발 크기만큼 부풀림)를 막힌 칸으로 표시 → A* 경로.
+const _NAV_CELL := 24.0
 var _nav: AStarGrid2D
 var _server_path := PackedVector2Array() # 발 기준 경유점
 var _server_goal := Vector2.INF
@@ -738,7 +742,7 @@ func _build_nav() -> void:
 	_nav.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
 	_nav.update()
 	# 발이 갈 수 있는 범위(플레이어 이동 범위와 같음) 밖은 막음.
-	var walk := Rect2(Vector2(48.0, 48.0) + _FOOT_OFFSET, _field.size - Vector2(96.0, 96.0))
+	var walk := Rect2(Vector2(_EDGE, _EDGE) + _FOOT_OFFSET, _field.size - Vector2(_EDGE, _EDGE) * 2.0)
 	var pad := _FOOT_SIZE * 0.5 + Vector2(2.0, 2.0)
 	var blocks: Array[Rect2] = []
 	for r in _obstacles():
@@ -769,7 +773,7 @@ func _server_walk(target_foot: Vector2, delta: float) -> void:
 		if not _server_path.is_empty():
 			_server_path.remove_at(0) # 현재 칸
 		_server_path.append(target_foot) # 마지막은 정확한 목표점
-	var step := RecipeDB.setting("server_speed", 300.0) * delta
+	var step := RecipeDB.setting("server_speed", 300.0) * Config.SCREEN_SCALE * delta
 	var dest := foot
 	while step > 0.0 and not _server_path.is_empty():
 		var to := _server_path[0] - dest
@@ -820,7 +824,7 @@ func _refresh_stations(near: String) -> void:
 	# 조리대: 올려둔 재료 + 손질 진행
 	if _st_nodes.has("counter"):
 		var cn: CookStation = _st_nodes["counter"]
-		cn.show_items([] if _counter_item.is_empty() else [_counter_item], 40.0)
+		cn.show_items([] if _counter_item.is_empty() else [_counter_item], 60.0)
 		var txt := ""
 		if not _counter_item.is_empty():
 			var need := RecipeDB.chop_count(String(_counter_item["id"]))
@@ -837,7 +841,7 @@ func _refresh_stations(near: String) -> void:
 			continue
 		var c: Dictionary = _cookers[st]
 		var node: CookStation = _st_nodes[st]
-		node.show_items([c["dish"]] if c["state"] == "ready" else c["items"], 24.0)
+		node.show_items([c["dish"]] if c["state"] == "ready" else c["items"], 36.0)
 		node.bar.visible = c["state"] == "cooking"
 		match String(c["state"]):
 			"ready":
@@ -854,7 +858,7 @@ func _refresh_stations(near: String) -> void:
 					node.status.text = ""
 	# 테이블
 	if _st_nodes.has("table"):
-		_st_nodes["table"].show_items(_table, 24.0)
+		_st_nodes["table"].show_items(_table, 36.0)
 		_st_nodes["table"].status.text = "%d/%d" % [_table.size(), _table_slots()] if not _table.is_empty() else ""
 
 
@@ -934,11 +938,11 @@ func _tray_label(text: String) -> Label:
 func _tray_button(it: Dictionary, text: String) -> Button:
 	var b := Button.new()
 	b.focus_mode = Control.FOCUS_NONE # WASD 이동과 포커스 충돌 방지
-	b.custom_minimum_size = Vector2(150, 44)
+	b.custom_minimum_size = Vector2(225, 66)
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	b.text = "        " + text
+	b.text = "              " + text
 	var vis := KitchenItem.new()
-	vis.position = Vector2(8, 8)
+	vis.position = Vector2(12, 12)
 	vis.set_item(it)
 	b.add_child(vis)
 	return b
@@ -992,17 +996,17 @@ func _update_hint(near: String) -> void:
 func _toast(text: String) -> void:
 	var lb := Label.new()
 	lb.text = text
-	lb.size = Vector2(420.0, 22.0)
+	lb.size = Vector2(630.0, 33.0)
 	lb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lb.add_theme_color_override("font_outline_color", Color.BLACK)
 	lb.add_theme_constant_override("outline_size", 4)
 	lb.modulate = Color(1.0, 0.95, 0.6)
 	lb.z_index = Z_UI
 	var at := _player_pos if _pos_init else _field.size * 0.5 # 준비 화면에선 필드 중앙
-	lb.position = at + Vector2(-210.0, -104.0)
+	lb.position = at + Vector2(-315.0, -156.0)
 	_field.add_child(lb)
 	var tw := lb.create_tween()
-	tw.tween_property(lb, "position:y", lb.position.y - 16.0, 1.0)
+	tw.tween_property(lb, "position:y", lb.position.y - 24.0, 1.0)
 	tw.parallel().tween_property(lb, "modulate:a", 0.0, 0.3).set_delay(0.7)
 	tw.tween_callback(lb.queue_free)
 
@@ -1031,7 +1035,7 @@ func _worst_grade(items: Array) -> String:
 ## - 1px 단위: 기구를 클릭해 선택 → 방향키 1px, Shift+방향키 10px.
 ## - 기구끼리 겹치는 위치로는 옮겨지지 않음(충돌·길찾기가 깨지지 않게).
 
-const _SNAP := 10.0
+const _SNAP := 15.0
 
 var _layout_mode := false
 var _drag: CookStation = null
@@ -1048,7 +1052,7 @@ func _build_layout_tools() -> void:
 	var btn := Button.new()
 	btn.text = "🛠 기구 배치 편집 (개발용)"
 	btn.focus_mode = Control.FOCUS_NONE
-	btn.custom_minimum_size = Vector2(0, 36)
+	btn.custom_minimum_size = Vector2(0, 54)
 	btn.pressed.connect(_enter_layout_mode)
 	var vbox := _start_button.get_parent()
 	vbox.add_child(btn)
@@ -1056,7 +1060,7 @@ func _build_layout_tools() -> void:
 
 	_layout_bar = PanelContainer.new()
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
+	row.add_theme_constant_override("separation", 18)
 	_layout_info = Label.new()
 	row.add_child(_layout_info)
 	var save := Button.new()
@@ -1073,7 +1077,7 @@ func _build_layout_tools() -> void:
 	add_child(_layout_bar)
 	_layout_bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
 	_layout_bar.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_layout_bar.position.y = 52.0 # 전역 HUD 상단 바(일차·페이즈, y 10~42) 아래
+	_layout_bar.position.y = 78.0 # 전역 HUD 상단 바(일차·페이즈, y 15~63) 아래
 	_layout_bar.visible = false
 
 
@@ -1294,13 +1298,13 @@ func _build_npc_rows() -> void:
 		var npc_id := _npc_for_role(String(slot))
 		var row := HBoxContainer.new()
 		var label := Label.new()
-		label.custom_minimum_size = Vector2(260, 0)
+		label.custom_minimum_size = Vector2(390, 0)
 		label.text = "%s: %s" % [_role_label(String(slot)), (_npc_name(npc_id) if npc_id != "" else "-")]
 		row.add_child(label)
 		if npc_id != "" and NPCManager.is_revived(npc_id):
 			var btn := Button.new()
 			btn.focus_mode = Control.FOCUS_NONE
-			btn.custom_minimum_size = Vector2(160, 34)
+			btn.custom_minimum_size = Vector2(240, 51)
 			var placed := String(NPCManager.placement.get(slot, "")) == npc_id
 			btn.text = "배치 해제" if placed else "배치하기"
 			btn.pressed.connect(_on_toggle_place.bind(String(slot), npc_id))
@@ -1331,7 +1335,7 @@ func _build_recipe_rows() -> void:
 	for r in RecipeDB.recipes:
 		var id := String(r["id"])
 		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 8)
+		row.add_theme_constant_override("separation", 12)
 		if not (id in unlocked):
 			var lock := Label.new()
 			lock.modulate = Color(0.55, 0.55, 0.55)
@@ -1341,7 +1345,7 @@ func _build_recipe_rows() -> void:
 			continue
 		var btn := Button.new()
 		btn.focus_mode = Control.FOCUS_NONE
-		btn.custom_minimum_size = Vector2(0, 34)
+		btn.custom_minimum_size = Vector2(0, 51)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		btn.toggle_mode = true
@@ -1351,7 +1355,7 @@ func _build_recipe_rows() -> void:
 		row.add_child(btn)
 
 		var ms := Label.new()
-		ms.custom_minimum_size = Vector2(110, 0)
+		ms.custom_minimum_size = Vector2(165, 0)
 		ms.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		var req := RecipeDB.mastery_required(id)
 		ms.text = "숙련 %d / %d" % [RecipeDB.mastery_of(id), req] if req >= 0 else "숙련 %d (MAX)" % RecipeDB.mastery_of(id)
@@ -1359,7 +1363,7 @@ func _build_recipe_rows() -> void:
 
 		var up := Button.new()
 		up.focus_mode = Control.FOCUS_NONE
-		up.custom_minimum_size = Vector2(96, 34)
+		up.custom_minimum_size = Vector2(144, 51)
 		up.text = "강화 ▲" if req >= 0 else "최대"
 		up.disabled = not RecipeDB.can_upgrade(id)
 		up.tooltip_text = _upgrade_tooltip(id)
@@ -1480,26 +1484,31 @@ func _build_recipe_panel() -> void:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0.0, 0.0, 0.0, 0.55)
 	sb.set_corner_radius_all(4)
-	sb.set_content_margin_all(6)
+	sb.set_content_margin_all(9)
 	_recipe_panel.add_theme_stylebox_override("panel", sb)
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 0)
+	box.add_theme_constant_override("separation", 2)
 	_recipe_panel.add_child(box)
 	var title := Label.new()
 	title.text = "오늘 레시피"
-	title.add_theme_font_size_override("font_size", 13)
+	title.add_theme_font_size_override("font_size", 20)
 	title.add_theme_color_override("font_color", Color(1.0, 0.85, 0.45))
 	box.add_child(title)
+	var grid := GridContainer.new() # 2열 — 메뉴가 많아도 세로로 길어지지 않게
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 36)
+	grid.add_theme_constant_override("v_separation", 0)
+	box.add_child(grid)
 	for id in RecipeDB.unlocked_ids():
 		if not bool(_selected.get(id, false)):
 			continue
 		var d := RecipeDB.cook_data(id)
 		var lb := Label.new()
 		lb.text = "%s%s · %s" % [d["display_name"], (" ★" if BelamiManager.is_preferred(id) else ""), _process_text(d)]
-		lb.add_theme_font_size_override("font_size", 12)
-		box.add_child(lb)
+		lb.add_theme_font_size_override("font_size", 18)
+		grid.add_child(lb)
 	add_child(_recipe_panel)
-	_recipe_panel.position = Vector2(12.0, 44.0) # 전역 HUD 일차 표시(y 10~42) 아래
+	_recipe_panel.position = Vector2(18.0, 72.0) # 전역 HUD 일차 표시(y 15~63) 아래
 	_recipe_panel.z_index = Z_UI
 
 
@@ -1577,12 +1586,12 @@ func _show_game_over() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	over.add_child(center)
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 14)
+	box.add_theme_constant_override("separation", 21)
 	center.add_child(box)
 	var title := Label.new()
 	title.text = "게임 오버"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 40)
+	title.add_theme_font_size_override("font_size", 60)
 	title.add_theme_color_override("font_color", Color(1.0, 0.3, 0.25))
 	box.add_child(title)
 	var sub := Label.new()
@@ -1591,7 +1600,7 @@ func _show_game_over() -> void:
 	box.add_child(sub)
 	var btn := Button.new()
 	btn.text = "Day %d 아침부터 다시 시작" % GameManager.day
-	btn.custom_minimum_size = Vector2(280, 48)
+	btn.custom_minimum_size = Vector2(420, 72)
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.pressed.connect(GameManager.restart_day)
 	box.add_child(btn)

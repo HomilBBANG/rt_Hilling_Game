@@ -50,6 +50,7 @@ func _spawn_world() -> void:
 	_player.global_position = $PlayerStart.global_position
 	# 무게 초과 시 머리 위에 뜨는 경고 라벨(월드 좌표).
 	_overweight_label = Label.new()
+	_overweight_label.add_theme_font_size_override("font_size", 16) # 월드 좌표 라벨: 카메라 줌 기준 크기 유지(전역 기본 24 미적용)
 	_overweight_label.text = "너무 무거워"
 	_overweight_label.modulate = Color(1.0, 0.25, 0.2)
 	_overweight_label.z_index = 50

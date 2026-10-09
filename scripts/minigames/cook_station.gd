@@ -31,7 +31,7 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_name_label = Label.new()
 	_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_name_label.add_theme_font_size_override("font_size", 13)
+	_name_label.add_theme_font_size_override("font_size", 20)
 	_name_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	_name_label.add_theme_constant_override("outline_size", 4)
 	add_child(_name_label, false, Node.INTERNAL_MODE_FRONT)
@@ -45,7 +45,8 @@ func _ready() -> void:
 
 	status = Label.new()
 	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	status.add_theme_font_size_override("font_size", 13)
+	status.add_theme_font_size_override("font_size", 18)
+	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	status.add_theme_color_override("font_outline_color", Color.BLACK)
 	status.add_theme_constant_override("outline_size", 4)
 	status.z_index = 2000
@@ -66,16 +67,18 @@ func display_name() -> String:
 
 
 ## 기구 위 물건 표시. 한 줄에 3개씩, 사각형 가운데 정렬.
-func show_items(items: Array, item_size := 26.0) -> void:
+func show_items(items: Array, item_size := 39.0) -> void:
 	while _item_nodes.size() < items.size():
 		var k := KitchenItem.new()
+		k.z_as_relative = false
+		k.z_index = 1900 # 캐릭터(z = 발 y, 최대 ~1080)보다 위, 안내 UI(2000)보다 아래
 		add_child(k, false, Node.INTERNAL_MODE_BACK)
 		_item_nodes.append(k)
 	while _item_nodes.size() > items.size():
 		_item_nodes.pop_back().queue_free()
 	var per_row := 3
 	var rows := ceili(items.size() / float(per_row))
-	var gap := 3.0
+	var gap := 4.0
 	for i in items.size():
 		var k: KitchenItem = _item_nodes[i]
 		k.size = Vector2(item_size, item_size)
@@ -110,9 +113,9 @@ func _apply() -> void:
 func _layout() -> void:
 	if bar == null:
 		return
-	_name_label.position = Vector2(0.0, -18.0)
-	_name_label.size = Vector2(size.x, 18.0)
-	bar.position = Vector2(0.0, size.y + 4.0)
-	bar.size = Vector2(size.x, 10.0)
-	status.size = Vector2(220.0, 20.0)
-	status.position = Vector2((size.x - 220.0) * 0.5, size.y + 16.0)
+	_name_label.position = Vector2(0.0, -28.0)
+	_name_label.size = Vector2(size.x, 28.0)
+	bar.position = Vector2(0.0, size.y + 6.0)
+	bar.size = Vector2(size.x, 15.0)
+	status.size = Vector2(size.x, 30.0)
+	status.position = Vector2(0.0, size.y + 24.0)

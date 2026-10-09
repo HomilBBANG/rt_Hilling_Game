@@ -43,5 +43,19 @@ func get_float(key: String, def: float) -> float:
 	return float(_values.get(key, def))
 
 
+## 그날 밤 목표 만족도(balance.xlsx day_targets 시트).
+## 적힌 날 중 day 이하인 가장 큰 날의 값 — 마지막 날 이후는 마지막 값 유지. 시트가 없으면 def.
+func day_target(day: int, def: float) -> float:
+	var t: Dictionary = _values.get("day_targets", {})
+	var best_day := 0
+	var best := def
+	for k in t.keys():
+		var d := int(k)
+		if d <= day and d > best_day:
+			best_day = d
+			best = float(t[k])
+	return best
+
+
 func get_int(key: String, def: int) -> int:
 	return int(_values.get(key, def))

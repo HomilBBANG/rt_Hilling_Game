@@ -22,47 +22,47 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 52
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 20
+theme_override_constants/margin_left = 36
+theme_override_constants/margin_top = 78
+theme_override_constants/margin_right = 36
+theme_override_constants/margin_bottom = 30
 
 [node name="VBox" type="VBoxContainer" parent="Body"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 18
 
 [node name="Header" type="Label" parent="Body/VBox"]
 layout_mode = 2
 horizontal_alignment = 1
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 33
 text = "캠프"
 
 [node name="Ground" type="Panel" parent="Body/VBox"]
-custom_minimum_size = Vector2(0, 300)
+custom_minimum_size = Vector2(0, 450)
 layout_mode = 2
 size_flags_vertical = 3
 
 [node name="Campfire" type="ColorRect" parent="Body/VBox/Ground"]
-offset_right = 22.0
-offset_bottom = 22.0
+offset_right = 33.0
+offset_bottom = 33.0
 color = Color(0.9, 0.5, 0.2, 1)
 
 [node name="Belami" type="AnimatedSprite2D" parent="Body/VBox/Ground"]
 texture_filter = 1
-scale = Vector2(2, 2)
+scale = Vector2(3, 3)
 
 [node name="Player" type="AnimatedSprite2D" parent="Body/VBox/Ground"]
 texture_filter = 1
-scale = Vector2(3, 3)
+scale = Vector2(4, 4)
 
 [node name="Footer" type="VBoxContainer" parent="Body/VBox"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 12
 
 [node name="UpgradePanel" type="VBoxContainer" parent="Body/VBox/Footer"]
 visible = false
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 9
 
 [node name="HanaTitle" type="Label" parent="Body/VBox/Footer/UpgradePanel"]
 layout_mode = 2
@@ -75,12 +75,12 @@ horizontal_alignment = 1
 text = "보유 토큰: 0"
 
 [node name="RangedButton" type="Button" parent="Body/VBox/Footer/UpgradePanel"]
-custom_minimum_size = Vector2(320, 36)
+custom_minimum_size = Vector2(480, 54)
 layout_mode = 2
 text = "총 강화"
 
 [node name="MeleeButton" type="Button" parent="Body/VBox/Footer/UpgradePanel"]
-custom_minimum_size = Vector2(320, 36)
+custom_minimum_size = Vector2(480, 54)
 layout_mode = 2
 text = "칼 강화"
 
@@ -92,10 +92,10 @@ text = "── 새 무기 제작 ──"
 
 [node name="CraftBox" type="VBoxContainer" parent="Body/VBox/Footer/UpgradePanel"]
 layout_mode = 2
-theme_override_constants/separation = 4
+theme_override_constants/separation = 6
 
 [node name="GoButton" type="Button" parent="Body/VBox/Footer"]
-custom_minimum_size = Vector2(0, 44)
+custom_minimum_size = Vector2(0, 66)
 layout_mode = 2
 text = "탐사 나가기 →"
 
@@ -122,7 +122,7 @@ anchor_bottom = 1.0
 [node name="Text" type="Label" parent="Cutscene/Center"]
 layout_mode = 2
 horizontal_alignment = 1
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 39
 text = ""
 
 [node name="StatsScreen" type="Control" parent="."]
@@ -150,20 +150,20 @@ layout_mode = 2
 
 [node name="Margin" type="MarginContainer" parent="StatsScreen/Center/Panel"]
 layout_mode = 2
-theme_override_constants/margin_left = 28
-theme_override_constants/margin_top = 20
-theme_override_constants/margin_right = 28
-theme_override_constants/margin_bottom = 20
+theme_override_constants/margin_left = 42
+theme_override_constants/margin_top = 30
+theme_override_constants/margin_right = 42
+theme_override_constants/margin_bottom = 30
 
 [node name="VBox" type="VBoxContainer" parent="StatsScreen/Center/Panel/Margin"]
-custom_minimum_size = Vector2(380, 0)
+custom_minimum_size = Vector2(570, 0)
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 15
 
 [node name="Title" type="Label" parent="StatsScreen/Center/Panel/Margin/VBox"]
 layout_mode = 2
 horizontal_alignment = 1
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 42
 text = "능력치"
 
 [node name="Tokens" type="Label" parent="StatsScreen/Center/Panel/Margin/VBox"]
@@ -179,7 +179,7 @@ layout_mode = 2
 text = "체력  100  (Lv0)"
 
 [node name="HpButton" type="Button" parent="StatsScreen/Center/Panel/Margin/VBox"]
-custom_minimum_size = Vector2(0, 40)
+custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 focus_mode = 0
 text = "체력 강화"
@@ -189,7 +189,7 @@ layout_mode = 2
 text = "이동속도  280  (Lv0)"
 
 [node name="SpeedButton" type="Button" parent="StatsScreen/Center/Panel/Margin/VBox"]
-custom_minimum_size = Vector2(0, 40)
+custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 focus_mode = 0
 text = "이동속도 강화"
@@ -228,19 +228,19 @@ layout_mode = 2
 
 [node name="Margin" type="MarginContainer" parent="ExplorePrep/Center/Panel"]
 layout_mode = 2
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 18
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 18
+theme_override_constants/margin_left = 36
+theme_override_constants/margin_top = 27
+theme_override_constants/margin_right = 36
+theme_override_constants/margin_bottom = 27
 
 [node name="VBox" type="VBoxContainer" parent="ExplorePrep/Center/Panel/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 15
 
 [node name="Title" type="Label" parent="ExplorePrep/Center/Panel/Margin/VBox"]
 layout_mode = 2
 horizontal_alignment = 1
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 42
 text = "탐험 준비"
 
 [node name="Hint" type="Label" parent="ExplorePrep/Center/Panel/Margin/VBox"]
@@ -251,11 +251,11 @@ text = "드래그로 창고 ↔ 가져갈 가방 사이를 옮기세요"
 
 [node name="Columns" type="HBoxContainer" parent="ExplorePrep/Center/Panel/Margin/VBox"]
 layout_mode = 2
-theme_override_constants/separation = 24
+theme_override_constants/separation = 36
 
 [node name="CarryVB" type="VBoxContainer" parent="ExplorePrep/Center/Panel/Margin/VBox/Columns"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 9
 
 [node name="CarryTitle" type="Label" parent="ExplorePrep/Center/Panel/Margin/VBox/Columns/CarryVB"]
 layout_mode = 2
@@ -263,19 +263,19 @@ horizontal_alignment = 1
 text = "가져갈 가방"
 
 [node name="CarryScroll" type="ScrollContainer" parent="ExplorePrep/Center/Panel/Margin/VBox/Columns/CarryVB"]
-custom_minimum_size = Vector2(300, 300)
+custom_minimum_size = Vector2(450, 450)
 layout_mode = 2
 horizontal_scroll_mode = 0
 
 [node name="CarryGrid" type="GridContainer" parent="ExplorePrep/Center/Panel/Margin/VBox/Columns/CarryVB/CarryScroll"]
 layout_mode = 2
-theme_override_constants/h_separation = 8
-theme_override_constants/v_separation = 8
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
 columns = 4
 
 [node name="StorageVB" type="VBoxContainer" parent="ExplorePrep/Center/Panel/Margin/VBox/Columns"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 9
 
 [node name="StorageTitle" type="Label" parent="ExplorePrep/Center/Panel/Margin/VBox/Columns/StorageVB"]
 layout_mode = 2
@@ -283,18 +283,18 @@ horizontal_alignment = 1
 text = "창고"
 
 [node name="StorageScroll" type="ScrollContainer" parent="ExplorePrep/Center/Panel/Margin/VBox/Columns/StorageVB"]
-custom_minimum_size = Vector2(300, 300)
+custom_minimum_size = Vector2(450, 450)
 layout_mode = 2
 horizontal_scroll_mode = 0
 
 [node name="StorageGrid" type="GridContainer" parent="ExplorePrep/Center/Panel/Margin/VBox/Columns/StorageVB/StorageScroll"]
 layout_mode = 2
-theme_override_constants/h_separation = 8
-theme_override_constants/v_separation = 8
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
 columns = 4
 
 [node name="StartButton" type="Button" parent="ExplorePrep/Center/Panel/Margin/VBox"]
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 focus_mode = 0
 text = "탐험 시작 →"

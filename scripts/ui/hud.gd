@@ -79,18 +79,18 @@ func _build_item_menus() -> void:
 	var panel := PanelContainer.new()
 	center.add_child(panel)
 	var vb := VBoxContainer.new()
-	vb.custom_minimum_size = Vector2(300, 0)
-	vb.add_theme_constant_override("separation", 12)
+	vb.custom_minimum_size = Vector2(450, 0)
+	vb.add_theme_constant_override("separation", 18)
 	panel.add_child(vb)
 	_drop_title = Label.new()
 	_drop_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vb.add_child(_drop_title)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 16)
+	row.add_theme_constant_override("separation", 24)
 	var minus := _menu_button("－")
 	_drop_qty_label = Label.new()
-	_drop_qty_label.custom_minimum_size = Vector2(60, 0)
+	_drop_qty_label.custom_minimum_size = Vector2(90, 0)
 	_drop_qty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var plus := _menu_button("＋")
 	row.add_child(minus)
@@ -99,7 +99,7 @@ func _build_item_menus() -> void:
 	vb.add_child(row)
 	var row2 := HBoxContainer.new()
 	row2.alignment = BoxContainer.ALIGNMENT_CENTER
-	row2.add_theme_constant_override("separation", 12)
+	row2.add_theme_constant_override("separation", 18)
 	var confirm := _menu_button("버리기")
 	var cancel := _menu_button("취소")
 	row2.add_child(confirm)
@@ -112,7 +112,7 @@ func _build_item_menus() -> void:
 	cancel.pressed.connect(func(): _drop_dialog.visible = false)
 
 	_inv_msg = Label.new()
-	_inv_msg.position = Vector2(360, 300)
+	_inv_msg.position = Vector2(540, 450)
 	_inv_msg.modulate = Color(1.0, 0.9, 0.4)
 	_inv_msg.z_index = 20
 	_inventory.add_child(_inv_msg)
@@ -122,7 +122,7 @@ func _menu_button(text: String) -> Button:
 	var b := Button.new()
 	b.text = text
 	b.focus_mode = Control.FOCUS_NONE
-	b.custom_minimum_size = Vector2(110, 34)
+	b.custom_minimum_size = Vector2(165, 51)
 	return b
 
 
@@ -165,7 +165,7 @@ func _rebuild_weapon_switch() -> void:
 		var kind := WeaponDB.kind_of(id)
 		var equipped_here: bool = String(WeaponManager.equipped.get(kind, "")) == id
 		var btn := Button.new()
-		btn.custom_minimum_size = Vector2(360, 32)
+		btn.custom_minimum_size = Vector2(540, 48)
 		btn.focus_mode = Control.FOCUS_NONE
 		var tag := "장착중" if equipped_here else "장착"
 		btn.text = "%s [%s] — %s" % [WeaponDB.display_name(id), _kind_label(kind), tag]
@@ -211,7 +211,7 @@ func _rebuild_bag() -> void:
 
 func _make_slot(item_id: String, count: int) -> Control:
 	var slot := Panel.new()
-	slot.custom_minimum_size = Vector2(64, 64)
+	slot.custom_minimum_size = Vector2(96, 96)
 	if item_id == "":
 		slot.modulate = Color(1, 1, 1, 0.3) # 빈 칸
 		return slot
@@ -221,10 +221,10 @@ func _make_slot(item_id: String, count: int) -> Control:
 	if count > 1: # 겹친 개수를 우측 하단에 표시
 		var cnt_lbl := Label.new()
 		cnt_lbl.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
-		cnt_lbl.offset_left = -34.0
-		cnt_lbl.offset_top = -24.0
-		cnt_lbl.offset_right = -4.0
-		cnt_lbl.offset_bottom = -2.0
+		cnt_lbl.offset_left = -51.0
+		cnt_lbl.offset_top = -36.0
+		cnt_lbl.offset_right = -6.0
+		cnt_lbl.offset_bottom = -3.0
 		cnt_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		cnt_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		cnt_lbl.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM

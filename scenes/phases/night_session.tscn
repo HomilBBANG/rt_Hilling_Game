@@ -27,12 +27,12 @@ color = Color(0.16, 0.12, 0.11, 1)
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_left = 24.0
-offset_top = 8.0
-offset_right = -24.0
-offset_bottom = 72.0
+offset_left = 36.0
+offset_top = 12.0
+offset_right = -36.0
+offset_bottom = 108.0
 grow_horizontal = 2
-theme_override_constants/separation = 20
+theme_override_constants/separation = 30
 alignment = 1
 
 [node name="TimeLabel" type="Label" parent="TopBar" unique_id=308061706]
@@ -44,7 +44,7 @@ layout_mode = 2
 text = "만족 0 / 60"
 
 [node name="SatBar" type="ProgressBar" parent="TopBar" unique_id=697145126]
-custom_minimum_size = Vector2(180, 20)
+custom_minimum_size = Vector2(270, 30)
 layout_mode = 2
 show_percentage = false
 
@@ -60,38 +60,38 @@ text = "먹인 수: 0"
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_left = 24.0
-offset_top = 76.0
-offset_right = -24.0
-offset_bottom = 648.0
+offset_left = 36.0
+offset_top = 114.0
+offset_right = -36.0
+offset_bottom = 972.0
 grow_horizontal = 2
 
 [node name="PlaceArea" type="ReferenceRect" parent="Field" unique_id=864424504]
 layout_mode = 0
-offset_left = 26.0
-offset_top = 68.0
-offset_right = 560.0
-offset_bottom = 460.0
+offset_left = 39.0
+offset_top = 102.0
+offset_right = 840.0
+offset_bottom = 690.0
 mouse_filter = 2
 border_color = Color(0.55, 0.9, 0.2, 1)
 border_width = 2.0
 
 [node name="Counter" type="ColorRect" parent="Field" unique_id=2131241749 instance=ExtResource("2")]
 layout_mode = 0
-offset_left = 203.0
-offset_top = 116.0
-offset_right = 299.0
-offset_bottom = 172.0
+offset_left = 304.5
+offset_top = 174.0
+offset_right = 448.5
+offset_bottom = 258.0
 mouse_filter = 2
 color = Color(0.55, 0.42, 0.25, 1)
 script = ExtResource("3_552im")
 
 [node name="Fryer" type="ColorRect" parent="Field" unique_id=156494600 instance=ExtResource("2")]
 layout_mode = 0
-offset_left = 300.0
-offset_top = 116.0
-offset_right = 396.0
-offset_bottom = 172.0
+offset_left = 450.0
+offset_top = 174.0
+offset_right = 594.0
+offset_bottom = 258.0
 mouse_filter = 2
 color = Color(0.78, 0.56, 0.18, 1)
 script = ExtResource("3_552im")
@@ -99,10 +99,10 @@ station_id = "fryer"
 
 [node name="Pot" type="ColorRect" parent="Field" unique_id=942066463 instance=ExtResource("2")]
 layout_mode = 0
-offset_left = 106.0
-offset_top = 115.0
-offset_right = 202.0
-offset_bottom = 171.0
+offset_left = 159.0
+offset_top = 172.5
+offset_right = 303.0
+offset_bottom = 256.5
 mouse_filter = 2
 color = Color(0.32, 0.44, 0.62, 1)
 script = ExtResource("3_552im")
@@ -110,10 +110,10 @@ station_id = "pot"
 
 [node name="Table" type="ColorRect" parent="Field" unique_id=274811406 instance=ExtResource("2")]
 layout_mode = 0
-offset_left = 397.0
-offset_top = 258.0
-offset_right = 493.0
-offset_bottom = 314.0
+offset_left = 613.0
+offset_top = 394.0
+offset_right = 757.0
+offset_bottom = 478.0
 mouse_filter = 2
 color = Color(0.46, 0.32, 0.2, 1)
 script = ExtResource("3_552im")
@@ -121,10 +121,10 @@ station_id = "table"
 
 [node name="Trash" type="ColorRect" parent="Field" unique_id=2022669531 instance=ExtResource("2")]
 layout_mode = 0
-offset_left = 209.0
-offset_top = 400.0
-offset_right = 305.0
-offset_bottom = 456.0
+offset_left = 313.5
+offset_top = 600.0
+offset_right = 457.5
+offset_bottom = 684.0
 mouse_filter = 2
 color = Color(0.3, 0.34, 0.3, 1)
 script = ExtResource("3_552im")
@@ -132,10 +132,10 @@ station_id = "trash"
 
 [node name="Bowl" type="ColorRect" parent="Field" unique_id=2131782790 instance=ExtResource("2")]
 layout_mode = 0
-offset_left = 397.0
-offset_top = 116.0
-offset_right = 493.0
-offset_bottom = 172.0
+offset_left = 595.5
+offset_top = 174.0
+offset_right = 739.5
+offset_bottom = 258.0
 mouse_filter = 2
 color = Color(0.6, 0.48, 0.66, 1)
 script = ExtResource("3_552im")
@@ -143,23 +143,23 @@ station_id = "bowl"
 
 [node name="God" type="AnimatedSprite2D" parent="Field" unique_id=1930137843]
 texture_filter = 1
-scale = Vector2(2, 2)
+scale = Vector2(3, 3)
 
 [node name="Belami" type="Label" parent="Field" unique_id=509313119]
 layout_mode = 0
-offset_right = 80.0
-offset_bottom = 40.0
-theme_override_font_sizes/font_size = 28
+offset_right = 120.0
+offset_bottom = 60.0
+theme_override_font_sizes/font_size = 42
 text = "( ˘ ᴗ ˘ )"
 
 [node name="Player" type="AnimatedSprite2D" parent="Field" unique_id=1816088786]
 texture_filter = 1
-scale = Vector2(3, 3)
+scale = Vector2(4, 4)
 
 [node name="Server" type="AnimatedSprite2D" parent="Field" unique_id=1620534230]
 visible = false
 texture_filter = 1
-scale = Vector2(3, 3)
+scale = Vector2(4, 4)
 
 [node name="ServerDish" type="Label" parent="Field" unique_id=57319363]
 visible = false
@@ -172,11 +172,11 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -64.0
-offset_bottom = -12.0
+offset_top = -96.0
+offset_bottom = -18.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_constants/separation = 12
+theme_override_constants/separation = 18
 alignment = 1
 
 [node name="ServeHint" type="Label" parent="Field" unique_id=1795100987]
@@ -185,8 +185,8 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -92.0
-offset_bottom = -68.0
+offset_top = -138.0
+offset_bottom = -102.0
 grow_horizontal = 2
 grow_vertical = 0
 text = "요리를 완성하면 들고 → WASD로 god에게 가져가 서빙"
@@ -198,10 +198,10 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 24.0
-offset_top = -72.0
-offset_right = -24.0
-offset_bottom = -8.0
+offset_left = 36.0
+offset_top = -108.0
+offset_right = -36.0
+offset_bottom = -12.0
 grow_horizontal = 2
 grow_vertical = 0
 alignment = 1
@@ -243,11 +243,11 @@ grow_vertical = 2
 
 [node name="VBox" type="VBoxContainer" parent="Results/Center" unique_id=535350716]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 24
 
 [node name="ResultTitle" type="Label" parent="Results/Center/VBox" unique_id=1141179377]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 42
 text = "오늘 밤 — 결과"
 horizontal_alignment = 1
 
@@ -294,19 +294,19 @@ layout_mode = 2
 
 [node name="Margin" type="MarginContainer" parent="Prep/Center/Panel" unique_id=390892347]
 layout_mode = 2
-theme_override_constants/margin_left = 28
-theme_override_constants/margin_top = 20
-theme_override_constants/margin_right = 28
-theme_override_constants/margin_bottom = 20
+theme_override_constants/margin_left = 42
+theme_override_constants/margin_top = 30
+theme_override_constants/margin_right = 42
+theme_override_constants/margin_bottom = 30
 
 [node name="VBox" type="VBoxContainer" parent="Prep/Center/Panel/Margin" unique_id=1051653124]
-custom_minimum_size = Vector2(900, 0)
+custom_minimum_size = Vector2(1350, 0)
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 15
 
 [node name="Title" type="Label" parent="Prep/Center/Panel/Margin/VBox" unique_id=1006387236]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 42
 text = "주방 준비"
 horizontal_alignment = 1
 
@@ -317,7 +317,7 @@ text = "── 주방 NPC 배치 ──"
 
 [node name="NpcList" type="VBoxContainer" parent="Prep/Center/Panel/Margin/VBox" unique_id=1148618287]
 layout_mode = 2
-theme_override_constants/separation = 4
+theme_override_constants/separation = 6
 
 [node name="RecipeTitle" type="Label" parent="Prep/Center/Panel/Margin/VBox" unique_id=1612612050]
 layout_mode = 2
@@ -326,10 +326,10 @@ text = "── 오늘 밤 레시피 선택 ──"
 
 [node name="RecipeList" type="VBoxContainer" parent="Prep/Center/Panel/Margin/VBox" unique_id=1437602176]
 layout_mode = 2
-theme_override_constants/separation = 4
+theme_override_constants/separation = 6
 
 [node name="StartButton" type="Button" parent="Prep/Center/Panel/Margin/VBox" unique_id=1528226195]
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 focus_mode = 0
 text = "요리 시작 →"

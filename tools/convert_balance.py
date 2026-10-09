@@ -8,10 +8,17 @@ data/balance.xlsx 를 읽어 data/balance.json (UTF-8) 을 생성합니다.
 
 필요 패키지:  pip install openpyxl
 
-엑셀 시트 첫 행은 헤더여야 하며, 다음 열을 사용합니다(대소문자 무시):
+첫 번째 시트(key/value): 첫 행은 헤더, 다음 열을 사용합니다(대소문자 무시):
     key   : 수치 이름(영문) — 필수
     value : 값(숫자) — 필수
     note  : 설명(게임에는 미사용)
+
+day_targets 시트(선택): 날짜별 밤 목표 만족도
+    day                 : 일차(1, 2, 3 …)
+    target_satisfaction : 그날 밤 성공에 필요한 만족도
+    note                : 설명(게임에는 미사용)
+  → balance.json 의 "day_targets": {"1": 60, "2": 70, …}
+  마지막으로 적은 날 이후는 마지막 값을 계속 사용.
 """
 import json
 import os
@@ -53,7 +60,7 @@ def main() -> int:
         return 1
 
     wb = load_workbook(XLSX, data_only=True)
-    ws = wb.active
+    ws = wb.worksheets[0] # 시트를 추가해도 항상 첫 시트가 key/value
     rows = list(ws.iter_rows(values_only=True))
     if not rows:
         print("[에러] 시트가 비어 있습니다.")
@@ -74,6 +81,20 @@ def main() -> int:
         if key is None or str(key).strip() == "" or val is None:
             continue
         values[str(key).strip()] = coerce(val)
+
+    if "day_targets" in wb.sheetnames:
+        drows = list(wb["day_targets"].iter_rows(values_only=True))
+        dh = [str(c).strip().lower() if c is not None else "" for c in drows[0]] if drows else []
+        if "day" in dh and "target_satisfaction" in dh:
+            di, ti = dh.index("day"), dh.index("target_satisfaction")
+            targets = {}
+            for r in drows[1:]:
+                if r is None or di >= len(r) or ti >= len(r) or r[di] is None or r[ti] is None:
+                    continue
+                targets[str(int(coerce(r[di])))] = coerce(r[ti])
+            values["day_targets"] = targets
+        else:
+            print(f"[경고] day_targets 시트 헤더에 'day', 'target_satisfaction' 이 필요합니다. 현재: {dh}")
 
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:

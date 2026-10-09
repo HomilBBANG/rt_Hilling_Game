@@ -34,10 +34,10 @@ func fill(id: String, cnt: int) -> void:
 	if cnt > 1:
 		var c := Label.new()
 		c.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
-		c.offset_left = -30.0
-		c.offset_top = -22.0
-		c.offset_right = -3.0
-		c.offset_bottom = -2.0
+		c.offset_left = -45.0
+		c.offset_top = -33.0
+		c.offset_right = -5.0
+		c.offset_bottom = -3.0
 		c.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		c.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		c.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM

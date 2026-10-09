@@ -19,7 +19,7 @@ var _player_pos := Vector2.ZERO
 var _pos_init := false
 
 ## 제작(무기 강화)은 carter 에게 다가가 E 를 눌러야 열린다.
-const _INTERACT_RANGE := 90.0
+const _INTERACT_RANGE := 135.0 # 화면 좌표(1080p 기준)
 var _carter_pos := Vector2.ZERO
 var _carter_hint: Label = null
 var _forge_open := false
@@ -178,7 +178,7 @@ func _fill_inv_grid(grid: GridContainer, inv: Dictionary, side: String) -> void:
 		slot_count += cols - (slot_count % cols)
 	for i in slot_count:
 		var slot: Panel = _INV_SLOT.new()
-		slot.custom_minimum_size = Vector2(64, 64)
+		slot.custom_minimum_size = Vector2(96, 96)
 		slot.side = side
 		slot.on_drop = _on_item_dropped
 		if i < stacks.size():
@@ -218,9 +218,9 @@ func _apply_move(dir: Vector2, delta: float) -> void:
 	if dir == Vector2.ZERO:
 		return
 	# 탐사·요리와 동일 속도(PlayerStats). 동적으로 읽어 Tab 업그레이드가 즉시 반영됨.
-	_player_pos += dir.normalized() * PlayerStats.move_speed() * delta
+	_player_pos += dir.normalized() * PlayerStats.move_speed() * Config.SCREEN_SCALE * delta # 화면 좌표 이동
 	var g := _ground.size
-	var h := 48.0
+	var h := 64.0 # 스프라이트(32px ×4) 반폭
 	_player_pos.x = clampf(_player_pos.x, h, g.x - h)
 	_player_pos.y = clampf(_player_pos.y, h, g.y - h)
 	_player_fig.position = _player_pos
@@ -235,7 +235,7 @@ func _build_figures() -> void:
 
 	_campfire.position = center - _campfire.size * 0.5
 	# 플레이어·god 위치는 balance 엑셀(camp_player_x/y, camp_god_x/y, 비율 0~1)로 조정 가능.
-	_player_pos = _camp_pos("camp_player", g, center + Vector2(-radius - 40.0, 8.0))
+	_player_pos = _camp_pos("camp_player", g, center + Vector2(-radius - 60.0, 12.0))
 	_player_fig.sprite_frames = PlayerFrames.build("idle_hand", "run_hand")
 	_player_fig.play("idle")
 	_player_fig.flip_h = true # 스폰 시 오른쪽을 바라봄(이동 로직과 동일 규약: flip_h=true=우향)
@@ -243,7 +243,7 @@ func _build_figures() -> void:
 	_pos_init = true
 	_belami.sprite_frames = GodFrames.build()
 	_belami.play("idle")
-	_belami.position = _camp_pos("camp_god", g, center + Vector2(-radius - 40.0, -46.0))
+	_belami.position = _camp_pos("camp_god", g, center + Vector2(-radius - 60.0, -69.0))
 
 	var entries := NpcUnlockDB.entries
 	var n := entries.size()
@@ -273,7 +273,7 @@ func _build_carter_hint() -> void:
 	_carter_hint = Label.new()
 	_carter_hint.text = "E: 제작"
 	_carter_hint.modulate = Color(1.0, 0.95, 0.5)
-	_carter_hint.position = _carter_pos + Vector2(-24.0, -60.0)
+	_carter_hint.position = _carter_pos + Vector2(-36.0, -100.0)
 	_carter_hint.visible = false
 	_ground.add_child(_carter_hint)
 
@@ -294,7 +294,7 @@ func _make_figure(npc_id: String, disp: String, color: Color, pos: Vector2) -> D
 	var body := AnimatedSprite2D.new()
 	body.sprite_frames = _npc_sprite_frames()
 	body.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	body.scale = Vector2(3, 3) # 플레이어(32px @ scale 3)와 동일 크기
+	body.scale = Vector2(4, 4) # 플레이어(32px @ scale 4)와 동일 크기
 	body.modulate = Color(1, 1, 1) # 원본 색 그대로(틴트 없음)
 	body.position = pos # AnimatedSprite2D 는 중심 기준
 	body.play("idle" if shown else "dead")
@@ -303,7 +303,7 @@ func _make_figure(npc_id: String, disp: String, color: Color, pos: Vector2) -> D
 	var label := Label.new()
 	label.text = disp if shown else "???"
 	label.modulate = Color(1, 1, 1) if shown else Color(0.6, 0.6, 0.6)
-	label.position = pos + Vector2(-16.0, 54.0) # 스프라이트(96px) 아래에 이름
+	label.position = pos + Vector2(-24.0, 70.0) # 스프라이트(128px) 아래에 이름
 	_ground.add_child(label)
 
 	return {"body": body, "label": label, "color": color, "name": disp}
@@ -357,7 +357,7 @@ func _play_one(npc_id: String) -> void:
 	var label: Label = fig["label"]
 	body.play("idle") # 시체(dead) → 살아있는 idle 애니메이션으로 전환
 	var t := create_tween()
-	t.tween_property(body, "position", body.position - Vector2(0, 6), 1.0) # 살짝 일어서는 연출
+	t.tween_property(body, "position", body.position - Vector2(0, 9), 1.0) # 살짝 일어서는 연출
 	await t.finished
 	label.text = String(fig["name"])
 	label.modulate = Color(1, 1, 1)
@@ -388,7 +388,7 @@ func _rebuild_craft_buttons() -> void:
 		var id := String(raw_id)
 		var w: Dictionary = WeaponDB.get_weapon(id)
 		var btn := Button.new()
-		btn.custom_minimum_size = Vector2(320, 34)
+		btn.custom_minimum_size = Vector2(480, 51)
 		btn.focus_mode = Control.FOCUS_NONE
 		btn.text = "제작: %s (%s, 공격력 %d) — %d토큰" % [
 			WeaponDB.display_name(id), _kind_label(String(w.get("kind", ""))),

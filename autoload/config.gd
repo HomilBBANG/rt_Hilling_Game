@@ -8,6 +8,10 @@ extends Node
 ## 나중에 숨기려면 이 값을 false 로 바꾸거나, 런타임에서 Config.show_gauges = false 로 토글.
 ## (게이지를 '지우는' 게 아니라 '가리는' 방식이라, 언제든 다시 켤 수 있음.)
 
+## 기준 해상도를 1280x720 → 1920x1080 으로 올리며 화면(스크린) 좌표가 1.5배가 됨.
+## 캠프·밤처럼 '화면 좌표'로 움직이는 이동 속도에 곱한다(탐사는 카메라 줌 기준 월드 좌표라 미적용).
+const SCREEN_SCALE := 1.5
+
 signal gauges_visibility_changed(visible: bool)
 signal detection_range_visibility_changed(visible: bool)
 

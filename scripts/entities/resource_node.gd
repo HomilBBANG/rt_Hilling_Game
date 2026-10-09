@@ -14,6 +14,7 @@ func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
 	_hint = Label.new()
+	_hint.add_theme_font_size_override("font_size", 16) # 월드 좌표 라벨: 카메라 줌 기준 크기 유지(전역 기본 24 미적용)
 	_hint.modulate = Color(1.0, 0.95, 0.5)
 	_hint.position = Vector2(-22.0, -40.0)
 	_hint.visible = false

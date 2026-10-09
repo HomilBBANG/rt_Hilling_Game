@@ -25,7 +25,7 @@
 
 | 엑셀 | 변환기 | 읽는 곳 | 내용 |
 |---|---|---|---|
-| `balance.xlsx` | convert_balance | `Balance` | 탐사 시간, 무기 사거리 `<무기id>_range`, 능력치 `stat_*`, 캠프 위치 `camp_*`, 가방 무게 |
+| `balance.xlsx` | convert_balance | `Balance` | 첫 시트(key/value): 탐사 시간, 카메라 줌 `camera_zoom`, 무기 사거리 `<무기id>_range`, 능력치 `stat_*`, 캠프 위치 `camp_*`, 가방 무게 / `day_targets` 시트: 날짜별 밤 목표 만족도(`Balance.day_target(day)`) |
 | `monsters.xlsx` | convert_monsters | `MonsterDB` | 몬스터 능력치·AI·공격·드롭(반드시 드롭, 수량)·보스·크기·스프라이트 |
 | `items.xlsx` | convert_items | `ItemDB` | 아이템 이름·무게·스택·소비/회복·아이콘 |
 | `weapons.xlsx` | convert_weapons | `WeaponDB` | 무기 공격력·제작비·탄약·스프라이트·총구 위치 |
@@ -42,8 +42,13 @@
 - **기구 배치 편집(개발용)**: 밤 준비 화면 `🛠 기구 배치 편집` → 드래그(자석 정렬, Alt 끄기), 방향키 1px/Shift 10px, 초록 범위(`Field/PlaceArea`) 안에서만, 겹침 불가, 저장 시 `night_session.tscn`에 기록.
 
 ## 아트 규격 (반드시 준수)
-- **기준 타일 32px**, 모든 스프라이트 같은 픽셀 밀도, `texture_filter = Nearest`.
-- 개별 확대 금지 → **카메라 줌**으로 통일(탐사 Camera2D zoom=2). 캠프·밤은 UI 화면이라 스프라이트 scale=3(god는 64px 원본 ×2).
+- **기준 해상도 1920×1080** (`project.godot` viewport, stretch canvas_items/expand). UI 기본 글자 24px(`gui/theme/default_font_size`).
+  - 2026-10 에 1280×720 → 1920×1080 으로 전환: 화면(UI) 좌표·글자·칸 크기 ×1.5, 도트 배율은 정수 유지.
+  - 캠프·밤처럼 **화면 좌표로 움직이는 속도**에는 `Config.SCREEN_SCALE`(1.5)를 곱함. 탐사는 월드 좌표라 미적용.
+  - 탐사 월드 라벨(탄약 부족, 너무 무거워, 시체/채집 안내)은 글자 16px 고정(카메라 줌 기준).
+- **기준 타일 32px**, 모든 스프라이트 같은 픽셀 밀도, `texture_filter = Nearest`, **정수 배율만**.
+- 탐사: Camera2D 줌 = `balance.xlsx` `camera_zoom`(기본 2, 3 = 예전 화면 비율). 캠프·밤: 캐릭터 scale=4, god(64px 원본) ×3.
+  - 밤 캐릭터 배율을 바꾸면 `night_session.gd` 의 `_SPRITE_SCALE`도 같이 바꿀 것(발 충돌 상자가 여기서 계산됨).
 - gif → 프레임 추출은 **프레임마다 독립 추출**(`frame.convert('RGBA')`). 누적 합성(alpha_composite)하면 잔상이 생김.
 - 플레이어 모션: 탐사 `idle`/`run`, 캠프·요리 `idle_hand`/`run_hand` (`PlayerFrames.build(idle, run)`).
 - 플레이어 원점 = 발(y-정렬용). Body/Aim/Camera가 (0,-26)에 있음.

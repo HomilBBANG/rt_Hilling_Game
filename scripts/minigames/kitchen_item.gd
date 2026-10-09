@@ -22,7 +22,7 @@ static var _icons := {}
 
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	custom_minimum_size = Vector2(28, 28)
+	custom_minimum_size = Vector2(42, 42)
 	size = custom_minimum_size
 
 
@@ -59,9 +59,9 @@ func _draw() -> void:
 	var g := String(item.get("grade", ""))
 	if g != "" and g != "A":
 		var font := ThemeDB.fallback_font
-		var at := Vector2(size.x - 9.0, size.y - 1.0)
-		draw_string_outline(font, at, g, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, 4, Color.BLACK)
-		draw_string(font, at, g, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(1.0, 0.75, 0.3))
+		var at := Vector2(size.x - 13.0, size.y - 1.0)
+		draw_string_outline(font, at, g, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, 5, Color.BLACK)
+		draw_string(font, at, g, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(1.0, 0.75, 0.3))
 
 
 func _blob(p: Vector2, rad: float, col: Color, tex: Texture2D) -> void:

@@ -329,6 +329,7 @@ func _die() -> void:
 		$Body.modulate = dark
 	# 상호작용 안내 라벨.
 	_corpse_hint = Label.new()
+	_corpse_hint.add_theme_font_size_override("font_size", 16) # 월드 좌표 라벨: 카메라 줌 기준 크기 유지(전역 기본 24 미적용)
 	_corpse_hint.modulate = Color(1.0, 0.95, 0.5)
 	_corpse_hint.position = Vector2(-24.0, -46.0)
 	_corpse_hint.visible = false
