@@ -10,7 +10,7 @@
     "y": 0.28
   },
   {
-    "threshold": 250,
+    "threshold": 300,
     "npc_id": "camila",
     "display_name": "카밀라",
     "role": "placeable",
@@ -20,7 +20,7 @@
     "y": 0.45
   },
   {
-    "threshold": 450,
+    "threshold": 650,
     "npc_id": "emma",
     "display_name": "엠마",
     "role": "placeable",
@@ -30,7 +30,7 @@
     "y": 0.72
   },
   {
-    "threshold": 700,
+    "threshold": 1000,
     "npc_id": "liam",
     "display_name": "리암",
     "role": "unique",

@@ -11,12 +11,13 @@
     "mastery_b": 2,
     "mastery_c": 1,
     "preferred_bonus": 1.5,
-    "kitchen_helper_bonus": 1.25,
     "server_speed": 300,
     "station_range": 36,
     "table_slots": 6,
     "floor_rot_seconds": 20,
-    "floor_grade_drop": 1
+    "floor_grade_drop": 1,
+    "helper_cook_seconds": 8,
+    "helper_grade": 2
   },
   "ingredients": [
     {
@@ -48,6 +49,38 @@
       "id": "meat",
       "chop_count": 1,
       "color": "#FFC0CB"
+    }
+  ],
+  "stations": [
+    {
+      "id": "counter",
+      "name": "조리대",
+      "scrap_cost": 10,
+      "max_count": 2
+    },
+    {
+      "id": "fryer",
+      "name": "튀김기",
+      "scrap_cost": 8,
+      "max_count": 3
+    },
+    {
+      "id": "pot",
+      "name": "냄비",
+      "scrap_cost": 8,
+      "max_count": 3
+    },
+    {
+      "id": "bowl",
+      "name": "믹싱볼",
+      "scrap_cost": 6,
+      "max_count": 3
+    },
+    {
+      "id": "table",
+      "name": "테이블",
+      "scrap_cost": 5,
+      "max_count": 3
     }
   ],
   "recipes": [

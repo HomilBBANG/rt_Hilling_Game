@@ -14,6 +14,10 @@ ingredients : 조리대에서 꺼낼 수 있는 식재료
     id          : 아이템 id (items.xlsx 와 같음)
     chop_count  : 조리대에서 클릭해 써는 횟수. 0 이면 손질 없이 바로 사용
     color       : 이미지가 없을 때 임시 도형 색(#RRGGBB)
+stations    : 기구 배치 화면에서 고철로 살 수 있는 기구
+    id          : 기구 종류(counter | fryer | pot | bowl | table)
+    scrap_cost  : 1개 가격(고철 개수)
+    max_count   : 주방에 둘 수 있는 최대 개수(기본 기구 포함)
 recipes     : 레시피 × 레벨(1~3) 한 행씩
     id               : 레시피 식별자(영문) — 필수
     level            : 1, 2, 3 — 필수
@@ -151,6 +155,24 @@ def read_ingredients(ws):
     return out
 
 
+def read_stations(ws):
+    rows = list(ws.iter_rows(values_only=True))
+    header = [text(c).lower() for c in rows[0]]
+    out = []
+    for r in rows[1:]:
+        row = {header[i]: (r[i] if i < len(r) else None) for i in range(len(header)) if header[i]}
+        sid = text(row.get("id"))
+        if sid == "":
+            continue
+        out.append({
+            "id": sid,
+            "name": text(row.get("name")) or sid,
+            "scrap_cost": int(num(row.get("scrap_cost"), 0)),
+            "max_count": int(num(row.get("max_count"), 1)),
+        })
+    return out
+
+
 def main() -> int:
     if not os.path.exists(XLSX):
         print(f"[에러] 엑셀 파일 없음: {XLSX}")
@@ -163,6 +185,7 @@ def main() -> int:
         data = {
             "settings": read_settings(wb["settings"]),
             "ingredients": read_ingredients(wb["ingredients"]) if "ingredients" in wb.sheetnames else [],
+            "stations": read_stations(wb["stations"]) if "stations" in wb.sheetnames else [],
             "recipes": read_recipes(wb["recipes"]),
         }
     except ValueError as e:

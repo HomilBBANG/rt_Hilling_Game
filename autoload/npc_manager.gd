@@ -11,6 +11,8 @@ var revived_ids: Array[String] = []
 ## 부활 컷씬을 이미 보여준 NPC(캠프에서 시체→NPC 연출 중복 방지).
 var shown_revival_ids: Array[String] = []
 var placement := {"kitchen": "", "serving": ""}
+## 주방 도우미(엠마)가 대신 만드는 요리(레시피 id) — 1종만.
+var kitchen_recipe := ""
 
 
 ## 누적 만족도에 따라, 아직 부활하지 않은 NPC 중 임계값을 넘긴 대상을 부활시킨다.
@@ -52,7 +54,7 @@ func assign(slot: String, npc_id: String) -> void:
 
 
 func to_dict() -> Dictionary:
-	return {"revived": revived_ids, "shown": shown_revival_ids, "placement": placement}
+	return {"revived": revived_ids, "shown": shown_revival_ids, "placement": placement, "kitchen_recipe": kitchen_recipe}
 
 
 func from_dict(d: Dictionary) -> void:
@@ -63,3 +65,4 @@ func from_dict(d: Dictionary) -> void:
 	for v in d.get("shown", []):
 		shown_revival_ids.append(String(v))
 	placement = d.get("placement", {"kitchen": "", "serving": ""})
+	kitchen_recipe = String(d.get("kitchen_recipe", ""))

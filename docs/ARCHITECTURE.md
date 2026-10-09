@@ -73,8 +73,11 @@ lobby ─(새 게임/불러오기)─▶ MORNING_PREP ─▶ SCAVENGE ─▶ NIG
 ## 밤 쿠킹 (night_session)
 `night_session.gd` 하나가 준비 화면·필드·결과 화면을 모두 담당. 필드는 `Field`(Panel) 좌표계.
 
-- **조리 기구** = `Field` 아래 `CookStation` 인스턴스(Counter/Fryer/Pot/Bowl/Table/Trash). 위치·크기는 씬 데이터
-  (에디터 드래그 또는 게임 내 배치 편집 → `PackedScene.pack` + `ResourceSaver.save`로 tscn 저장).
+- **조리 기구** = `Field` 아래 `CookStation` 인스턴스. **키 = 노드 이름**(Counter, Fryer, Fryer2 …), **종류 = `station_id`**
+  (counter/fryer/pot/bowl/table/trash/helper). 같은 종류 여러 개 가능 — 상태는 키별: `_counter_items[key]`, `_cookers[key]`, `_tables[key]`.
+  기본 배치 = 씬 데이터, 세이브별 배치·구입 기구 = `RecipeDB.kitchen_layout`([{key,type,x,y}], `_apply_saved_layout`이 씬 위에 적용·없는 기구는 생성).
+  기구 구입은 `_buy_station`(고철 = `GameManager.consume_for_cooking("scrap_metal")`, 가격·최대 개수 = cooking.xlsx stations).
+  엠마 조리대(`Field/Helper`)는 주방 도우미 배치 시에만 `_st_nodes`에 등록(`_sync_helper_station`), 엠마 로직은 `_update_emma`.
   `CookStation.INFO`에 기구별 이름·색, `show_items()`로 기구 위 물건 표시.
 - **물건(item)** = Dictionary, 형식은 `KitchenItem` 주석 참고:
   재료 `{type:"ing", id, chopped, chops, grade, floor_t}` / 요리 `{type:"dish", recipe, grade}` / `burnt` / `rotten`.

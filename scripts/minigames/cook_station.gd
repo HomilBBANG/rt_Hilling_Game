@@ -14,9 +14,10 @@ const INFO := {
 	"bowl": {"name": "믹싱볼", "color": Color(0.6, 0.48, 0.66)},
 	"table": {"name": "테이블", "color": Color(0.46, 0.32, 0.2)},
 	"trash": {"name": "쓰레기통", "color": Color(0.3, 0.34, 0.3)},
+	"helper": {"name": "엠마 조리대", "color": Color(0.42, 0.58, 0.46)}, # 주방 도우미 배치 시에만 등장
 }
 
-@export_enum("counter", "fryer", "pot", "bowl", "table", "trash") var station_id: String = "counter":
+@export_enum("counter", "fryer", "pot", "bowl", "table", "trash", "helper") var station_id: String = "counter":
 	set(v):
 		station_id = v
 		_apply()

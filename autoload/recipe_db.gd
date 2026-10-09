@@ -14,10 +14,14 @@ const DATA_PATH := "res://data/cooking.json"
 var settings: Dictionary = {}
 var recipes: Array = [] # 각 원소: {id, display_name, unlock, levels:[...]}
 var ingredients: Array = [] # 각 원소: {id, chop_count, color}
+var stations: Array = []    # 기구 상점: {id, name, scrap_cost, max_count}
 var _by_id: Dictionary = {}
 var _ing_by_id: Dictionary = {}
 
 var purchased: Array[String] = [] # 레시피 북에서 산 레시피(unlock = shop)
+## 이 세이브의 주방 배치(기구 배치 화면에서 저장). [{key, type, x, y}] — 비어 있으면 씬 기본 배치.
+## key = Field 아래 노드 이름(구입한 기구는 Fryer2 처럼 새 이름).
+var kitchen_layout: Array = []
 var levels: Dictionary = {}  # recipe_id -> 현재 레벨(기본 1)
 var mastery: Dictionary = {} # recipe_id -> 누적 숙련도
 
@@ -46,6 +50,7 @@ func reload() -> void:
 	settings = parsed.get("settings", {})
 	recipes = parsed.get("recipes", [])
 	ingredients = parsed.get("ingredients", [])
+	stations = parsed.get("stations", [])
 	for r in recipes:
 		_by_id[String(r["id"])] = r
 	for g in ingredients:
@@ -117,6 +122,15 @@ func unlock_text(id: String) -> String:
 			names.append(ItemDB.display_name(item_id.strip_edges()))
 		return "%s 획득 시 해금" % " · ".join(names)
 	return "해금 조건 미정"
+
+
+# ── 기구 상점(고철) ───────────────────────────────────
+
+func station_shop_entry(type: String) -> Dictionary:
+	for s in stations:
+		if String(s["id"]) == type:
+			return s
+	return {}
 
 
 # ── 레시피 북(토큰 구입) ──────────────────────────────
@@ -241,7 +255,8 @@ func cook_data(id: String, lv: int = -1) -> Dictionary:
 # ── 세이브 ─────────────────────────────────────────────
 
 func to_dict() -> Dictionary:
-	return {"levels": levels.duplicate(), "mastery": mastery.duplicate(), "purchased": purchased.duplicate()}
+	return {"levels": levels.duplicate(), "mastery": mastery.duplicate(), "purchased": purchased.duplicate(),
+		"kitchen_layout": kitchen_layout.duplicate(true)}
 
 
 func from_dict(d: Dictionary) -> void:
@@ -250,6 +265,7 @@ func from_dict(d: Dictionary) -> void:
 	purchased = []
 	for id in d.get("purchased", []):
 		purchased.append(String(id))
+	kitchen_layout = d.get("kitchen_layout", []).duplicate(true)
 	var lv: Dictionary = d.get("levels", {})
 	for k in lv.keys():
 		levels[String(k)] = int(lv[k])
