@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/data/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "cheese"
+display_name = "치즈"
+category = 0
+description = "날쌘이가 지니고 있던 치즈. 녹이면 더 맛있다."
+freshness_decay = 0.05

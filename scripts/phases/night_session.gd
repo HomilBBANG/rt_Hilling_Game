@@ -1494,8 +1494,12 @@ func _build_recipe_panel() -> void:
 	title.add_theme_font_size_override("font_size", 20)
 	title.add_theme_color_override("font_color", Color(1.0, 0.85, 0.45))
 	box.add_child(title)
-	var grid := GridContainer.new() # 2열 — 메뉴가 많아도 세로로 길어지지 않게
-	grid.columns = 2
+	var count := 0
+	for id in RecipeDB.unlocked_ids():
+		if bool(_selected.get(id, false)):
+			count += 1
+	var grid := GridContainer.new() # 최대 4줄 — 메뉴가 많으면 열을 늘려(최대 3열) 기구 줄을 가리지 않게
+	grid.columns = clampi(ceili(count / 4.0), 1, 3)
 	grid.add_theme_constant_override("h_separation", 36)
 	grid.add_theme_constant_override("v_separation", 0)
 	box.add_child(grid)

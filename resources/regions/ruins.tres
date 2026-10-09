@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = "ruins"
 display_name = "폐허"
-food_item_ids = PackedStringArray("canned_food", "herb", "potato")
+food_item_ids = PackedStringArray("canned_food", "herb", "potato", "tomato")
 material_item_ids = PackedStringArray("scrap_metal")
 boss_id = "ruins_boss"
 ammo_pickup_points = 3

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/data/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "meat"
+display_name = "고기"
+category = 0
+description = "추적자에게서 얻은 고기. 튀기거나 끓여 먹는다."
+freshness_decay = 0.05

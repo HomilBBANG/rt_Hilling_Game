@@ -32,7 +32,7 @@
 | `npc_unlocks.xlsx` | convert_npc_unlocks | `NpcUnlockDB` | NPC 부활 임계값·해금 기능·캠프 위치 |
 | `cooking.xlsx` | convert_cooking | `RecipeDB` | 시트 3개: `settings`(쿠킹 밸런스) / `ingredients`(써는 횟수·임시 도형 색) / `recipes`(레시피 × Lv1~3) |
 
-- 지역만 Godot 리소스: `resources/regions/ruins.tres`(음식/재료 풀, 보스 id 등).
+- 지역만 Godot 리소스: `resources/regions/ruins.tres`(채집 음식 풀 `food_item_ids`, 몬스터 폴백 재료, 보스 id 등).
 
 ## 구현 완료 (요약 — 상세는 GDD)
 - **로비**: 새 게임/불러오기/진행도 초기화.
@@ -69,7 +69,7 @@
 - 기획서(`docs/GDD.md`)는 기능이 바뀔 때마다 함께 갱신.
 
 ## 알려진 이슈 / 다음 할 일 후보
-1. 고기·치즈: 몬스터 드롭·회복 아이템으로만 쓰임. 쿠킹 재료(ingredients 시트)·레시피 미등록.
+1. 채집 노드는 아이템과 상관없이 같은 도형(가까이 가면 'E: 토마토×1 줍기'처럼 이름 표시) — 재료별 채집 스프라이트 미정.
 2. 엠마(주방 보조) 효과는 만족·토큰 ×1.25 배율만, 리암(새 지역) 미구현.
 3. 밤이 끝나면 조리대·테이블·바닥에 남은 재료는 사라짐(꺼낼 때 이미 소모).
 4. 레시피 데이터상 "들어간 재료 + 통조림" 형태가 많아 믹싱볼에서 "E로 시작" 대기가 자주 생김 → 레시피 재료 조정 검토.

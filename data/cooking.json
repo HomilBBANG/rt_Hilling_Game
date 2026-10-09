@@ -378,6 +378,392 @@
           "upgrade_mastery": 0
         }
       ]
+    },
+    {
+      "id": "meat_fry",
+      "display_name": "고기 튀김",
+      "unlock": "item:meat",
+      "levels": [
+        {
+          "level": 1,
+          "ingredients": [
+            "meat"
+          ],
+          "station": "fryer",
+          "timer_seconds": 5,
+          "sat": {
+            "A": 30,
+            "B": 20,
+            "C": 10
+          },
+          "upgrade_mastery": 9
+        },
+        {
+          "level": 2,
+          "ingredients": [
+            "meat",
+            "meat"
+          ],
+          "station": "fryer",
+          "timer_seconds": 5,
+          "sat": {
+            "A": 40,
+            "B": 27,
+            "C": 13
+          },
+          "upgrade_mastery": 24
+        },
+        {
+          "level": 3,
+          "ingredients": [
+            "meat",
+            "meat",
+            "herb"
+          ],
+          "station": "fryer",
+          "timer_seconds": 5.5,
+          "sat": {
+            "A": 50,
+            "B": 33,
+            "C": 16
+          },
+          "upgrade_mastery": 0
+        }
+      ]
+    },
+    {
+      "id": "meat_stew",
+      "display_name": "고기 스튜",
+      "unlock": "item:meat",
+      "levels": [
+        {
+          "level": 1,
+          "ingredients": [
+            "meat",
+            "potato"
+          ],
+          "station": "pot",
+          "timer_seconds": 4,
+          "sat": {
+            "A": 34,
+            "B": 23,
+            "C": 11
+          },
+          "upgrade_mastery": 12
+        },
+        {
+          "level": 2,
+          "ingredients": [
+            "meat",
+            "potato",
+            "potato",
+            "herb"
+          ],
+          "station": "pot",
+          "timer_seconds": 4,
+          "sat": {
+            "A": 44,
+            "B": 29,
+            "C": 15
+          },
+          "upgrade_mastery": 30
+        },
+        {
+          "level": 3,
+          "ingredients": [
+            "meat",
+            "meat",
+            "potato",
+            "herb",
+            "canned_food"
+          ],
+          "station": "pot",
+          "timer_seconds": 5,
+          "sat": {
+            "A": 56,
+            "B": 37,
+            "C": 19
+          },
+          "upgrade_mastery": 0
+        }
+      ]
+    },
+    {
+      "id": "cheese_salad",
+      "display_name": "치즈 들풀 샐러드",
+      "unlock": "item:cheese",
+      "levels": [
+        {
+          "level": 1,
+          "ingredients": [
+            "cheese",
+            "herb"
+          ],
+          "station": "bowl",
+          "timer_seconds": 0,
+          "sat": {
+            "A": 22,
+            "B": 15,
+            "C": 7
+          },
+          "upgrade_mastery": 9
+        },
+        {
+          "level": 2,
+          "ingredients": [
+            "cheese",
+            "herb",
+            "herb"
+          ],
+          "station": "bowl",
+          "timer_seconds": 0,
+          "sat": {
+            "A": 30,
+            "B": 20,
+            "C": 10
+          },
+          "upgrade_mastery": 24
+        },
+        {
+          "level": 3,
+          "ingredients": [
+            "cheese",
+            "cheese",
+            "herb",
+            "herb"
+          ],
+          "station": "bowl",
+          "timer_seconds": 0,
+          "sat": {
+            "A": 40,
+            "B": 27,
+            "C": 13
+          },
+          "upgrade_mastery": 0
+        }
+      ]
+    },
+    {
+      "id": "cheese_potato",
+      "display_name": "치즈 감자",
+      "unlock": "item:cheese",
+      "levels": [
+        {
+          "level": 1,
+          "ingredients": [
+            "cheese",
+            "potato"
+          ],
+          "station": "bowl",
+          "timer_seconds": 0,
+          "sat": {
+            "A": 26,
+            "B": 17,
+            "C": 9
+          },
+          "upgrade_mastery": 9
+        },
+        {
+          "level": 2,
+          "ingredients": [
+            "cheese",
+            "potato",
+            "potato"
+          ],
+          "station": "pot",
+          "timer_seconds": 3,
+          "sat": {
+            "A": 34,
+            "B": 23,
+            "C": 11
+          },
+          "upgrade_mastery": 24
+        },
+        {
+          "level": 3,
+          "ingredients": [
+            "cheese",
+            "cheese",
+            "potato",
+            "potato"
+          ],
+          "station": "pot",
+          "timer_seconds": 3.5,
+          "sat": {
+            "A": 44,
+            "B": 29,
+            "C": 15
+          },
+          "upgrade_mastery": 0
+        }
+      ]
+    },
+    {
+      "id": "cheese_meat",
+      "display_name": "치즈 고기찜",
+      "unlock": "item:meat+cheese",
+      "levels": [
+        {
+          "level": 1,
+          "ingredients": [
+            "meat",
+            "cheese"
+          ],
+          "station": "pot",
+          "timer_seconds": 4.5,
+          "sat": {
+            "A": 36,
+            "B": 24,
+            "C": 12
+          },
+          "upgrade_mastery": 12
+        },
+        {
+          "level": 2,
+          "ingredients": [
+            "meat",
+            "cheese",
+            "potato"
+          ],
+          "station": "pot",
+          "timer_seconds": 4.5,
+          "sat": {
+            "A": 46,
+            "B": 31,
+            "C": 15
+          },
+          "upgrade_mastery": 30
+        },
+        {
+          "level": 3,
+          "ingredients": [
+            "meat",
+            "meat",
+            "cheese",
+            "cheese"
+          ],
+          "station": "pot",
+          "timer_seconds": 5,
+          "sat": {
+            "A": 58,
+            "B": 39,
+            "C": 19
+          },
+          "upgrade_mastery": 0
+        }
+      ]
+    },
+    {
+      "id": "tomato_salad",
+      "display_name": "토마토 샐러드",
+      "unlock": "item:tomato",
+      "levels": [
+        {
+          "level": 1,
+          "ingredients": [
+            "tomato",
+            "herb"
+          ],
+          "station": "bowl",
+          "timer_seconds": 0,
+          "sat": {
+            "A": 22,
+            "B": 15,
+            "C": 7
+          },
+          "upgrade_mastery": 9
+        },
+        {
+          "level": 2,
+          "ingredients": [
+            "tomato",
+            "tomato",
+            "herb"
+          ],
+          "station": "bowl",
+          "timer_seconds": 0,
+          "sat": {
+            "A": 30,
+            "B": 20,
+            "C": 10
+          },
+          "upgrade_mastery": 24
+        },
+        {
+          "level": 3,
+          "ingredients": [
+            "tomato",
+            "tomato",
+            "herb",
+            "herb"
+          ],
+          "station": "bowl",
+          "timer_seconds": 0,
+          "sat": {
+            "A": 40,
+            "B": 27,
+            "C": 13
+          },
+          "upgrade_mastery": 0
+        }
+      ]
+    },
+    {
+      "id": "tomato_stew",
+      "display_name": "토마토 스튜",
+      "unlock": "item:tomato",
+      "levels": [
+        {
+          "level": 1,
+          "ingredients": [
+            "tomato",
+            "potato"
+          ],
+          "station": "pot",
+          "timer_seconds": 4,
+          "sat": {
+            "A": 30,
+            "B": 20,
+            "C": 10
+          },
+          "upgrade_mastery": 9
+        },
+        {
+          "level": 2,
+          "ingredients": [
+            "tomato",
+            "tomato",
+            "potato",
+            "herb"
+          ],
+          "station": "pot",
+          "timer_seconds": 4,
+          "sat": {
+            "A": 40,
+            "B": 27,
+            "C": 13
+          },
+          "upgrade_mastery": 24
+        },
+        {
+          "level": 3,
+          "ingredients": [
+            "tomato",
+            "tomato",
+            "potato",
+            "potato",
+            "herb"
+          ],
+          "station": "pot",
+          "timer_seconds": 5,
+          "sat": {
+            "A": 52,
+            "B": 35,
+            "C": 17
+          },
+          "upgrade_mastery": 0
+        }
+      ]
     }
   ]
 }

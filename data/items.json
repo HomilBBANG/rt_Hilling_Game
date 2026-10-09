@@ -54,5 +54,14 @@
     "weight": 0.5,
     "consumable": true,
     "heal": 6
+  },
+  {
+    "id": "tomato",
+    "display_name": "토마토",
+    "category": "food",
+    "max_stack": 99,
+    "weight": 0.5,
+    "consumable": true,
+    "heal": 5
   }
 ]

@@ -89,12 +89,16 @@ func ingredient_color(id: String) -> Color:
 # ── 해금 ───────────────────────────────────────────────
 
 ## unlock: "default" | "item:<아이템id>"(해당 아이템을 한 번이라도 획득하면 해금)
+##         | "item:<id>+<id>"(나열한 아이템을 모두 획득해야 해금)
 func is_unlocked(id: String) -> bool:
 	var u := String(get_recipe(id).get("unlock", "default"))
 	if u == "" or u == "default":
 		return true
 	if u.begins_with("item:"):
-		return CodexManager.is_item_obtained(u.substr(5))
+		for item_id in u.substr(5).split("+", false):
+			if not CodexManager.is_item_obtained(item_id.strip_edges()):
+				return false
+		return true
 	return false
 
 
@@ -102,7 +106,10 @@ func is_unlocked(id: String) -> bool:
 func unlock_text(id: String) -> String:
 	var u := String(get_recipe(id).get("unlock", "default"))
 	if u.begins_with("item:"):
-		return "%s 획득 시 해금" % ItemDB.display_name(u.substr(5))
+		var names: Array[String] = []
+		for item_id in u.substr(5).split("+", false):
+			names.append(ItemDB.display_name(item_id.strip_edges()))
+		return "%s 획득 시 해금" % " · ".join(names)
 	return "해금 조건 미정"
 
 

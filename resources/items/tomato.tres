@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/data/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "tomato"
+display_name = "토마토"
+category = 0
+description = "폐허 덤불에서 딴 토마토. 샐러드와 스튜에 어울린다."
+freshness_decay = 0.05
