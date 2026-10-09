@@ -2,8 +2,15 @@ extends Area2D
 ## 바닥 아이템 노드 (PRD 3.1). 플레이어가 가까이서 E 를 누르면 채집 → 인벤토리 반영.
 ## 무게 초과 시 담을 수 있는 만큼만 담기고 남은 수량은 노드로 유지된다.
 
-var item_id: String = "canned_food"
+## 아이템이 정해질 때마다 색을 바꾼다(스폰 쪽에서 add_child 후에 지정하므로 setter 로 처리).
+var item_id: String = "canned_food":
+	set(v):
+		item_id = v
+		_apply_color()
 var amount: int = 1
+
+## 쿠킹 재료가 아닌 아이템(고철 등)의 색.
+const _OTHER_COLOR := Color(0.33, 0.35, 0.4) # 짙은 쇳빛 — 밝은 회색 통조림과 구분
 
 var _player_near := false
 var _e_was_down := false
@@ -19,6 +26,32 @@ func _ready() -> void:
 	_hint.position = Vector2(-22.0, -40.0)
 	_hint.visible = false
 	add_child(_hint)
+	_apply_color()
+
+
+## 겉모습: 아이템 아이콘(items.xlsx icon)이 있으면 아이콘, 없으면 재료 색 사각형
+## (색 = cooking.xlsx ingredients 의 color, 주방 임시 도형과 같은 색 / 재료가 아니면 짙은 쇳빛).
+func _apply_color() -> void:
+	var vis := get_node_or_null("Vis") as Polygon2D
+	if vis == null:
+		return
+	var icon_path := ItemDB.icon_path(item_id)
+	var icon := get_node_or_null("Icon") as Sprite2D
+	if icon_path != "":
+		if icon == null:
+			icon = Sprite2D.new()
+			icon.name = "Icon"
+			icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			icon.scale = Vector2(0.5, 0.5) # 64px 아이콘 → 사각형(22px)과 비슷한 크기
+			add_child(icon)
+		icon.texture = load(icon_path)
+		icon.visible = true
+		vis.visible = false
+		return
+	if icon:
+		icon.visible = false
+	vis.visible = true
+	vis.color = RecipeDB.ingredient_color(item_id) if item_id in RecipeDB.ingredient_ids() else _OTHER_COLOR
 
 
 func _on_body_entered(body: Node) -> void:
