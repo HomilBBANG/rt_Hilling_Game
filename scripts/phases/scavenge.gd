@@ -5,18 +5,14 @@ extends Node2D
 
 const REGION_PATH := "res://resources/regions/ruins.tres"
 
-## 맵 크기. 스폰 분산 범위 + 카메라 경계 기준.
+## 맵 크기. 카메라 경계 기준(몬스터·채집 노드는 씬의 고정 SpawnPoint 에 생성).
 const MAP_SIZE := Vector2(3200, 2400)
-const SPAWN_MARGIN := 140.0    # 벽에서 떨어뜨릴 여백
-const PLAYER_CLEAR := 500.0    # 플레이어 시작 주변엔 몬스터 스폰 금지
 
 @export var player_scene: PackedScene
 @export var monster_scene: PackedScene
 @export var resource_scene: PackedScene
 @export var ammo_scene: PackedScene
 @export var run_seconds := 90.0
-@export var monster_count := 16
-@export var resource_count := 24
 
 var _region: RegionData = null
 var _time_left := 0.0
@@ -60,31 +56,30 @@ func _spawn_world() -> void:
 		_player.stamina_depleted.connect(_on_stamina_depleted)
 	_set_camera_limits()
 
-	# 일반 몬스터(보스 제외) 순환 배치.
-	for i in monster_count:
+	# 몬스터·채집 노드는 씬에 찍어 둔 고정 지점(SpawnPoint)에 생성 — 매 탐사 같은 위치·같은 종류.
+	# 위치·종류·수는 scavenge.tscn 의 MonsterSpawns / ItemSpawns 아래 노드를 에디터에서 편집.
+	for sp in $MonsterSpawns.get_children():
+		if not (sp is SpawnPoint):
+			continue
+		var data := MonsterDB.get_by_id(sp.spawn_id)
+		if data.is_empty():
+			push_warning("Scavenge: 몬스터 id '%s' 가 monsters.xlsx 에 없습니다 (%s)" % [sp.spawn_id, sp.name])
+			continue
 		var mon := monster_scene.instantiate()
-		_apply_monster_type(mon, MonsterDB.get_regular(i))
+		_apply_monster_type(mon, data)
 		if mon.drop_item_id == "": # 종류에 드롭 아이템이 없으면 지역 재료로 폴백
 			mon.drop_item_id = _pick_material_id()
 		add_child(mon) # exports 를 _ready 전에 주입
-		mon.global_position = _random_spawn_pos(true)
+		mon.global_position = sp.global_position
 
-	# 지역 보스(region.boss_id) 1마리 — 플레이어 시작 반대편 먼 곳에.
-	if _region and _region.boss_id != "":
-		var boss_data := MonsterDB.get_by_id(_region.boss_id)
-		if not boss_data.is_empty():
-			var boss := monster_scene.instantiate()
-			_apply_monster_type(boss, boss_data)
-			if boss.drop_item_id == "":
-				boss.drop_item_id = _pick_material_id()
-			add_child(boss)
-			boss.global_position = Vector2(MAP_SIZE.x * 0.5, 320.0) # 상단 중앙(시작 지점서 멀리)
-
-	for i in resource_count:
+	for sp in $ItemSpawns.get_children():
+		if not (sp is SpawnPoint):
+			continue
 		var node := resource_scene.instantiate()
 		add_child(node)
-		node.global_position = _random_spawn_pos(false)
-		node.item_id = _pick_food_id()
+		node.global_position = sp.global_position
+		node.item_id = sp.spawn_id
+		node.amount = sp.amount
 
 	# 탄약: 맵 내 고정 지점(랜덤 아님, PRD 3.1)
 	for a in $AmmoSpawns.get_children():
@@ -281,12 +276,6 @@ func _loot_summary() -> String:
 	return ", ".join(parts)
 
 
-func _pick_food_id() -> String:
-	if _region and _region.food_item_ids.size() > 0:
-		return _region.food_item_ids[randi() % _region.food_item_ids.size()]
-	return "canned_food"
-
-
 func _pick_material_id() -> String:
 	if _region and _region.material_item_ids.size() > 0:
 		return _region.material_item_ids[randi() % _region.material_item_ids.size()]
@@ -294,16 +283,6 @@ func _pick_material_id() -> String:
 
 
 ## 맵 내 랜덤 위치. avoid_player=true 면 플레이어 시작 지점 주변은 피함.
-func _random_spawn_pos(avoid_player: bool) -> Vector2:
-	var start: Vector2 = $PlayerStart.global_position
-	for attempt in 25:
-		var p := Vector2(
-			randf_range(SPAWN_MARGIN, MAP_SIZE.x - SPAWN_MARGIN),
-			randf_range(SPAWN_MARGIN, MAP_SIZE.y - SPAWN_MARGIN))
-		if avoid_player and p.distance_to(start) < PLAYER_CLEAR:
-			continue
-		return p
-	return start + Vector2(PLAYER_CLEAR, 0.0)
 
 
 ## 플레이어 카메라가 맵 밖(벽 너머)을 보지 않도록 경계 제한.

@@ -10,6 +10,7 @@
 [ext_resource type="Texture2D" uid="uid://dwbuvuslj6ddj" path="res://assets/ui/hp_frame.png" id="8"]
 [ext_resource type="PackedScene" uid="uid://c77o3mrl2phx7" path="res://scenes/entities/props/tree.tscn" id="9"]
 [ext_resource type="Texture2D" path="res://assets/ui/bullet.png" id="10"]
+[ext_resource type="Script" path="res://scripts/entities/spawn_point.gd" id="11"]
 
 [sub_resource type="RectangleShape2D" id="wallH"]
 size = Vector2(3200, 20)
@@ -102,6 +103,232 @@ position = Vector2(700, 1200)
 
 [node name="A8" type="Marker2D" parent="AmmoSpawns" unique_id=25684883]
 position = Vector2(2500, 1200)
+
+[node name="MonsterSpawns" type="Node2D" parent="."]
+
+[node name="Boss" type="Marker2D" parent="MonsterSpawns"]
+position = Vector2(1600, 320)
+script = ExtResource("11")
+kind = "monster"
+spawn_id = "ruins_boss"
+
+[node name="M01" type="Marker2D" parent="MonsterSpawns"]
+position = Vector2(3046, 1993)
+script = ExtResource("11")
+kind = "monster"
+spawn_id = "monster_a"
+
+[node name="M02" type="Marker2D" parent="MonsterSpawns"]
+position = Vector2(146, 152)
+script = ExtResource("11")
+kind = "monster"
+spawn_id = "monster_c"
+
+[node name="M03" type="Marker2D" parent="MonsterSpawns"]
+position = Vector2(352, 2219)
+script = ExtResource("11")
+kind = "monster"
+spawn_id = "monster_c"
+
+[node name="M04" type="Marker2D" parent="MonsterSpawns"]
+position = Vector2(2354, 141)
+script = ExtResource("11")
+kind = "monster"
+spawn_id = "monster_b"
+
+[node name="M05" type="Marker2D" parent="MonsterSpawns"]
+position = Vector2(1430, 1878)
+script = ExtResource("11")
+kind = "monster"
+spawn_id = "monster_a"
+
+[node name="M06" type="Marker2D" parent="MonsterSpawns"]
+position = Vector2(1312, 665)
+script = ExtResource("11")
+kind = "monster"
+spawn_id = "monster_b"
+
+[node name="M07" type="Marker2D" parent="MonsterSpawns"]
+position = Vector2(2279, 1216)
+script = ExtResource("11")
+kind = "monster"
+spawn_id = "monster_c"
+
+[node name="M08" type="Marker2D" parent="MonsterSpawns"]
+position = Vector2(319, 1123)
+script = ExtResource("11")
+kind = "monster"
+spawn_id = "monster_c"
+
+[node name="M09" type="Marker2D" parent="MonsterSpawns"]
+position = Vector2(2271, 2086)
+script = ExtResource("11")
+kind = "monster"
+spawn_id = "monster_b"
+
+[node name="M10" type="Marker2D" parent="MonsterSpawns"]
+position = Vector2(3051, 963)
+script = ExtResource("11")
+kind = "monster"
+spawn_id = "monster_a"
+
+[node name="M11" type="Marker2D" parent="MonsterSpawns"]
+position = Vector2(990, 1393)
+script = ExtResource("11")
+kind = "monster"
+spawn_id = "monster_a"
+
+[node name="M12" type="Marker2D" parent="MonsterSpawns"]
+position = Vector2(976, 2206)
+script = ExtResource("11")
+kind = "monster"
+spawn_id = "monster_a"
+
+[node name="M13" type="Marker2D" parent="MonsterSpawns"]
+position = Vector2(2990, 313)
+script = ExtResource("11")
+kind = "monster"
+spawn_id = "monster_a"
+
+[node name="M14" type="Marker2D" parent="MonsterSpawns"]
+position = Vector2(1947, 755)
+script = ExtResource("11")
+kind = "monster"
+spawn_id = "monster_b"
+
+[node name="M15" type="Marker2D" parent="MonsterSpawns"]
+position = Vector2(2693, 1565)
+script = ExtResource("11")
+kind = "monster"
+spawn_id = "monster_c"
+
+[node name="M16" type="Marker2D" parent="MonsterSpawns"]
+position = Vector2(503, 1669)
+script = ExtResource("11")
+kind = "monster"
+spawn_id = "monster_b"
+
+[node name="ItemSpawns" type="Node2D" parent="."]
+
+[node name="I01" type="Marker2D" parent="ItemSpawns"]
+position = Vector2(165, 1451)
+script = ExtResource("11")
+spawn_id = "herb"
+
+[node name="I02" type="Marker2D" parent="ItemSpawns"]
+position = Vector2(3035, 1627)
+script = ExtResource("11")
+spawn_id = "canned_food"
+
+[node name="I03" type="Marker2D" parent="ItemSpawns"]
+position = Vector2(2012, 255)
+script = ExtResource("11")
+spawn_id = "canned_food"
+
+[node name="I04" type="Marker2D" parent="ItemSpawns"]
+position = Vector2(1373, 2149)
+script = ExtResource("11")
+spawn_id = "canned_food"
+
+[node name="I05" type="Marker2D" parent="ItemSpawns"]
+position = Vector2(702, 232)
+script = ExtResource("11")
+spawn_id = "herb"
+
+[node name="I06" type="Marker2D" parent="ItemSpawns"]
+position = Vector2(1278, 1073)
+script = ExtResource("11")
+spawn_id = "potato"
+
+[node name="I07" type="Marker2D" parent="ItemSpawns"]
+position = Vector2(2868, 652)
+script = ExtResource("11")
+spawn_id = "potato"
+
+[node name="I08" type="Marker2D" parent="ItemSpawns"]
+position = Vector2(1988, 1612)
+script = ExtResource("11")
+spawn_id = "herb"
+
+[node name="I09" type="Marker2D" parent="ItemSpawns"]
+position = Vector2(614, 2224)
+script = ExtResource("11")
+spawn_id = "tomato"
+
+[node name="I10" type="Marker2D" parent="ItemSpawns"]
+position = Vector2(645, 996)
+script = ExtResource("11")
+spawn_id = "tomato"
+
+[node name="I11" type="Marker2D" parent="ItemSpawns"]
+position = Vector2(1282, 235)
+script = ExtResource("11")
+spawn_id = "herb"
+
+[node name="I12" type="Marker2D" parent="ItemSpawns"]
+position = Vector2(2426, 2203)
+script = ExtResource("11")
+spawn_id = "canned_food"
+
+[node name="I13" type="Marker2D" parent="ItemSpawns"]
+position = Vector2(208, 564)
+script = ExtResource("11")
+spawn_id = "tomato"
+
+[node name="I14" type="Marker2D" parent="ItemSpawns"]
+position = Vector2(2204, 863)
+script = ExtResource("11")
+spawn_id = "canned_food"
+
+[node name="I15" type="Marker2D" parent="ItemSpawns"]
+position = Vector2(2655, 1116)
+script = ExtResource("11")
+spawn_id = "tomato"
+
+[node name="I16" type="Marker2D" parent="ItemSpawns"]
+position = Vector2(687, 1633)
+script = ExtResource("11")
+spawn_id = "potato"
+
+[node name="I17" type="Marker2D" parent="ItemSpawns"]
+position = Vector2(1799, 2079)
+script = ExtResource("11")
+spawn_id = "potato"
+
+[node name="I18" type="Marker2D" parent="ItemSpawns"]
+position = Vector2(1581, 712)
+script = ExtResource("11")
+spawn_id = "herb"
+
+[node name="I19" type="Marker2D" parent="ItemSpawns"]
+position = Vector2(1311, 1662)
+script = ExtResource("11")
+spawn_id = "potato"
+
+[node name="I20" type="Marker2D" parent="ItemSpawns"]
+position = Vector2(2583, 182)
+script = ExtResource("11")
+spawn_id = "canned_food"
+
+[node name="I21" type="Marker2D" parent="ItemSpawns"]
+position = Vector2(2751, 1926)
+script = ExtResource("11")
+spawn_id = "tomato"
+
+[node name="I22" type="Marker2D" parent="ItemSpawns"]
+position = Vector2(1807, 1217)
+script = ExtResource("11")
+spawn_id = "potato"
+
+[node name="I23" type="Marker2D" parent="ItemSpawns"]
+position = Vector2(2425, 593)
+script = ExtResource("11")
+spawn_id = "herb"
+
+[node name="I24" type="Marker2D" parent="ItemSpawns"]
+position = Vector2(977, 668)
+script = ExtResource("11")
+spawn_id = "tomato"
 
 [node name="ExitZone" type="Area2D" parent="." unique_id=1276427600]
 position = Vector2(1600, 2340)
