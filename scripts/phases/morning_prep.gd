@@ -25,6 +25,13 @@ var _carter_hint: Label = null
 var _forge_open := false
 var _e_was_down := false
 
+## 레시피 북(토큰으로 레시피 구입) — 하단 '📖 레시피 북' 버튼.
+var _book: Control
+var _book_grid: GridContainer   # 왼쪽: 레시피 카드 격자(완성 요리 + 이름 + 숙련도 게이지)
+var _book_detail: VBoxContainer # 오른쪽: 선택한 레시피 상세
+var _book_tokens: Label
+var _book_sel := ""             # 선택한 레시피 id
+
 ## 능력치 화면(Tab 토글).
 var _stats_open := false
 var _tab_was_down := false
@@ -66,6 +73,7 @@ func _ready() -> void:
 	_speed_btn.pressed.connect(_on_stat_upgrade.bind("speed"))
 	_stats_screen.visible = false
 	_overlay.visible = false
+	_build_recipe_book()
 	# 레이아웃 확정 후 배치.
 	await get_tree().process_frame
 	await get_tree().process_frame
@@ -75,7 +83,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if _overlay.visible or _explore_prep.visible: # 컷씬·탐험 준비 중엔 이동/입력 정지
+	if _overlay.visible or _explore_prep.visible or _book.visible: # 컷씬·탐험 준비·레시피 북 중엔 이동/입력 정지
 		return
 	_handle_stats_toggle()
 	if not _pos_init or _stats_open: # 능력치 화면 중엔 이동 정지
@@ -145,6 +153,129 @@ func _on_stat_upgrade(stat: String) -> void:
 	if PlayerStats.try_upgrade(stat):
 		_refresh_stats()
 		_refresh_forge() # 토큰이 줄었으니 제작 패널도 갱신(열려 있으면)
+
+
+# ── 레시피 북 (토큰으로 레시피 구입) ─────────────────────
+## 카드 격자·상세 패널은 공용 RecipeCards(밤 주방 준비와 같은 모습). 미해금이면 구입 버튼.
+
+
+
+func _build_recipe_book() -> void:
+	var open_btn := Button.new()
+	open_btn.text = "📖 레시피 북"
+	open_btn.focus_mode = Control.FOCUS_NONE
+	open_btn.custom_minimum_size = Vector2(0, 66)
+	open_btn.pressed.connect(_open_recipe_book)
+	var footer := _go_button.get_parent()
+	footer.add_child(open_btn)
+	footer.move_child(open_btn, _go_button.get_index()) # 탐사 나가기 바로 위
+
+	_book = Control.new()
+	_book.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(_book)
+	var dim := ColorRect.new()
+	dim.color = Color(0.05, 0.04, 0.06, 0.94)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_book.add_child(dim)
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_book.add_child(center)
+	var panel := PanelContainer.new()
+	center.add_child(panel)
+	var margin := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 30)
+	panel.add_child(margin)
+	var vb := VBoxContainer.new()
+	vb.add_theme_constant_override("separation", 14)
+	margin.add_child(vb)
+	var title := Label.new()
+	title.text = "📖 레시피 북"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 42)
+	vb.add_child(title)
+	_book_tokens = Label.new()
+	_book_tokens.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vb.add_child(_book_tokens)
+
+	var body := HBoxContainer.new()
+	body.add_theme_constant_override("separation", 30)
+	vb.add_child(body)
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(780, 660)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	body.add_child(scroll)
+	_book_grid = GridContainer.new()
+	_book_grid.columns = 4
+	_book_grid.add_theme_constant_override("h_separation", 12)
+	_book_grid.add_theme_constant_override("v_separation", 12)
+	scroll.add_child(_book_grid)
+
+	var detail_panel := PanelContainer.new()
+	detail_panel.custom_minimum_size = Vector2(620, 660)
+	body.add_child(detail_panel)
+	var dm := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		dm.add_theme_constant_override("margin_" + side, 24)
+	detail_panel.add_child(dm)
+	_book_detail = VBoxContainer.new()
+	_book_detail.add_theme_constant_override("separation", 10)
+	dm.add_child(_book_detail)
+
+	var close := Button.new()
+	close.text = "닫기"
+	close.focus_mode = Control.FOCUS_NONE
+	close.custom_minimum_size = Vector2(0, 60)
+	close.pressed.connect(func(): _book.visible = false)
+	vb.add_child(close)
+	_book.visible = false
+
+
+func _open_recipe_book() -> void:
+	_book_sel = ""
+	_refresh_recipe_book()
+	_book.visible = true
+
+
+func _refresh_recipe_book() -> void:
+	_book_tokens.text = "보유 토큰: %d" % GameManager.tokens
+	var order := RecipeCards.order()
+	if _book_sel == "" and not order.is_empty():
+		_book_sel = order[0]
+	for c in _book_grid.get_children():
+		c.queue_free()
+	for id in order:
+		_book_grid.add_child(RecipeCards.card(id, id == _book_sel, _on_book_card.bind(id)))
+	_refresh_book_detail()
+
+
+func _on_book_card(id: String) -> void:
+	_book_sel = id
+	_refresh_recipe_book()
+
+
+## 오른쪽 상세(공용 RecipeCards) + 미해금이면 구입 버튼.
+func _refresh_book_detail() -> void:
+	if _book_sel == "":
+		return
+	RecipeCards.fill_detail(_book_detail, _book_sel, false)
+	if RecipeDB.is_for_sale(_book_sel):
+		var spacer := Control.new()
+		spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		_book_detail.add_child(spacer)
+		var buy := Button.new()
+		buy.focus_mode = Control.FOCUS_NONE
+		buy.custom_minimum_size = Vector2(0, 64)
+		buy.text = "구입  %d토큰" % RecipeDB.price(_book_sel)
+		buy.disabled = not RecipeDB.can_buy(_book_sel)
+		buy.pressed.connect(_on_buy_recipe.bind(_book_sel))
+		_book_detail.add_child(buy)
+
+
+func _on_buy_recipe(id: String) -> void:
+	if RecipeDB.buy(id):
+		_refresh_recipe_book()
+		_refresh_forge() # 토큰이 줄었으니 대장간 패널도 갱신(열려 있으면)
 
 
 # ── 탐험 준비 (가방 ↔ 창고 드래그앤드롭) ────────────────

@@ -18,7 +18,9 @@ recipes     : 레시피 × 레벨(1~3) 한 행씩
     id               : 레시피 식별자(영문) — 필수
     level            : 1, 2, 3 — 필수
     display_name     : 표시 이름 (레벨 1 행에만 적어도 됨)
-    unlock           : 해금 조건 (레벨 1 행) — default | item:<아이템id>
+    unlock           : 해금 조건 (레벨 1 행) — default(처음부터) | shop(레시피 북에서 토큰으로 구입)
+                       | item:<id>(획득 시) | item:<id>+<id>(모두 획득 시)
+    price            : shop 레시피 구입 가격(토큰, 레벨 1 행)
     ingredients      : 필요 재료(순서 무관). 쉼표 구분, 중복 = 여러 개 필요 (예: potato, potato, herb)
     station          : 재료를 넣어 완성하는 기구 — fryer(튀김기) | pot(냄비) | bowl(믹싱볼, 불 없이 바로 완성)
     timer_seconds    : 튀김기/냄비 적정 시간(초). bowl 은 무시
@@ -92,13 +94,15 @@ def read_recipes(ws):
         if rid == "":
             continue
         if rid not in recipes:
-            recipes[rid] = {"id": rid, "display_name": rid, "unlock": "default", "levels": []}
+            recipes[rid] = {"id": rid, "display_name": rid, "unlock": "default", "price": 0, "levels": []}
             order.append(rid)
         rec = recipes[rid]
         if text(row.get("display_name")):
             rec["display_name"] = text(row.get("display_name"))
         if text(row.get("unlock")):
             rec["unlock"] = text(row.get("unlock"))
+        if text(row.get("price")):
+            rec["price"] = int(num(row.get("price"), 0))
         ings = [s.strip() for s in text(row.get("ingredients")).split(",") if s.strip()]
         timer = num(row.get("timer_seconds"), 0)
         station = text(row.get("station")).lower()

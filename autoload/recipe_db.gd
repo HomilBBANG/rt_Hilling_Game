@@ -17,6 +17,7 @@ var ingredients: Array = [] # 각 원소: {id, chop_count, color}
 var _by_id: Dictionary = {}
 var _ing_by_id: Dictionary = {}
 
+var purchased: Array[String] = [] # 레시피 북에서 산 레시피(unlock = shop)
 var levels: Dictionary = {}  # recipe_id -> 현재 레벨(기본 1)
 var mastery: Dictionary = {} # recipe_id -> 누적 숙련도
 
@@ -88,12 +89,15 @@ func ingredient_color(id: String) -> Color:
 
 # ── 해금 ───────────────────────────────────────────────
 
-## unlock: "default" | "item:<아이템id>"(해당 아이템을 한 번이라도 획득하면 해금)
+## unlock: "default"(처음부터) | "shop"(레시피 북에서 토큰으로 구입)
+##         | "item:<아이템id>"(해당 아이템을 한 번이라도 획득하면 해금)
 ##         | "item:<id>+<id>"(나열한 아이템을 모두 획득해야 해금)
 func is_unlocked(id: String) -> bool:
 	var u := String(get_recipe(id).get("unlock", "default"))
 	if u == "" or u == "default":
 		return true
+	if u == "shop":
+		return id in purchased
 	if u.begins_with("item:"):
 		for item_id in u.substr(5).split("+", false):
 			if not CodexManager.is_item_obtained(item_id.strip_edges()):
@@ -105,12 +109,53 @@ func is_unlocked(id: String) -> bool:
 ## 잠긴 레시피의 해금 조건 안내 문구.
 func unlock_text(id: String) -> String:
 	var u := String(get_recipe(id).get("unlock", "default"))
+	if u == "shop":
+		return "레시피 북에서 구입 (%d토큰)" % price(id)
 	if u.begins_with("item:"):
 		var names: Array[String] = []
 		for item_id in u.substr(5).split("+", false):
 			names.append(ItemDB.display_name(item_id.strip_edges()))
 		return "%s 획득 시 해금" % " · ".join(names)
 	return "해금 조건 미정"
+
+
+# ── 레시피 북(토큰 구입) ──────────────────────────────
+
+func price(id: String) -> int:
+	return int(get_recipe(id).get("price", 0))
+
+
+func is_for_sale(id: String) -> bool:
+	return String(get_recipe(id).get("unlock", "")) == "shop" and not (id in purchased)
+
+
+func can_buy(id: String) -> bool:
+	return is_for_sale(id) and GameManager.tokens >= price(id)
+
+
+## 토큰을 내고 레시피 구입. 성공 시 true.
+func buy(id: String) -> bool:
+	if not can_buy(id):
+		return false
+	GameManager.tokens -= price(id)
+	purchased.append(id)
+	return true
+
+
+## 제작 과정 요약: "감자✂4 + 통조림 → 냄비 3초" (✂N = 조리대에서 써는 횟수).
+func describe(d: Dictionary) -> String:
+	var parts: Array[String] = []
+	for ing in d.get("ingredients", []):
+		var n := chop_count(String(ing))
+		parts.append(ItemDB.display_name(String(ing)) + ("✂%d" % n if n > 0 else ""))
+	var st := String(d.get("station", ""))
+	var tail := ""
+	if st in CookStation.INFO:
+		tail = " → " + String(CookStation.INFO[st]["name"])
+		var t := float(d.get("timer_seconds", 0.0))
+		if t > 0.0:
+			tail += " %s초" % (str(int(t)) if is_equal_approx(t, roundf(t)) else str(t))
+	return " + ".join(parts) + tail
 
 
 func unlocked_ids() -> Array[String]:
@@ -196,12 +241,15 @@ func cook_data(id: String, lv: int = -1) -> Dictionary:
 # ── 세이브 ─────────────────────────────────────────────
 
 func to_dict() -> Dictionary:
-	return {"levels": levels.duplicate(), "mastery": mastery.duplicate()}
+	return {"levels": levels.duplicate(), "mastery": mastery.duplicate(), "purchased": purchased.duplicate()}
 
 
 func from_dict(d: Dictionary) -> void:
 	levels = {}
 	mastery = {}
+	purchased = []
+	for id in d.get("purchased", []):
+		purchased.append(String(id))
 	var lv: Dictionary = d.get("levels", {})
 	for k in lv.keys():
 		levels[String(k)] = int(lv[k])

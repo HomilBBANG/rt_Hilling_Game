@@ -62,8 +62,8 @@ lobby ─(새 게임/불러오기)─▶ MORNING_PREP ─▶ SCAVENGE ─▶ NIG
 - 밤 요리 재료: `cooking_stock(id)` = 가방 + 창고, `consume_for_cooking()` = 가방 먼저 차감.
 
 ## 탐사 (scavenge)
-- `scavenge.gd`가 지역(ruins.tres) + MonsterDB 로 몬스터(일반 순환 + 보스)·채집 노드·탄약 픽업 스폰.
-  `_apply_monster_type()`이 몬스터 종류별 능력치·드롭·크기를 주입.
+- `scavenge.gd`가 씬의 고정 지점에서 스폰: `MonsterSpawns`/`ItemSpawns` 아래 `SpawnPoint`(scripts/entities/spawn_point.gd, @tool — 에디터에서 id 표시),
+  `AmmoSpawns` 마커. `_apply_monster_type()`이 몬스터 종류별 능력치·드롭·크기(보스 포함)를 주입.
 - `add_loot(id, n)` → 무게 한도(`GameManager.units_that_fit`) 안에서 담고 실제 담은 수 반환.
   `drop_on_floor()`는 바닥에 `resource_node`(E로 줍기) 생성.
 - `monster.gd`: IDLE(배회)/CHASE, 공격 예고(`_draw`), 장애물 회피(슬라이드 충돌 노말 기준 접선 이동),

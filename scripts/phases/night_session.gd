@@ -1323,58 +1323,110 @@ func _on_toggle_place(slot: String, npc_id: String) -> void:
 	_build_npc_rows()
 
 
-## 레시피 행: [선택 토글] [숙련도] [강화 버튼]. 잠긴 레시피는 해금 조건만 회색으로 표시.
-## 처음 열 때 해금된 레시피 전부 선택.
+## 오늘 메뉴 선택 — 캠프 레시피 북과 같은 모습(RecipeCards).
+## 왼쪽 격자: 카드(완성 요리 + 이름 + 숙련도), 보유한 레시피 먼저·미해금은 회색, 선호 음식은 분홍 테두리.
+##   보유한 카드 왼쪽 위 체크 = 오늘 메뉴 포함(처음엔 전부 체크).
+## 오른쪽: 선택한 레시피 상세 + 재료 보유 수 + [강화 ▲] / [구입] 버튼.
+var _prep_grid: GridContainer
+var _prep_detail: VBoxContainer
+var _prep_sel := ""
+
+
 func _build_recipe_rows() -> void:
-	for c in _recipe_list.get_children():
-		c.queue_free()
 	var unlocked := RecipeDB.unlocked_ids()
 	if _selected.is_empty():
 		for id in unlocked:
 			_selected[id] = true
-	for r in RecipeDB.recipes:
-		var id := String(r["id"])
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 12)
-		if not (id in unlocked):
-			var lock := Label.new()
-			lock.modulate = Color(0.55, 0.55, 0.55)
-			lock.text = "🔒 %s — %s" % [RecipeDB.display_name(id), RecipeDB.unlock_text(id)]
-			row.add_child(lock)
-			_recipe_list.add_child(row)
-			continue
-		var btn := Button.new()
-		btn.focus_mode = Control.FOCUS_NONE
-		btn.custom_minimum_size = Vector2(0, 51)
-		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		btn.toggle_mode = true
-		btn.button_pressed = bool(_selected.get(id, false))
-		btn.text = _recipe_row_text(id, btn.button_pressed)
-		btn.toggled.connect(_on_toggle_recipe.bind(id, btn))
-		row.add_child(btn)
+	$Prep/Center/Panel/Margin/VBox/RecipeTitle.text = "── 오늘 밤 메뉴 (체크 = 포함) · 보유 토큰 %d ──" % GameManager.tokens
+	if _prep_grid == null: # 최초 1회 레이아웃
+		var body := HBoxContainer.new()
+		body.add_theme_constant_override("separation", 24)
+		_recipe_list.add_child(body)
+		var scroll := ScrollContainer.new()
+		scroll.custom_minimum_size = Vector2(780, 600)
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		body.add_child(scroll)
+		_prep_grid = GridContainer.new()
+		_prep_grid.columns = 4
+		_prep_grid.add_theme_constant_override("h_separation", 12)
+		_prep_grid.add_theme_constant_override("v_separation", 12)
+		scroll.add_child(_prep_grid)
+		var dp := PanelContainer.new()
+		dp.custom_minimum_size = Vector2(560, 600)
+		body.add_child(dp)
+		var dsc := ScrollContainer.new() # 재료가 많아도 잘리지 않게
+		dsc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		dp.add_child(dsc)
+		var dm := MarginContainer.new()
+		dm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		for side in ["left", "right", "top", "bottom"]:
+			dm.add_theme_constant_override("margin_" + side, 18)
+		dsc.add_child(dm)
+		_prep_detail = VBoxContainer.new()
+		_prep_detail.add_theme_constant_override("separation", 8)
+		dm.add_child(_prep_detail)
+	var order := RecipeCards.order()
+	if _prep_sel == "" and not order.is_empty():
+		_prep_sel = order[0]
+	for c in _prep_grid.get_children():
+		c.queue_free()
+	for id in order:
+		var card := RecipeCards.card(id, id == _prep_sel, _on_prep_card.bind(id))
+		if id in unlocked: # 메뉴 포함 체크
+			var chk := CheckBox.new()
+			chk.focus_mode = Control.FOCUS_NONE
+			chk.button_pressed = bool(_selected.get(id, false))
+			chk.position = Vector2(6, 4)
+			chk.toggled.connect(_on_toggle_recipe.bind(id))
+			card.add_child(chk)
+			if not chk.button_pressed:
+				card.modulate = Color(0.75, 0.75, 0.75) # 메뉴에서 뺀 카드는 살짝 흐리게
+		_prep_grid.add_child(card)
+	_refresh_prep_detail()
 
-		var ms := Label.new()
-		ms.custom_minimum_size = Vector2(165, 0)
-		ms.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		var req := RecipeDB.mastery_required(id)
-		ms.text = "숙련 %d / %d" % [RecipeDB.mastery_of(id), req] if req >= 0 else "숙련 %d (MAX)" % RecipeDB.mastery_of(id)
-		row.add_child(ms)
 
-		var up := Button.new()
-		up.focus_mode = Control.FOCUS_NONE
-		up.custom_minimum_size = Vector2(144, 51)
-		up.text = "강화 ▲" if req >= 0 else "최대"
-		up.disabled = not RecipeDB.can_upgrade(id)
-		up.tooltip_text = _upgrade_tooltip(id)
-		up.pressed.connect(_on_upgrade_recipe.bind(id))
-		row.add_child(up)
-		_recipe_list.add_child(row)
+func _on_prep_card(id: String) -> void:
+	_prep_sel = id
+	_build_recipe_rows()
 
 
-func _on_toggle_recipe(pressed: bool, id: String, btn: Button) -> void:
+func _on_toggle_recipe(pressed: bool, id: String) -> void:
 	_selected[id] = pressed
-	btn.text = _recipe_row_text(id, pressed)
+	_build_recipe_rows()
+
+
+func _refresh_prep_detail() -> void:
+	if _prep_sel == "":
+		return
+	var id := _prep_sel
+	RecipeCards.fill_detail(_prep_detail, id, true, 84.0)
+	if RecipeDB.is_unlocked(id):
+		var req := RecipeDB.mastery_required(id)
+		if req >= 0:
+			var up := Button.new()
+			up.focus_mode = Control.FOCUS_NONE
+			up.custom_minimum_size = Vector2(0, 56)
+			up.text = "강화 ▲  Lv%d → Lv%d" % [RecipeDB.level_of(id), RecipeDB.level_of(id) + 1]
+			up.disabled = not RecipeDB.can_upgrade(id)
+			up.tooltip_text = "다음 레벨: %s" % _process_text(RecipeDB.cook_data(id, RecipeDB.level_of(id) + 1))
+			up.pressed.connect(_on_upgrade_recipe.bind(id))
+			_prep_detail.add_child(up)
+	elif RecipeDB.is_for_sale(id):
+		var buy := Button.new()
+		buy.focus_mode = Control.FOCUS_NONE
+		buy.custom_minimum_size = Vector2(0, 56)
+		buy.text = "구입  %d토큰" % RecipeDB.price(id)
+		buy.disabled = not RecipeDB.can_buy(id)
+		buy.pressed.connect(_on_buy_recipe.bind(id))
+		_prep_detail.add_child(buy)
+
+
+## 잠긴 레시피를 토큰으로 구입 → 바로 오늘 메뉴에 포함.
+func _on_buy_recipe(id: String) -> void:
+	if RecipeDB.buy(id):
+		_selected[id] = true
+		_build_recipe_rows()
+		_toast("%s 레시피를 배웠다!" % RecipeDB.display_name(id))
 
 
 func _on_upgrade_recipe(id: String) -> void:
@@ -1382,47 +1434,9 @@ func _on_upgrade_recipe(id: String) -> void:
 		_build_recipe_rows()
 
 
-## "[✓] 감자튀김 Lv2   감자✂3 + 감자✂3 → 튀김기 4초   · 만족 32/21/10"
-func _recipe_row_text(id: String, selected: bool) -> String:
-	var mark := "✓" if selected else " "
-	var d := RecipeDB.cook_data(id)
-	var pref := " ★" if BelamiManager.is_preferred(id) else ""
-	var sat: Dictionary = d.get("sat", {})
-	return "[%s] %s Lv%d%s   %s   · 만족 %d/%d/%d" % [
-		mark, d["display_name"], int(d["level"]), pref, _process_text(d),
-		int(sat.get("A", 0)), int(sat.get("B", 0)), int(sat.get("C", 0))]
-
-
-## 제작 과정 요약: 재료(✂N = 썰기 횟수) → 기구(+시간).
+## 제작 과정 요약: 재료(✂N = 썰기 횟수) → 기구(+시간). 레시피 북과 같은 표기.
 func _process_text(d: Dictionary) -> String:
-	var parts: Array[String] = []
-	for ing in d.get("ingredients", []):
-		var n := RecipeDB.chop_count(String(ing))
-		parts.append(_item_name(String(ing)) + ("✂%d" % n if n > 0 else ""))
-	var st := String(d.get("station", ""))
-	var tail := ""
-	if st in CookStation.INFO:
-		tail = " → " + String(CookStation.INFO[st]["name"])
-		if float(d.get("timer_seconds", 0.0)) > 0.0:
-			tail += " %s초" % _sec_text(d["timer_seconds"])
-	return " + ".join(parts) + tail
-
-
-## 4.0 → "4", 4.5 → "4.5"
-func _sec_text(v: Variant) -> String:
-	var f := float(v)
-	return str(int(f)) if is_equal_approx(f, roundf(f)) else str(f)
-
-
-func _upgrade_tooltip(id: String) -> String:
-	var lv := RecipeDB.level_of(id)
-	if lv >= RecipeDB.max_level(id):
-		return "최대 레벨입니다"
-	var nd := RecipeDB.cook_data(id, lv + 1)
-	var sat: Dictionary = nd.get("sat", {})
-	return "Lv%d → Lv%d (숙련 %d 필요)\n%s\n만족 %d/%d/%d" % [
-		lv, lv + 1, RecipeDB.mastery_required(id), _process_text(nd),
-		int(sat.get("A", 0)), int(sat.get("B", 0)), int(sat.get("C", 0))]
+	return RecipeDB.describe(d)
 
 
 ## '요리 시작' → 준비 화면 닫고 조리 진행. 선택이 없으면 전체 선택으로 대체.

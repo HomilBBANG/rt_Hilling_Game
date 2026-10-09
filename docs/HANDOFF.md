@@ -32,11 +32,12 @@
 | `npc_unlocks.xlsx` | convert_npc_unlocks | `NpcUnlockDB` | NPC 부활 임계값·해금 기능·캠프 위치 |
 | `cooking.xlsx` | convert_cooking | `RecipeDB` | 시트 3개: `settings`(쿠킹 밸런스) / `ingredients`(써는 횟수·임시 도형 색) / `recipes`(레시피 × Lv1~3) |
 
-- 지역만 Godot 리소스: `resources/regions/ruins.tres`(채집 음식 풀 `food_item_ids`, 몬스터 폴백 재료, 보스 id 등).
+- 지역만 Godot 리소스: `resources/regions/ruins.tres`(몬스터 폴백 재료 등). `food_item_ids`·`boss_id`·`ammo_pickup_points` 는 현재 미사용.
+- **탐사 배치는 전부 고정**: `scavenge.tscn` 의 `MonsterSpawns`(보스 포함) / `ItemSpawns` 아래 `SpawnPoint`(kind, spawn_id, amount) + `AmmoSpawns` 마커. 에디터에서 드래그·복제로 편집(에디터에서만 id 글자 표시).
 
 ## 구현 완료 (요약 — 상세는 GDD)
 - **로비**: 새 게임/불러오기/진행도 초기화.
-- **캠프**: NPC 시체·부활 컷씬, 카터 대장간(무기 강화·제작), 능력치 화면(Tab), 탐험 준비(가방↔창고 드래그앤드롭, 무게 제한), 위치는 엑셀.
+- **캠프**: NPC 시체·부활 컷씬, 카터 대장간(무기 강화·제작), 능력치 화면(Tab), 레시피 북(토큰으로 레시피 구입 — RecipeDB.buy, 세이브 `cooking.purchased`), 탐험 준비(가방↔창고 드래그앤드롭, 무게 제한), 위치는 엑셀.
 - **탐사**: 탑다운 이동·사격·근접, 무기별 스프라이트/총구, 몬스터 AI(배회·추적·공격 예고·장애물 우회), 보스, 시체 루팅(E 2초, 반드시 드롭, 무게 초과분은 바닥), 채집, 인벤토리(I, 우클릭 사용/퀵슬롯/버리기), 퀵슬롯(1), 획득 텍스트, 피격 플래시, 나무 y-정렬.
 - **밤 쿠킹**: 준비 화면(NPC 배치·메뉴 선택·레시피 강화), 왼쪽 위 레시피 표, 재료 소진 시 배고픈 god(시간 2배) → 타임오버 게임 오버 → 그날 아침부터(`GameManager.restart_day`, 밤 세이브의 `morning_snapshot`), 조리 기구 6종(조리대/튀김기/냄비/믹싱볼/테이블/쓰레기통), 재료 꺼내기→클릭 손질→기구에 넣어 레시피 자동 판별→조리→서빙, E 집기/R 내려놓기, 바닥 낙하(등급↓·20초 후 썩음), 카밀라 서빙(길찾기), 발 기준 충돌·깊이 정렬, 숙련도·강화, 결과 화면.
 - **기구 배치 편집(개발용)**: 밤 준비 화면 `🛠 기구 배치 편집` → 드래그(자석 정렬, Alt 끄기), 방향키 1px/Shift 10px, 초록 범위(`Field/PlaceArea`) 안에서만, 겹침 불가, 저장 시 `night_session.tscn`에 기록.

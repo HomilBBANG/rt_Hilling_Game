@@ -55,6 +55,7 @@
       "id": "herb_bite",
       "display_name": "들풀 무침",
       "unlock": "default",
+      "price": 0,
       "levels": [
         {
           "level": 1,
@@ -109,7 +110,8 @@
     {
       "id": "canned_stew",
       "display_name": "통조림 스튜",
-      "unlock": "default",
+      "unlock": "shop",
+      "price": 30,
       "levels": [
         {
           "level": 1,
@@ -166,6 +168,7 @@
       "id": "herb_fry",
       "display_name": "들풀 튀김",
       "unlock": "default",
+      "price": 0,
       "levels": [
         {
           "level": 1,
@@ -217,7 +220,8 @@
     {
       "id": "fries",
       "display_name": "감자튀김",
-      "unlock": "item:potato",
+      "unlock": "default",
+      "price": 0,
       "levels": [
         {
           "level": 1,
@@ -269,7 +273,8 @@
     {
       "id": "potato_soup",
       "display_name": "감자 수프",
-      "unlock": "item:potato",
+      "unlock": "shop",
+      "price": 40,
       "levels": [
         {
           "level": 1,
@@ -324,7 +329,8 @@
     {
       "id": "hearty_stew",
       "display_name": "든든한 스튜",
-      "unlock": "item:potato",
+      "unlock": "shop",
+      "price": 60,
       "levels": [
         {
           "level": 1,
@@ -382,7 +388,8 @@
     {
       "id": "meat_fry",
       "display_name": "고기 튀김",
-      "unlock": "item:meat",
+      "unlock": "shop",
+      "price": 50,
       "levels": [
         {
           "level": 1,
@@ -434,7 +441,8 @@
     {
       "id": "meat_stew",
       "display_name": "고기 스튜",
-      "unlock": "item:meat",
+      "unlock": "shop",
+      "price": 70,
       "levels": [
         {
           "level": 1,
@@ -491,7 +499,8 @@
     {
       "id": "cheese_salad",
       "display_name": "치즈 들풀 샐러드",
-      "unlock": "item:cheese",
+      "unlock": "shop",
+      "price": 40,
       "levels": [
         {
           "level": 1,
@@ -546,7 +555,8 @@
     {
       "id": "cheese_potato",
       "display_name": "치즈 감자",
-      "unlock": "item:cheese",
+      "unlock": "shop",
+      "price": 50,
       "levels": [
         {
           "level": 1,
@@ -601,7 +611,8 @@
     {
       "id": "cheese_meat",
       "display_name": "치즈 고기찜",
-      "unlock": "item:meat+cheese",
+      "unlock": "shop",
+      "price": 90,
       "levels": [
         {
           "level": 1,
@@ -656,7 +667,8 @@
     {
       "id": "tomato_salad",
       "display_name": "토마토 샐러드",
-      "unlock": "item:tomato",
+      "unlock": "shop",
+      "price": 40,
       "levels": [
         {
           "level": 1,
@@ -711,7 +723,8 @@
     {
       "id": "tomato_stew",
       "display_name": "토마토 스튜",
-      "unlock": "item:tomato",
+      "unlock": "shop",
+      "price": 60,
       "levels": [
         {
           "level": 1,
